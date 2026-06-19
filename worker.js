@@ -325,6 +325,9 @@ function renderPage(env = {}) {
 
   // ---------- HELPERS ----------
   const money=function(n){return "$"+Math.round(n||0).toLocaleString();};
+  function withTimeout(promise,ms,label){
+    return Promise.race([promise, new Promise(function(_,rej){ setTimeout(function(){ rej(new Error((label||"This")+" took too long. Check your connection and try again.")); }, ms||25000); })]);
+  }
   function median(a){if(!a.length)return 0;const s=a.slice().sort(function(x,y){return x-y;});const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
   function summarize(sales){
     const conf=sales.filter(function(s){return s.price_confirmed!==false;});
@@ -492,14 +495,16 @@ function renderPage(env = {}) {
         if(currentSession) loadHomeFeed();
       }catch(e){}
     }).catch(function(){});
-    sb.auth.onAuthStateChange(async function(_e,session){
-      try{
-        currentSession=session; panelOpen=false;
-        await ensureMyProfile();
-        renderAuth(); renderNav();
-        if(!session && (view==="portfolio"||view==="watchlist"||view==="editProfile")){ setView("search"); }
-        loadHomeFeed();
-      }catch(e){}
+    sb.auth.onAuthStateChange(function(_e,session){
+      currentSession=session; panelOpen=false;
+      if(!session && (view==="portfolio"||view==="watchlist"||view==="editProfile")){ setView("search"); }
+      renderAuth(); renderNav();
+      // Defer any Supabase calls out of the auth callback. supabase-js holds an
+      // internal lock while this fires; awaiting DB/storage calls here deadlocks
+      // the client and freezes later writes (profile save, avatar upload).
+      setTimeout(async function(){
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); }catch(e){}
+      },0);
     });
   }
 
@@ -834,11 +839,11 @@ function renderPage(env = {}) {
     try{
       const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
       const path=currentSession.user.id+"/avatar_"+Date.now()+"."+ext;
-      const up=await sb.storage.from("avatars").upload(path,file,{upsert:true,cacheControl:"3600"});
+      const up=await withTimeout(sb.storage.from("avatars").upload(path,file,{upsert:true,cacheControl:"3600"}),30000,"Upload");
       if(up.error){ msg.textContent="Upload failed: "+up.error.message; return; }
       const pub=sb.storage.from("avatars").getPublicUrl(path);
       const url=pub.data.publicUrl;
-      const u=await sb.from("profiles").update({avatar_url:url}).eq("id",currentSession.user.id);
+      const u=await withTimeout(sb.from("profiles").update({avatar_url:url}).eq("id",currentSession.user.id),25000,"Save");
       if(u.error){ msg.textContent="Saved file, but could not update profile: "+u.error.message; return; }
       myProfile=Object.assign({},myProfile,{avatar_url:url});
       msg.textContent="Avatar updated.";
@@ -860,7 +865,9 @@ function renderPage(env = {}) {
       updated_at:new Date().toISOString()
     };
     const btn=document.getElementById("efSave"); btn.disabled=true; btn.textContent="Saving…";
-    const u=await sb.from("profiles").update(payload).eq("id",currentSession.user.id);
+    let u;
+    try{ u=await withTimeout(sb.from("profiles").update(payload).eq("id",currentSession.user.id),25000,"Save"); }
+    catch(err){ btn.disabled=false; btn.textContent="Save profile"; msg.style.color="var(--down)"; msg.textContent=err.message||"Could not save. Please try again."; return; }
     btn.disabled=false; btn.textContent="Save profile";
     if(u.error){ msg.style.color="var(--down)"; msg.textContent=(/duplicate|unique/i.test(u.error.message)?"That handle is taken. Try another.":("Could not save: "+u.error.message)); return; }
     myProfile=Object.assign({},myProfile,payload);
