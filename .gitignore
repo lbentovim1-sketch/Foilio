@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Wrangler / Cloudflare local build + state
+.wrangler/
+
+# Local secrets - NEVER commit these
+.dev.vars
+.env
+.env.*
+
+# OS / editor noise
+.DS_Store

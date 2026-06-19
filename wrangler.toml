@@ -1,0 +1,22 @@
+# Cloudflare Worker configuration for Foilio.
+# This tells Cloudflare how to deploy the app in worker.js.
+#
+# IMPORTANT: Do NOT put API keys or secrets in this file.
+# Set them in the Cloudflare dashboard (or with `wrangler secret put`).
+# See README.md -> "Deploying Foilio" for step-by-step instructions.
+
+name = "foilio"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+
+# The Worker serves the website AND relays the data APIs, so we want it
+# reachable on its own URL. Cloudflare gives you a free <name>.<your-subdomain>.workers.dev
+# URL automatically. Leave this on unless you wire up a custom domain.
+workers_dev = true
+
+# Secrets / environment variables used by the app (set these in the dashboard,
+# they are intentionally NOT defined here):
+#   THE_CARD_API_KEY      - server-side key for market sales lookups
+#   PSA_TOKEN             - server-side bearer token for PSA cert lookups
+#   SUPABASE_URL          - your Supabase project URL (public)
+#   SUPABASE_ANON_KEY     - your Supabase anon/publishable key (public)

@@ -23,6 +23,57 @@ Do not commit credentials to GitHub. Configure these as Cloudflare Worker enviro
 
 The PSA and Card API values stay on the server side. Supabase URL and anon/publishable key are public client configuration, but should still be supplied through deployment config so projects can be changed without editing source.
 
+## Deploying Foilio
+
+You do **not** need to be a developer to deploy this. Pick one of the two paths below. Path A is recommended because, once set up, every future change is published automatically.
+
+### What you need first
+
+- A free [Cloudflare](https://dash.cloudflare.com/sign-up) account.
+- Your four config values ready to paste in: `THE_CARD_API_KEY`, `PSA_TOKEN`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY`.
+
+### Path A — Automatic deploys from GitHub (recommended)
+
+This connects your GitHub repo to Cloudflare so the app redeploys itself whenever code changes.
+
+1. Log in to the [Cloudflare dashboard](https://dash.cloudflare.com).
+2. In the left menu, go to **Compute (Workers)** → **Workers & Pages**.
+3. Click **Create** → **Workers** → **Connect to Git** (you may be asked to authorize GitHub the first time).
+4. Choose this repository, then choose the `main` branch as the deploy branch.
+5. Cloudflare will detect `wrangler.toml` automatically. Leave the build settings at their defaults and click **Save and Deploy**.
+6. After the first deploy, open the Worker → **Settings** → **Variables and Secrets** and add all four values listed above. Mark `THE_CARD_API_KEY` and `PSA_TOKEN` as **Secret**; `SUPABASE_URL` and `SUPABASE_ANON_KEY` can be plain text. Click **Deploy** again so the values take effect.
+7. Your site is live at the `*.workers.dev` URL shown on the Worker's page.
+
+From now on, any change merged into `main` (including ones made through Cursor) will deploy on its own — no extra steps.
+
+### Path B — Manual deploy from your computer
+
+Use this if you'd rather publish by hand.
+
+1. Install [Node.js](https://nodejs.org) (LTS version).
+2. Open a terminal in this project folder and run:
+
+```bash
+npm install
+npx wrangler login        # opens your browser to authorize Cloudflare
+npm run deploy
+```
+
+3. Add your secrets once (Cloudflare stores them after this):
+
+```bash
+npx wrangler secret put THE_CARD_API_KEY
+npx wrangler secret put PSA_TOKEN
+npx wrangler secret put SUPABASE_URL
+npx wrangler secret put SUPABASE_ANON_KEY
+```
+
+4. Run `npm run deploy` again. The terminal prints your live `*.workers.dev` URL.
+
+### Testing locally (optional)
+
+Copy `.dev.vars.example` to `.dev.vars`, fill in your values, then run `npm run dev`. The `.dev.vars` file is git-ignored so your keys never get committed.
+
 ## Current Supabase assumptions
 
 The app expects an authenticated Supabase client and a `holdings` table with columns used by `worker.js`, including:
