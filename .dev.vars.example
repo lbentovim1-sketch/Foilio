@@ -1,0 +1,11 @@
+# Local development secrets for `wrangler dev`.
+# 1. Copy this file to ".dev.vars"
+# 2. Fill in the real values below
+# 3. Run: npm run dev
+#
+# The real ".dev.vars" file is git-ignored and will NOT be committed.
+
+THE_CARD_API_KEY="your-card-api-key-here"
+PSA_TOKEN="your-psa-bearer-token-here"
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_ANON_KEY="your-supabase-anon-or-publishable-key-here"

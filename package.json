@@ -1,0 +1,13 @@
+{
+  "name": "foilio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Foilio - trading-card market and portfolio app running on a Cloudflare Worker.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.103.0"
+  }
+}
