@@ -2,13 +2,8 @@
 //  FOILIO  —  all-in-one Cloudflare Worker
 //  Serves the site, relays The Card API (/api), and powers
 //  accounts + saved portfolios via Supabase.
-//  All credentials are baked in below — just paste & Deploy.
+//  Configure secrets and public app config as Cloudflare Worker bindings.
 // ============================================================
-
-const API_KEY = "tca_74351763bc5e266abd439c9a88584aafd0cec7ec0f26ef8f";
-
-// PSA cert lookup token (server-side only — never goes into the page). Get yours at psacard.com -> API.
-const PSA_TOKEN = "cTFEajZ_9M-z7VT0cGzHE2OFv5LrXe9dS2hNuVTSRj1tmPib_g4TKMd0vh00dt1R2og1sU6a1i-9k2MoIUkTC2IsfCLOHM1oAqjzJFKGaD9NU9a50nNw-tPfxwKoBcIvxPeQp37KR6mALqby4fCHN8ZfUuWI8WLTmwKZvvay-ffs_IwR9jIOK7EhAd1tiBW9EqhXQ9awKqd14YyG7BbUZg-Oe2XMF7YbNgVkP5uXE-hZ79VzvLa1HWDOxGRfR7NBnPLsoOvnaU4remMCo-tRtPrVCBzNKzplvVnM9-lYO4MKNIK_";
 
 const UPSTREAM = "https://thecardapi.com/api/v1/market/sales";
 const CORS = {
@@ -17,8 +12,19 @@ const CORS = {
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
+function envValue(env, key) {
+  return env && typeof env[key] === "string" ? env[key].trim() : "";
+}
+
+function jsonResponse(body, status) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+}
+
 export default {
-  async fetch(request) {
+  async fetch(request, env = {}) {
     const url = new URL(request.url);
     if (url.pathname === "/api") {
       if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
@@ -26,42 +32,48 @@ export default {
       const limit = url.searchParams.get("limit") || "20";
       const sort = url.searchParams.get("sort") || "date_desc";
       if (q.length < 4) {
-        return new Response(JSON.stringify({ error: "Query must be at least 4 characters." }),
-          { status: 400, headers: { ...CORS, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Query must be at least 4 characters." }, 400);
       }
+      const apiKey = envValue(env, "THE_CARD_API_KEY");
+      if (!apiKey) return jsonResponse({ error: "The Card API key is not configured." }, 500);
       const upstreamUrl = UPSTREAM + "?q=" + encodeURIComponent(q) +
         "&limit=" + encodeURIComponent(limit) + "&sort=" + encodeURIComponent(sort);
       try {
-        const r = await fetch(upstreamUrl, { headers: { "x-market-api-key": API_KEY } });
+        const r = await fetch(upstreamUrl, { headers: { "x-market-api-key": apiKey } });
         const body = await r.text();
         return new Response(body, { status: r.status, headers: { ...CORS, "Content-Type": "application/json" } });
       } catch (err) {
-        return new Response(JSON.stringify({ error: "Could not reach the data source." }),
-          { status: 502, headers: { ...CORS, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Could not reach the data source." }, 502);
       }
     }
     if (url.pathname === "/cert") {
       if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
       const n = (url.searchParams.get("n") || "").replace(/[^0-9]/g, "");
       if (n.length < 5) {
-        return new Response(JSON.stringify({ error: "Invalid cert number." }),
-          { status: 400, headers: { ...CORS, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Invalid cert number." }, 400);
       }
+      const psaToken = envValue(env, "PSA_TOKEN");
+      if (!psaToken) return jsonResponse({ error: "PSA token is not configured." }, 500);
       try {
         const r = await fetch("https://api.psacard.com/publicapi/cert/GetByCertNumber/" + encodeURIComponent(n),
-          { headers: { "Authorization": "bearer " + PSA_TOKEN } });
+          { headers: { "Authorization": "bearer " + psaToken } });
         const body = await r.text();
         return new Response(body, { status: r.status, headers: { ...CORS, "Content-Type": "application/json" } });
       } catch (e) {
-        return new Response(JSON.stringify({ error: "Cert relay failed." }),
-          { status: 502, headers: { ...CORS, "Content-Type": "application/json" } });
+        return jsonResponse({ error: "Cert relay failed." }, 502);
       }
     }
-    return new Response(PAGE, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    return new Response(renderPage(env), { headers: { "Content-Type": "text/html; charset=utf-8" } });
   },
 };
 
-const PAGE = `<!DOCTYPE html>
+function renderPage(env = {}) {
+  const publicConfig = JSON.stringify({
+    supabaseUrl: envValue(env, "SUPABASE_URL"),
+    supabaseAnonKey: envValue(env, "SUPABASE_ANON_KEY") || envValue(env, "SUPABASE_PUBLISHABLE_KEY"),
+  }).replace(/</g, "\\u003c");
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
@@ -135,6 +147,20 @@ const PAGE = `<!DOCTYPE html>
   .hrow .rm:hover{border-color:var(--down);color:var(--down)}
   .hrow .ed{background:none;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:5px 10px;font-size:12px;cursor:pointer;flex-shrink:0}
   .hrow .ed:hover{border-color:var(--indigo);color:var(--indigo)}
+  .vision{margin-top:26px;display:grid;grid-template-columns:1.1fr .9fr;gap:18px;align-items:stretch}
+  .vision h2{font-family:'Space Grotesk',sans-serif;font-size:25px;letter-spacing:-.6px;line-height:1.15}
+  .pillars{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+  .pillar{background:var(--ink);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .pillar b{display:block;font-size:13px;margin-bottom:4px}
+  .pillar span{display:block;font-size:12px;color:var(--muted);line-height:1.45}
+  .network-card{background:linear-gradient(145deg,rgba(109,92,255,.22),rgba(245,181,68,.08));border:1px solid var(--borderB);border-radius:14px;padding:18px}
+  .activity{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .activity:last-child{border-bottom:none}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6d5cff,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0}
+  .activity .copy{font-size:13px;color:var(--text)}
+  .activity .copy span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+  .handle-preview{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:12px;margin-top:7px}
+  @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%;justify-content:center}.nav button{flex:1}}
 </style>
 </head>
 <body>
@@ -153,6 +179,26 @@ const PAGE = `<!DOCTYPE html>
     <input id="q" placeholder='e.g. "PSA 10 Jalen Brunson Prizm"' value="PSA 10 Jalen Brunson Prizm"/>
     <div class="chips" id="chips"></div>
     <button class="btn" id="go">Check price</button>
+  </div>
+  <div class="vision">
+    <div class="card" style="margin-top:0">
+      <label>THE FOILIO NETWORK</label>
+      <h2>Card Ladder data, portfolio tracking, and collector reputation in one place.</h2>
+      <p class="sub" style="font-size:14px">Foilio starts with live sold prices and saved portfolios. The next layer is a social market where every collector can build an @handle, post cards, follow trusted sellers, and react to new market moves.</p>
+      <div class="pillars">
+        <div class="pillar"><b>Live market tape</b><span>Trend cards by category, price velocity, and recent confirmed sales.</span></div>
+        <div class="pillar"><b>Public portfolios</b><span>Show holdings, gains, grails, and cards available for sale or trade.</span></div>
+        <div class="pillar"><b>@handles + follow graph</b><span>Build collector profiles that make reputation and taste visible.</span></div>
+        <div class="pillar"><b>Messages + alerts</b><span>Notify followers when new cards drop or watchlist prices move.</span></div>
+      </div>
+    </div>
+    <div class="network-card">
+      <label>COMING SOCIAL FEED</label>
+      <div class="activity"><div class="avatar">JB</div><div class="copy"><b>@brunsonvault</b> uploaded a PSA 10 Prizm Silver<span>Followers get an instant new-card alert</span></div></div>
+      <div class="activity"><div class="avatar">PK</div><div class="copy"><b>@pikatcg</b> added Charizard to a public grail list<span>Portfolio value +18% over last tracked buy-in</span></div></div>
+      <div class="activity"><div class="avatar">LM</div><div class="copy"><b>@futbolcards</b> is trending in soccer cards<span>3 cards moved above recent median</span></div></div>
+      <div class="handle-preview">Claim a handle when you create your account.</div>
+    </div>
   </div>
   <div id="out"></div>
 </div></div>
@@ -193,10 +239,11 @@ const PAGE = `<!DOCTYPE html>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   // ---------- CONFIG ----------
-  const SB_URL="https://feaoxyrpkjfoouadwaai.supabase.co";
-  const SB_KEY="sb_publishable_pmH-3MD9OO_JwFDaYw7zgg_yrQeqU-9";
+  const FOILIO_CONFIG=${publicConfig};
+  const SB_URL=FOILIO_CONFIG.supabaseUrl||"";
+  const SB_KEY=FOILIO_CONFIG.supabaseAnonKey||"";
   let sb=null;
-  try{ if(window.supabase){ sb=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){}
+  try{ if(window.supabase && SB_URL && SB_KEY){ sb=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){}
 
   // ---------- STATE ----------
   let currentSession=null;
@@ -218,6 +265,10 @@ const PAGE = `<!DOCTYPE html>
     return {median:median(prices),n:(conf.length||sales.length),top:(basis[0]||sales[0])};
   }
   function escapeHtml(t){ return (t==null?"":(""+t)).replace(/[&<>"]/g,function(ch){return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[ch]; }); }
+  function normalizeHandle(t){
+    const h=(t||"").toLowerCase().replace(/^@+/,"").replace(/[^a-z0-9_]/g,"");
+    return /^[a-z0-9_]{3,20}$/.test(h)?h:"";
+  }
   function findImages(obj){
     var urls=[]; var seen={};
     function walk(v){
@@ -293,6 +344,7 @@ const PAGE = `<!DOCTYPE html>
       '<div class="tabs"><button class="tab'+(authMode==="login"?" on":"")+'" id="tabLogin">Log in</button>'+
       '<button class="tab'+(authMode==="signup"?" on":"")+'" id="tabSignup">Sign up</button></div>'+
       '<input id="authEmail" type="email" placeholder="Email" autocomplete="email"/>'+
+      (authMode==="signup"?'<input id="authHandle" type="text" placeholder="@handle (3-20 letters/numbers)" autocomplete="username" maxlength="21"/>':"")+
       '<input id="authPass" type="password" placeholder="Password (6+ chars)" autocomplete="current-password"/>'+
       '<button class="authbtn primary" id="authAction" style="width:100%;margin-top:2px">'+(authMode==="login"?"Log in":"Create account")+'</button>'+
       '<div class="msg" id="authMsg"></div></div>';
@@ -300,7 +352,10 @@ const PAGE = `<!DOCTYPE html>
   function renderAuth(){
     if(!sb){ authArea.innerHTML='<span class="who">accounts setup pending</span>'; return; }
     if(currentSession && currentSession.user){
-      authArea.innerHTML='<span class="who">\u2713 <b>'+currentSession.user.email+'</b></span> <button class="authbtn" id="logoutBtn">Log out</button>';
+      const meta=currentSession.user.user_metadata||{};
+      const handle=normalizeHandle(meta.handle);
+      const identity=handle?("@"+handle):currentSession.user.email;
+      authArea.innerHTML='<span class="who">\u2713 <b>'+escapeHtml(identity)+'</b></span> <button class="authbtn" id="logoutBtn">Log out</button>';
       document.getElementById("logoutBtn").onclick=function(){ sb.auth.signOut(); };
     } else {
       authArea.innerHTML='<button class="authbtn primary" id="signinToggle">Sign in</button>'+(panelOpen?panelHTML():"");
@@ -313,7 +368,8 @@ const PAGE = `<!DOCTYPE html>
     document.getElementById("tabSignup").onclick=function(){ authMode="signup"; renderAuth(); };
     const gE=function(){return document.getElementById("authEmail").value.trim();};
     const gP=function(){return document.getElementById("authPass").value;};
-    const say=function(t,ok){var m=document.getElementById("authMsg");if(!m)return;m.style.color=ok?"var(--up)":"var(--down)";m.innerHTML=t;};
+    const gH=function(){var el=document.getElementById("authHandle");return el?el.value:"";};
+    const say=function(t,ok){var m=document.getElementById("authMsg");if(!m)return;m.style.color=ok?"var(--up)":"var(--down)";m.textContent=t;};
     document.getElementById("authAction").onclick=async function(){
       if(authMode==="login"){
         if(!gE()||!gP()){say("Enter your email and password.");return;}
@@ -321,7 +377,9 @@ const PAGE = `<!DOCTYPE html>
         if(r.error) say(r.error.message);
       } else {
         if(!gE()||gP().length<6){say("Use a valid email and a 6+ character password.");return;}
-        const r=await sb.auth.signUp({email:gE(),password:gP()});
+        const handle=normalizeHandle(gH());
+        if(!handle){say("Choose a 3-20 character handle using letters, numbers, or underscores.");return;}
+        const r=await sb.auth.signUp({email:gE(),password:gP(),options:{data:{handle:handle}}});
         if(r.error) say(r.error.message);
         else if(r.data && r.data.session) say("Account created \u2014 you are signed in!",true);
         else say("Account created. If email confirmation is on, check your inbox; otherwise just log in.",true);
@@ -533,3 +591,4 @@ const PAGE = `<!DOCTYPE html>
 </script>
 </body>
 </html>`;
+}
