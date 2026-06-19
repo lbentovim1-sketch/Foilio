@@ -1,14 +1,34 @@
 # Foilio
 
-Foilio is an early trading-card market and portfolio app. The current Cloudflare Worker prototype serves a single-page web app that can:
+Foilio is a trading-card market and social portfolio app. The Cloudflare Worker serves a single-page web app that can:
 
 - search recent trading-card sold prices through The Card API
 - look up PSA certs through a server-side relay
 - authenticate users with Supabase
-- save cards into a personal portfolio and track estimated gain/loss
-- reserve an initial collector `@handle` during signup
+- save **specific** cards into a personal portfolio (per-listing "+ Add") and track estimated gain/loss
+- set per-card visibility (public/private) for the portfolio
+- give every collector a public `@handle` profile page with avatar, bio, and social links
+- follow / unfollow other collectors
+- track cards on a watchlist with optional in-app price alerts
+- browse a live "market tape" of trending medians and a community feed of recently added cards
 
 The product direction is a mix of Card Ladder, LinkedIn, stock-market tools, and Instagram for trading cards: live trends, uploaded card portfolios, public collector profiles, follows, messaging, and upload/price alerts.
+
+## Database setup (required for the social features)
+
+The social features (profiles, follows, watchlists, public cards, avatar uploads) need new
+tables and security rules in Supabase. This is a one-time, copy-paste step:
+
+1. Open your project at [supabase.com](https://supabase.com) → **SQL Editor** → **New query**.
+2. Open [`supabase/schema.sql`](supabase/schema.sql) in this repo, copy its entire contents, paste into the editor, and click **Run**.
+3. You should see "Success. No rows returned." That's it — the script is safe to run again any time.
+
+The script creates `profiles`, `follows`, and `watchlist` tables, adds `user_id` + `is_public`
+columns to `holdings`, sets up Row Level Security so users can only edit their own data (while
+public profiles/cards stay readable), and creates a public `avatars` storage bucket for profile pictures.
+
+> Note on alerts: watchlist targets are evaluated **in-app** each time you open the Watchlist page.
+> Automated email/push alerts would need a Cloudflare Cron Trigger plus an email provider — that's a planned follow-up.
 
 ## Runtime configuration
 
