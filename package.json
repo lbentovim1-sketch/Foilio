@@ -1,0 +1,13 @@
+{
+  "name": "foilio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node --input-type=module --check < worker.js",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.103.0"
+  }
+}

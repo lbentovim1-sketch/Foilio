@@ -23,6 +23,24 @@ Do not commit credentials to GitHub. Configure these as Cloudflare Worker enviro
 
 The PSA and Card API values stay on the server side. Supabase URL and anon/publishable key are public client configuration, but should still be supplied through deployment config so projects can be changed without editing source.
 
+## Connect GitHub to Cloudflare
+
+This repo includes `wrangler.toml` so Cloudflare can deploy the Worker from GitHub.
+
+In Cloudflare:
+
+1. Go to Workers & Pages.
+2. Create or open the Worker project for Foilio.
+3. Connect the GitHub repository.
+4. Use these build settings:
+   - Install command: `npm install`
+   - Build command: `npm run check`
+   - Deploy command: `npm run deploy`
+5. Confirm the production environment has the variables listed above.
+6. Deploy the latest `main` branch.
+
+If the Worker already exists under a different Cloudflare name, update `name` in `wrangler.toml` to match that Worker before deploying.
+
 ## Current Supabase assumptions
 
 The app expects an authenticated Supabase client and a `holdings` table with columns used by `worker.js`, including:

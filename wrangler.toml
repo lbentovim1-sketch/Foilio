@@ -1,0 +1,10 @@
+name = "foilio"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+# Keep secrets out of this file. Configure these in Cloudflare:
+# - THE_CARD_API_KEY
+# - PSA_TOKEN
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY or SUPABASE_PUBLISHABLE_KEY
