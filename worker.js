@@ -479,20 +479,29 @@ function renderPage(env = {}) {
     window.scrollTo(0,0);
   }
 
+  // Render the shell immediately so the header/nav never blanks out, even if
+  // Supabase is slow, offline, or misconfigured. The async session check below
+  // re-renders once it knows who (if anyone) is signed in.
+  renderAuth(); renderNav(); routeFromPath(true); loadHomeFeed();
   if(sb){
     sb.auth.getSession().then(async function(res){
-      currentSession=res.data.session;
-      await ensureMyProfile();
-      renderAuth(); renderNav(); routeFromPath(true); loadHomeFeed();
-    });
+      try{
+        currentSession=(res&&res.data)?res.data.session:null;
+        await ensureMyProfile();
+        renderAuth(); renderNav();
+        if(currentSession) loadHomeFeed();
+      }catch(e){}
+    }).catch(function(){});
     sb.auth.onAuthStateChange(async function(_e,session){
-      currentSession=session; panelOpen=false;
-      await ensureMyProfile();
-      renderAuth(); renderNav();
-      if(!session && (view==="portfolio"||view==="watchlist"||view==="editProfile")){ setView("search"); }
-      loadHomeFeed();
+      try{
+        currentSession=session; panelOpen=false;
+        await ensureMyProfile();
+        renderAuth(); renderNav();
+        if(!session && (view==="portfolio"||view==="watchlist"||view==="editProfile")){ setView("search"); }
+        loadHomeFeed();
+      }catch(e){}
     });
-  } else { renderAuth(); renderNav(); }
+  }
 
   // ---------- ROUTING ----------
   function routeFromPath(initial){
@@ -1032,9 +1041,6 @@ function renderPage(env = {}) {
   var _ws=document.getElementById("watchSave"); if(_ws) _ws.onclick=saveWatch;
   var _wc=document.getElementById("watchCancel"); if(_wc) _wc.onclick=function(){ document.getElementById("watchModal").style.display="none"; pendingWatch=null; };
   var _wm=document.getElementById("watchModal"); if(_wm) _wm.addEventListener("click",function(e){ if(e.target.id==="watchModal"){ _wm.style.display="none"; pendingWatch=null; } });
-
-  // initial route when accounts are not configured
-  if(!sb){ routeFromPath(true); loadHomeFeed(); }
 </script>
 </body>
 </html>`;
