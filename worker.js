@@ -508,6 +508,18 @@ function renderPage(env = {}) {
       return summarize(j.data||[]);
     }catch(e){ return {median:0,n:0,top:null}; }
   }
+  // For cards with no stock image, fall back to an owner-uploaded photo as the thumbnail.
+  async function fillThumbs(holds){
+    try{
+      const need=holds.filter(function(h){return !h.image_url;}).map(function(h){return h.id;});
+      if(!need.length) return holds;
+      const pr=await sb.from("card_photos").select("holding_id,url").in("holding_id",need).order("created_at",{ascending:true});
+      const byH={}; (pr.data||[]).forEach(function(x){ if(!byH[x.holding_id]) byH[x.holding_id]=x.url; });
+      holds.forEach(function(h){ if(!h.image_url && byH[h.id]) h._thumb=byH[h.id]; });
+    }catch(e){}
+    return holds;
+  }
+  function thumbOf(h){ return h.image_url||h._thumb||""; }
 
   function findImages(obj){
     var urls=[]; var seen={};
@@ -703,6 +715,7 @@ function renderPage(env = {}) {
         (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
       }
       rows.forEach(function(h){ h._profile=profs[h.user_id]||null; });
+      await fillThumbs(rows);
       return rows;
     }catch(e){ return []; }
   }
@@ -749,6 +762,7 @@ function renderPage(env = {}) {
     if(r.error){ list.innerHTML='<div class="err"><b>Could not load portfolio.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
     const holds=r.data||[];
     if(!holds.length){ list.innerHTML='<div class="card">No cards yet. Go to <b>Search</b>, look up a card, and tap <b>"+ Add"</b> on the one you own.</div>'; return; }
+    await fillThumbs(holds);
     const valued=await Promise.all(holds.map(async function(h){ const v=await valueHolding(h); return {h:h, current:v.current, manual:v.manual}; }));
     let totalCur=0, totalAdd=0;
     valued.forEach(function(v){ totalCur+=v.current; totalAdd+=(Number(v.h.added_value)||0); });
@@ -762,7 +776,7 @@ function renderPage(env = {}) {
     let rows="";
     valued.forEach(function(v){
       const h=v.h; const add=Number(h.added_value)||0; const diff=v.current-add; const dpct=add?(diff/add*100):0;
-      const img=h.image_url||"";
+      const img=thumbOf(h);
       const manualTag=v.manual?' <span style="font-size:9px;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0 4px;vertical-align:1px">MANUAL</span>':"";
       const pubTag=(h.is_public!==false)?'<span style="font-size:9px;color:var(--up)">public</span>':'<span style="font-size:9px;color:var(--dim)">private</span>';
       const listTag=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
@@ -903,7 +917,7 @@ function renderPage(env = {}) {
     if(!rows.length){ feedWrap.innerHTML='<div class="card"><label>RECENTLY ADDED ACROSS FOILIO</label><div class="insight">No public cards yet. Add a card to your portfolio to seed the feed.</div></div>'; return; }
     let feed="";
     rows.forEach(function(h){
-      const p=h._profile; const name=p?("@"+p.handle):"a collector"; const img=h.image_url||"";
+      const p=h._profile; const name=p?("@"+p.handle):"a collector"; const img=thumbOf(h);
       feed+='<div class="hrow">'+
         (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
         '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+'</div>'+
@@ -975,11 +989,12 @@ function renderPage(env = {}) {
     const hr=await sb.from("holdings").select("*").eq("user_id",p.id).eq("is_public",true).order("added_at",{ascending:false});
     const holds=(hr.data||[]);
     if(!holds.length){ cardsEl.innerHTML='<div class="card"><label>PUBLIC CARDS</label><div class="insight">This collector has no public cards yet.</div></div>'; return; }
+    await fillThumbs(holds);
     const valued=await Promise.all(holds.slice(0,40).map(async function(h){ const v=await valueHolding(h); return {h:h, current:v.current}; }));
     let total=0; valued.forEach(function(v){ total+=v.current; });
     let rows="";
     valued.forEach(function(v,idx){
-      const h=v.h; const img=h.image_url||"";
+      const h=v.h; const img=thumbOf(h);
       const tags=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
       let act="";
       if(!isMe && currentSession && !h.sold && (h.for_sale||h.for_trade)){
@@ -1272,6 +1287,9 @@ function renderPage(env = {}) {
       const url=sb.storage.from("cards").getPublicUrl(path).data.publicUrl;
       const ins=await sb.from("card_photos").insert({holding_id:holdingId,user_id:currentSession.user.id,url:url});
       if(ins.error){ alert("Could not save photo: "+ins.error.message); return; }
+      // If the card has no stock image, use this upload as its primary image so it
+      // appears as the thumbnail across profile/portfolio/market/feed.
+      try{ const hr=await sb.from("holdings").select("image_url").eq("id",holdingId).maybeSingle(); if(hr.data && !hr.data.image_url){ await sb.from("holdings").update({image_url:url}).eq("id",holdingId); } }catch(e){}
       openCard(holdingId,true);
     }catch(err){ alert("Upload failed."); }
   }
@@ -1468,6 +1486,7 @@ function renderPage(env = {}) {
     let profs={};
     if(ids.length){ const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",ids); (pr.data||[]).forEach(function(p){ profs[p.id]=p; }); }
     rows.forEach(function(h){ h._profile=profs[h.user_id]||null; });
+    await fillThumbs(rows);
     return rows;
   }
   async function loadMarket(){
@@ -1481,7 +1500,7 @@ function renderPage(env = {}) {
     rows.forEach(function(h,idx){
       const p=h._profile; const seller=p?("@"+p.handle):"a collector";
       const mine=currentSession && h.user_id===currentSession.user.id;
-      const img=h.image_url||"";
+      const img=thumbOf(h);
       const tags=(h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"");
       let acts="";
       if(mine){ acts='<button data-edit="'+idx+'">Edit listing</button>'; }
