@@ -32,6 +32,20 @@ tables and security rules in Supabase. This is a one-time, copy-paste step:
 4. Then open [`supabase/03_engagement.sql`](supabase/03_engagement.sql) and run it (likes, comments, card photos, notifications, and a `cards` storage bucket).
 5. You should see "Success. No rows returned." after each. The scripts are safe to run again any time.
 
+### Optional: richer market data (Phase A)
+
+Foilio works with just The Card API, but two optional providers fill coverage gaps. Both are wired as
+server-side relays and **degrade gracefully** — if a key isn't set, the related feature is simply skipped.
+
+| Provider | Worker variable | What it adds | Notes |
+| --- | --- | --- | --- |
+| [SoldComps](https://sold-comps.com) | `SOLDCOMPS_API_KEY` (secret) | eBay sold-comps **fallback** when The Card API has no sales for a card (search + card pages) | Free tier ~100 req/month; key starts with `sc_` |
+| [SportsCardsPro / PriceCharting](https://www.sportscardspro.com/api-documentation) | `PRICECHARTING_TOKEN` (secret) | Card **catalog autocomplete** in manual add + a grade-based **price-guide** value when no live sales exist | Requires a paid subscription token (40 chars) |
+
+Add them in Cloudflare → your Worker → **Settings → Variables and Secrets** as **Secrets**. No code changes needed.
+
+How the card page now sources value, in order: live confirmed sales (The Card API) → eBay sold comps (SoldComps) → catalog price guide (SportsCardsPro) → your saved value.
+
 ### Optional: GIF search
 
 GIFs in comments and DMs work by pasting a GIF/image URL out of the box. To enable an in-app **GIF search picker**, create a free [GIPHY developer API key](https://developers.giphy.com/) and add it as a Cloudflare Worker variable named `GIPHY_API_KEY` (it is a public client key, so a plain Variable is fine). Without it, the GIF button falls back to "paste a URL".

@@ -47,6 +47,60 @@ export default {
         return jsonResponse({ error: "Could not reach the data source." }, 502);
       }
     }
+    if (url.pathname === "/comps") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
+      const q = url.searchParams.get("q") || "";
+      if (q.length < 3) return jsonResponse({ data: [] }, 200);
+      const key = envValue(env, "SOLDCOMPS_API_KEY");
+      if (!key) return jsonResponse({ data: [], configured: false }, 200);
+      try {
+        const upstream = "https://api.sold-comps.com/v1/scrape?keyword=" + encodeURIComponent(q) +
+          "&count=120&daysToScrape=180&sortOrder=endedRecently";
+        const r = await fetch(upstream, { headers: { "Authorization": "Bearer " + key } });
+        if (!r.ok) return jsonResponse({ data: [], error: "upstream_" + r.status }, 200);
+        const j = await r.json();
+        const items = (j.items || []).map(function (it) {
+          const priceStr = (it.soldPrice != null) ? it.soldPrice : it.totalPrice;
+          return {
+            title: it.title || "",
+            price: (priceStr != null && priceStr !== "") ? Number(priceStr) : null,
+            sale_date: it.endedAt ? String(it.endedAt).slice(0, 10) : "",
+            platform: "eBay",
+            listing_url: it.url || "",
+            thumbnail_url: it.thumbnailUrl || "",
+            image_url: it.thumbnailUrl || "",
+            price_confirmed: true,
+            source: "soldcomps",
+          };
+        }).filter(function (x) { return typeof x.price === "number" && !isNaN(x.price) && x.price > 0; });
+        return jsonResponse({ data: items, source: "soldcomps" }, 200);
+      } catch (e) {
+        return jsonResponse({ data: [], error: "relay_failed" }, 200);
+      }
+    }
+    if (url.pathname === "/catalog") {
+      if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
+      const token = envValue(env, "PRICECHARTING_TOKEN");
+      if (!token) return jsonResponse({ data: [], configured: false }, 200);
+      const id = url.searchParams.get("id") || "";
+      const q = url.searchParams.get("q") || "";
+      try {
+        if (id) {
+          const r = await fetch("https://www.pricecharting.com/api/product?t=" + encodeURIComponent(token) + "&id=" + encodeURIComponent(id));
+          const j = await r.json();
+          return jsonResponse({ product: j }, 200);
+        }
+        if (q.length < 3) return jsonResponse({ data: [] }, 200);
+        const r = await fetch("https://www.pricecharting.com/api/products?t=" + encodeURIComponent(token) + "&q=" + encodeURIComponent(q));
+        const j = await r.json();
+        const products = (j.products || []).slice(0, 12).map(function (p) {
+          return { id: p.id, name: p["product-name"] || "", set: p["console-name"] || "" };
+        });
+        return jsonResponse({ data: products }, 200);
+      } catch (e) {
+        return jsonResponse({ data: [], error: "relay_failed" }, 200);
+      }
+    }
     if (url.pathname === "/cert") {
       if (request.method === "OPTIONS") return new Response(null, { headers: CORS });
       const n = (url.searchParams.get("n") || "").replace(/[^0-9]/g, "");
@@ -425,7 +479,7 @@ function renderPage(env = {}) {
   <div class="modalbox">
     <div style="font-size:15px;font-weight:700;margin-bottom:4px">Add a card manually</div>
     <div style="font-size:12px;color:var(--dim);margin-bottom:16px">For raw cards or any grading company. We'll try to estimate a market value, but your own value always wins.</div>
-    <div class="field"><label>CARD</label><input id="mTitle" placeholder="e.g. 2024 Bowman Chrome Caitlin Clark #1"/></div>
+    <div class="field" style="position:relative"><label>CARD</label><input id="mTitle" placeholder="e.g. 2024 Bowman Chrome Caitlin Clark #1" autocomplete="off"/><div id="mSuggest" style="position:absolute;left:0;right:0;top:100%;z-index:5;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-top:4px;max-height:220px;overflow-y:auto;display:none"></div></div>
     <div class="field"><label>GRADING</label>
       <select id="mGrader" style="width:100%;background:var(--ink);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:13px 12px;font-size:15px;font-family:'Manrope',sans-serif">
         <option value="Raw">Raw / Ungraded</option>
@@ -552,6 +606,34 @@ function renderPage(env = {}) {
     return holds;
   }
   function thumbOf(h){ return h.image_url||h._thumb||""; }
+  async function fetchComps(query){
+    try{ const r=await fetch("/comps?q="+encodeURIComponent(query)); const j=await r.json(); return j.data||[]; }catch(e){ return []; }
+  }
+  function catalogPriceForGrade(prod,grade){
+    function v(k){ var x=prod[k]; if(x==null) return null; var n=Number(x); return isNaN(n)?null:n; }
+    const g=(grade||"").toLowerCase();
+    let cents=null;
+    if(/psa\\s*10/.test(g)) cents=v("manual-only-price");
+    else if(/bgs\\s*10/.test(g)) cents=v("bgs-10-price");
+    else if(/cgc\\s*10/.test(g)) cents=v("condition-17-price");
+    else if(/sgc\\s*10/.test(g)) cents=v("condition-18-price");
+    else if(/9\\.5/.test(g)) cents=v("box-only-price");
+    else if(/(^|[^0-9])9([^0-9.]|$)/.test(g)) cents=v("graded-price");
+    else if(/(^|[^0-9])8(\\.5)?([^0-9]|$)/.test(g)) cents=v("new-price");
+    else if(/(^|[^0-9])7(\\.5)?([^0-9]|$)/.test(g)) cents=v("cib-price");
+    else if(/raw|ungraded/.test(g)) cents=v("loose-price");
+    if(cents==null) cents=v("graded-price")||v("loose-price");
+    return cents!=null?(cents/100):null;
+  }
+  async function fetchCatalogValue(h){
+    try{
+      const r=await fetch("/catalog?q="+encodeURIComponent(h.title||h.query)); const j=await r.json();
+      const first=(j.data||[])[0]; if(!first) return null;
+      const pr=await fetch("/catalog?id="+encodeURIComponent(first.id)); const pj=await pr.json();
+      const prod=pj.product; if(!prod||prod.status!=="success") return {value:null,name:first.name,set:first.set};
+      return { value:catalogPriceForGrade(prod,h.grade), name:prod["product-name"]||first.name, set:prod["console-name"]||first.set };
+    }catch(e){ return null; }
+  }
 
   function findImages(obj){
     var urls=[]; var seen={};
@@ -1246,8 +1328,12 @@ function renderPage(env = {}) {
   async function renderCardMarket(h){
     const el=document.getElementById("cChart"); if(!el) return;
     el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label><div class="insight">Loading recent sales…</div></div>';
-    let sales=[];
+    let sales=[]; let sourceLabel="The Card API";
     try{ const res=await fetch("/api?q="+encodeURIComponent(h.query)+"&limit=50&sort=date_desc"); const j=await res.json(); sales=j.data||[]; }catch(e){}
+    if(!sales.filter(function(s){return typeof s.price==="number";}).length){
+      const comps=await fetchComps(h.query);
+      if(comps.length){ sales=comps; sourceLabel="eBay sold (via SoldComps)"; }
+    }
     const withPrice=sales.filter(function(s){return typeof s.price==="number";});
     const confirmed=withPrice.filter(function(s){return s.price_confirmed!==false;});
     const basis=confirmed.length?confirmed:withPrice;
@@ -1260,9 +1346,12 @@ function renderPage(env = {}) {
     const svg=buildSalesChart(sales);
     if(!basis.length){
       const ownerVal=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):(Number(h.added_value)||0);
-      el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label>'+
-        (ownerVal?('<div class="stats"><div class="stat hl"><div class="l">Saved value</div><div class="v">'+money(ownerVal)+'</div></div></div>'):'')+
-        '<div class="insight" style="margin-top:10px">No marketplace sales found for this card in our live data source (The Card API). Niche cards and 1-of-1 parallels often aren\\'t indexed there yet, so your saved value is used across the app. Popular cards show a full sales history and trend.</div></div>';
+      const guide=await fetchCatalogValue(h);
+      let inner="";
+      if(guide && guide.value){ inner='<div class="stats"><div class="stat hl"><div class="l">Price guide</div><div class="v">'+money(guide.value)+'</div></div>'+(ownerVal?('<div class="stat"><div class="l">Saved value</div><div class="v">'+money(ownerVal)+'</div></div>'):"")+'</div><div class="insight" style="margin-top:10px">No live sold listings found, so this shows the <b>'+escapeHtml(guide.name||"")+'</b> price-guide value for this grade (SportsCardsPro). Saved value is what you set.</div>'; }
+      else if(ownerVal){ inner='<div class="stats"><div class="stat hl"><div class="l">Saved value</div><div class="v">'+money(ownerVal)+'</div></div></div><div class="insight" style="margin-top:10px">No marketplace sales found for this card in our data sources yet — niche cards and 1-of-1 parallels often aren\\'t indexed. Your saved value is used across the app.</div>'; }
+      else { inner='<div class="insight" style="margin-top:10px">No marketplace sales found for this card in our data sources yet.</div>'; }
+      el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label>'+inner+'</div>';
       if(h.cert) loadPopulation(h.cert);
       return;
     }
@@ -1271,14 +1360,14 @@ function renderPage(env = {}) {
       '<div class="stat"><div class="l">Last sale date</div><div class="v" style="font-size:13px">'+escapeHtml(last&&last.sale_date?last.sale_date:"\u2014")+'</div></div>'+
       '<div class="stat"><div class="l">Median</div><div class="v">'+(sm.median?money(sm.median):"\u2014")+'</div></div>'+
       '<div class="stat"><div class="l">Average</div><div class="v">'+(avg?money(avg):"\u2014")+'</div></div>'+
-      '<div class="stat"><div class="l">Confirmed sales</div><div class="v">'+(confirmed.length||0)+'</div></div>'+
+      '<div class="stat"><div class="l">Sales</div><div class="v">'+(basis.length||0)+'</div></div>'+
       '<div class="stat"><div class="l">Range</div><div class="v" style="font-size:13px">'+(prices.length?(money(lo)+"–"+money(hi)):"\u2014")+'</div></div>'+
       '</div>';
     const chartHtml=svg?('<div style="margin-top:12px">'+svg+'</div>')
-      :('<div class="insight" style="margin-top:10px">'+(basis.length===1?("Only one confirmed sale so far ("+money(basis[0].price)+(basis[0].sale_date?(" on "+escapeHtml(basis[0].sale_date)):"")+") — need at least two to draw a trend line."):"No recent confirmed sales found.")+'</div>');
+      :('<div class="insight" style="margin-top:10px">'+(basis.length===1?("Only one sale so far ("+money(basis[0].price)+(basis[0].sale_date?(" on "+escapeHtml(basis[0].sale_date)):"")+") — need at least two to draw a trend line."):"No recent confirmed sales found.")+'</div>');
     const list=basis.slice(0,12).map(saleRowMini).join("");
     el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label>'+stats+chartHtml+
-      (list?('<div style="margin-top:10px"><div class="insight" style="margin-bottom:4px">Recent sold listings</div>'+list+'</div>'):"")+'</div>';
+      (list?('<div style="margin-top:10px"><div class="insight" style="margin-bottom:4px">Recent sold listings · source: '+escapeHtml(sourceLabel)+'</div>'+list+'</div>'):"")+'</div>';
     if(h.cert) loadPopulation(h.cert);
   }
   async function loadPopulation(cert){
@@ -1821,7 +1910,12 @@ function renderPage(env = {}) {
       if(res.status===429){throw {kind:"limit"};}
       if(!res.ok){throw {kind:"server",code:res.status};}
       const json=await res.json();
-      const sales=(json.data||[]);
+      let sales=(json.data||[]);
+      let srcNote="";
+      if(!sales.length){
+        const comps=await fetchComps(q);
+        if(comps.length){ sales=comps; srcNote=' · source: eBay sold (via SoldComps)'; }
+      }
       if(!sales.length){out.innerHTML='<div class="err"><b>No recent sales found.</b> Try fewer or different words — e.g. just the player and set.</div>';return;}
       const isPending=function(s){return s.price_confirmed===false;};
       const confirmed=sales.filter(function(s){return !isPending(s);});
@@ -1848,7 +1942,7 @@ function renderPage(env = {}) {
         '<div class="stat hl"><div class="l">Median</div><div class="v">'+money(med)+'</div></div>'+
         '<div class="stat"><div class="l">Low</div><div class="v">'+money(lo)+'</div></div>'+
         '<div class="stat"><div class="l">High</div><div class="v">'+money(hi)+'</div></div>'+
-        '</div><div class="insight" style="margin-top:10px">'+basisLabel+' · last 7 days</div>'+notes+watchBtn+'</div>';
+        '</div><div class="insight" style="margin-top:10px">'+basisLabel+srcNote+'</div>'+notes+watchBtn+'</div>';
       lastSales=confirmed.concat(pending);
       const renderSale=function(s,idx){
         const g=gradeOf(s);
@@ -1910,6 +2004,21 @@ function renderPage(env = {}) {
   var _mcl2=document.getElementById("manualCancel"); if(_mcl2) _mcl2.onclick=function(){ document.getElementById("manualModal").style.display="none"; };
   var _mmo=document.getElementById("manualModal"); if(_mmo) _mmo.addEventListener("click",function(e){ if(e.target.id==="manualModal") _mmo.style.display="none"; });
   var _mgr=document.getElementById("mGrader"); if(_mgr) _mgr.onchange=function(){ document.getElementById("mGradeWrap").style.display=(_mgr.value==="Raw")?"none":""; };
+  var _mt=document.getElementById("mTitle"); var _mSugTimer=null;
+  if(_mt) _mt.addEventListener("input",function(){
+    const sug=document.getElementById("mSuggest"); const v=_mt.value.trim();
+    clearTimeout(_mSugTimer);
+    if(v.length<3){ sug.style.display="none"; return; }
+    _mSugTimer=setTimeout(async function(){
+      try{
+        const r=await fetch("/catalog?q="+encodeURIComponent(v)); const j=await r.json(); const items=j.data||[];
+        if(!items.length){ sug.style.display="none"; return; }
+        sug.innerHTML=items.map(function(it){ return '<div class="convo" data-nm="'+escapeAttr(it.name)+'" style="padding:9px 12px"><div class="cmeta"><div class="cn" style="font-size:13px">'+escapeHtml(it.name)+'</div><div class="cp">'+escapeHtml(it.set)+'</div></div></div>'; }).join("");
+        sug.style.display="";
+        Array.prototype.forEach.call(sug.querySelectorAll("[data-nm]"),function(d){ d.onclick=function(){ _mt.value=d.getAttribute("data-nm"); sug.style.display="none"; }; });
+      }catch(e){ sug.style.display="none"; }
+    },300);
+  });
   var _gs=document.getElementById("gifSearch"); if(_gs) _gs.addEventListener("input",function(){ if(!GIPHY_KEY) return; clearTimeout(gifTimer); var v=_gs.value.trim(); gifTimer=setTimeout(function(){ gifSearch(v||"trending"); },350); });
 </script>
 </body>

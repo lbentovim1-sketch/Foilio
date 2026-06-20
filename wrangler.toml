@@ -20,3 +20,8 @@ workers_dev = true
 #   PSA_TOKEN             - server-side bearer token for PSA cert lookups
 #   SUPABASE_URL          - your Supabase project URL (public)
 #   SUPABASE_ANON_KEY     - your Supabase anon/publishable key (public)
+#
+# Optional richer-data providers (Phase A). Features degrade gracefully if unset:
+#   SOLDCOMPS_API_KEY     - SoldComps API key (sc_...) for eBay sold-comps fallback
+#   PRICECHARTING_TOKEN   - SportsCardsPro/PriceCharting token for catalog + price guide
+#   GIPHY_API_KEY         - optional GIPHY key to enable in-app GIF search
