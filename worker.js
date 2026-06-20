@@ -149,8 +149,8 @@ function renderPage(env = {}) {
   ::-webkit-scrollbar-thumb{background:var(--borderB);border-radius:4px}
   a{color:var(--indigo)}
   .mono{font-family:'JetBrains Mono',monospace}
-  .top{border-bottom:1px solid var(--border);background:var(--surface)}
-  .topin{max-width:920px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
+  .top{border-bottom:1px solid var(--border);background:rgba(10,11,18,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:sticky;top:0;z-index:50}
+  .topin{max-width:960px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
   .foil{background:linear-gradient(100deg,#a78bfa,#22d3ee 28%,#34d399 52%,#fbbf24 74%,#f472b6);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:foil 6s linear infinite}
   @keyframes foil{to{background-position:200% center}}
   @media (prefers-reduced-motion:reduce){.foil{animation:none}}
@@ -199,9 +199,11 @@ function renderPage(env = {}) {
   .tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:3px}
   .tab{flex:1;background:transparent;border:none;color:var(--muted);border-radius:6px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif}
   .tab.on{background:var(--indigo);color:#fff}
-  .nav{display:flex;gap:3px;background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:3px;margin-left:auto;flex-wrap:wrap}
-  .nav button{background:transparent;border:none;color:var(--muted);border-radius:6px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Manrope',sans-serif}
-  .nav button.on{background:var(--surface2);color:var(--text)}
+  .nav{display:flex;gap:2px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none;max-width:100%}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{background:transparent;border:none;color:var(--muted);border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Manrope',sans-serif;white-space:nowrap;transition:color .15s}
+  .nav button:hover:not(.on){color:var(--text)}
+  .nav button.on{background:var(--surface2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.35)}
   .addbtn{background:var(--up);color:#04210f;border:none;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Manrope',sans-serif;margin-top:12px;width:100%}
   .addbtn:disabled{opacity:.7}
   .hrow{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--border)}
@@ -294,7 +296,28 @@ function renderPage(env = {}) {
   .notif{display:flex;gap:11px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer}
   .notif.unread{background:var(--surface2)}
   .notif .nt{flex:1;min-width:0;font-size:14px} .notif .nt span{display:block;font-size:11px;color:var(--dim);margin-top:2px}
-  @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%;justify-content:center}.nav button{flex:1}.mkt{grid-template-columns:1fr 1fr}}
+  .cmt .rm{background:none;border:none;cursor:pointer;font-size:17px;line-height:1;padding:3px 7px;border-radius:7px;opacity:0;transition:opacity .15s,background .15s;color:var(--muted);flex-shrink:0;align-self:flex-start;margin-top:2px}
+  .cmt:hover .rm,.cmt .rm:focus{opacity:1}
+  .cmt .rm:hover{color:var(--down);background:rgba(255,93,108,.12)}
+  .discgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:14px}
+  .usercard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;align-items:center;gap:14px;transition:border-color .15s}
+  .usercard:hover{border-color:var(--borderB)}
+  .ucinfo{flex:1;min-width:0}
+  .ucname{font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .uchandle{font-size:12px;color:var(--gold);font-family:'JetBrains Mono',monospace;margin-top:1px}
+  .ucmeta{font-size:12px;color:var(--muted);margin-top:3px}
+  .followlist{max-height:50vh;overflow-y:auto;margin-top:12px}
+  .followitem{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border);cursor:pointer}
+  .followitem:last-child{border-bottom:none}
+  .followitem:hover .finame{color:var(--indigo)}
+  .finame{font-size:14px;font-weight:700;transition:color .15s}
+  .fihandle{font-size:12px;color:var(--muted)}
+  .lbsearch{display:flex;gap:8px;margin-bottom:14px}
+  .lbsearch input{flex:1;padding:10px 14px;font-size:14px}
+  .pstat-btn{background:none;border:none;cursor:pointer;font-family:'Manrope',sans-serif;color:inherit;padding:0;text-align:left}
+  .pstat-btn:hover b{color:var(--indigo)}
+  .following-style{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important}
+  @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -390,13 +413,31 @@ function renderPage(env = {}) {
 
 <div id="leaderboardView" style="display:none"><div class="wrap">
   <h1 style="font-size:28px">Leaderboards</h1>
-  <p class="sub">The most notable collectors on Foilio, ranked by public portfolio value, followers, and collection size.</p>
+  <p class="sub">Top collectors ranked by portfolio value, followers, card count — or search by any player or character to see who owns the best collection.</p>
   <div class="lbtabs" id="lbTabs">
     <button data-lb="value" class="on">Portfolio value</button>
     <button data-lb="followers">Followers</button>
     <button data-lb="cards">Cards</button>
+    <button data-lb="subject">By player / character</button>
+  </div>
+  <div class="lbsearch" id="lbSearchWrap" style="display:none">
+    <input id="lbSubjectInput" placeholder='e.g. "Juan Soto" or "Charizard"'/>
+    <button class="authbtn primary" id="lbSubjectGo">Search</button>
   </div>
   <div id="lbWrap"></div>
+</div></div>
+
+<div id="discoverView" style="display:none"><div class="wrap">
+  <h1 style="font-size:28px">Discover Collectors</h1>
+  <p class="sub">Find collectors, see their public portfolios, and follow the ones whose taste you respect.</p>
+  <div class="card" style="margin-bottom:0">
+    <label>SEARCH COLLECTORS</label>
+    <div style="display:flex;gap:8px">
+      <input id="discoverSearch" placeholder="Search by name or @handle" style="flex:1"/>
+      <button class="authbtn primary" id="discoverGo">Search</button>
+    </div>
+  </div>
+  <div id="discoverWrap"></div>
 </div></div>
 
 <div id="messagesView" style="display:none"><div class="wrap">
@@ -499,6 +540,16 @@ function renderPage(env = {}) {
       <button class="authbtn" id="manualCancel">Cancel</button>
     </div>
     <div class="msg insight" id="manualMsg" style="margin-top:8px"></div>
+  </div>
+</div>
+
+<div id="followListModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div class="modalbox" style="max-width:400px;width:100%">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div id="followListTitle" style="font-size:15px;font-weight:700"></div>
+      <button class="authbtn" id="followListClose">Close</button>
+    </div>
+    <div class="followlist" id="followListBody"></div>
   </div>
 </div>
 
@@ -720,6 +771,7 @@ function renderPage(env = {}) {
     items+='<button id="navTrending" class="'+(view==="trending"?"on":"")+'">Trending</button>';
     items+='<button id="navMarket" class="'+(view==="market"?"on":"")+'">Market</button>';
     items+='<button id="navLeaders" class="'+(view==="leaderboard"?"on":"")+'">Leaders</button>';
+    items+='<button id="navDiscover" class="'+(view==="discover"?"on":"")+'">People</button>';
     if(sb && currentSession){
       items+='<button id="navPortfolio" class="'+(view==="portfolio"?"on":"")+'">Portfolio</button>';
       items+='<button id="navWatch" class="'+(view==="watchlist"?"on":"")+'">Watchlist</button>';
@@ -732,6 +784,7 @@ function renderPage(env = {}) {
     document.getElementById("navTrending").onclick=function(){ setView("trending"); };
     document.getElementById("navMarket").onclick=function(){ setView("market"); };
     document.getElementById("navLeaders").onclick=function(){ setView("leaderboard"); };
+    document.getElementById("navDiscover").onclick=function(){ setView("discover"); };
     if(sb && currentSession){
       document.getElementById("navPortfolio").onclick=function(){ setView("portfolio"); };
       document.getElementById("navWatch").onclick=function(){ setView("watchlist"); };
@@ -745,6 +798,7 @@ function renderPage(env = {}) {
     document.getElementById("trendingView").style.display=(view==="trending")?"":"none";
     document.getElementById("marketView").style.display=(view==="market")?"":"none";
     document.getElementById("leaderboardView").style.display=(view==="leaderboard")?"":"none";
+    document.getElementById("discoverView").style.display=(view==="discover")?"":"none";
     document.getElementById("portfolioView").style.display=(view==="portfolio")?"":"none";
     document.getElementById("watchlistView").style.display=(view==="watchlist")?"":"none";
     document.getElementById("messagesView").style.display=(view==="messages")?"":"none";
@@ -755,12 +809,13 @@ function renderPage(env = {}) {
   }
   function setView(v,skipPush){
     view=v; activeConvo=null; applyView(); renderNav();
-    if(!skipPush){ try{ history.pushState({view:v}, "", v==="search"?"/":("/"+v)); }catch(e){} }
+    if(!skipPush){ try{ history.pushState({view:v}, "", v==="search"?"/":(v==="discover"?"/people":("/"+v))); }catch(e){} }
     if(v==="portfolio") loadPortfolio();
     if(v==="watchlist") loadWatchlist();
     if(v==="trending") loadTrending();
     if(v==="market") loadMarket();
     if(v==="leaderboard") loadLeaderboard();
+    if(v==="discover") loadDiscover();
     if(v==="messages") loadConversations();
     if(v==="notifications") loadNotifications();
     if(v==="editProfile") renderEditProfile();
@@ -808,6 +863,7 @@ function renderPage(env = {}) {
     if(path==="/trending"){ setView("trending", true); return; }
     if(path==="/market"){ setView("market", true); return; }
     if(path==="/leaderboard"){ setView("leaderboard", true); return; }
+    if(path==="/people"||path==="/discover"){ setView("discover", true); return; }
     if(path==="/watchlist" && currentSession){ setView("watchlist", true); return; }
     if(path==="/portfolio" && currentSession){ setView("portfolio", true); return; }
     if(path==="/messages" && currentSession){ setView("messages", true); return; }
@@ -844,6 +900,100 @@ function renderPage(env = {}) {
       return '<div class="activity">'+avatarHtml(p)+'<div class="copy"><b data-h="'+(p?escapeAttr(p.handle):"")+'">'+escapeHtml(name)+'</b> added '+escapeHtml(h.title||h.query)+'<span>'+escapeHtml(h.grade||"")+(h.added_value?(' · '+money(h.added_value)):"")+'</span></div></div>';
     }).join("");
     Array.prototype.forEach.call(el.querySelectorAll("b[data-h]"),function(b){ var hh=b.getAttribute("data-h"); if(hh) b.onclick=function(){ viewProfile(hh); }; });
+  }
+
+  // ---------- DISCOVER COLLECTORS ----------
+  async function loadDiscover(){
+    const wrap=document.getElementById("discoverWrap");
+    const searchEl=document.getElementById("discoverSearch");
+    const goBtn=document.getElementById("discoverGo");
+    if(goBtn && !goBtn._wired){ goBtn._wired=true; goBtn.onclick=function(){ loadDiscover(); }; searchEl.addEventListener("keydown",function(e){ if(e.key==="Enter") loadDiscover(); }); }
+    const term=(searchEl?searchEl.value.trim():"");
+    wrap.innerHTML='<div class="card" style="margin-top:14px">Finding collectors…</div>';
+    if(!sb){ wrap.innerHTML='<div class="card" style="margin-top:14px"><div class="insight">Accounts not configured.</div></div>'; return; }
+    try{
+      let q=sb.from("profiles").select("id,handle,display_name,avatar_url,bio,created_at").order("created_at",{ascending:false}).limit(60);
+      if(term) q=q.or("handle.ilike.%"+term+"%,display_name.ilike.%"+term+"%");
+      const r=await q;
+      const profiles=r.data||[];
+      if(!profiles.length){ wrap.innerHTML='<div class="card" style="margin-top:14px"><div class="insight">No collectors found'+(term?' for "'+escapeHtml(term)+'"':"")+'.</div></div>'; return; }
+      const ids=profiles.map(function(p){return p.id;});
+      let cardCounts={};
+      try{ const cr=await sb.from("holdings").select("user_id").in("user_id",ids).eq("is_public",true).limit(5000); (cr.data||[]).forEach(function(h){ cardCounts[h.user_id]=(cardCounts[h.user_id]||0)+1; }); }catch(e){}
+      let followerCounts={};
+      try{ const fr=await sb.from("follows").select("following_id").in("following_id",ids).limit(5000); (fr.data||[]).forEach(function(f){ followerCounts[f.following_id]=(followerCounts[f.following_id]||0)+1; }); }catch(e){}
+      let myFollowing=new Set();
+      if(currentSession){ try{ const mf=await sb.from("follows").select("following_id").eq("follower_id",currentSession.user.id); (mf.data||[]).forEach(function(f){ myFollowing.add(f.following_id); }); }catch(e){} }
+      let html="";
+      profiles.forEach(function(p){
+        const cards=cardCounts[p.id]||0;
+        const fols=followerCounts[p.id]||0;
+        const isMe=currentSession && p.id===currentSession.user.id;
+        const iFollow=myFollowing.has(p.id);
+        let followBtn="";
+        if(currentSession && !isMe) followBtn='<button class="authbtn'+(iFollow?" following-style":"")+'" data-follow="'+escapeAttr(p.id)+'" data-handle="'+escapeAttr(p.handle)+'" style="flex-shrink:0">'+(iFollow?"Following":"Follow")+'</button>';
+        html+='<div class="usercard">'+avatarHtml(p,"avatar")+
+          '<div class="ucinfo"><div class="ucname" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div>'+
+          '<div class="uchandle">@'+escapeHtml(p.handle)+'</div>'+
+          '<div class="ucmeta">'+cards+' public card'+(cards===1?"":"s")+' · '+fols+' follower'+(fols===1?"":"s")+'</div>'+
+          (p.bio?('<div class="insight" style="margin-top:4px;font-size:12px">'+escapeHtml(p.bio.slice(0,80))+(p.bio.length>80?"…":"")+'</div>'):"")+
+          '</div>'+followBtn+'</div>';
+      });
+      wrap.innerHTML='<div class="discgrid">'+html+'</div>';
+      Array.prototype.forEach.call(wrap.querySelectorAll(".ucname[data-h]"),function(el){ var hh=el.getAttribute("data-h"); if(hh) el.onclick=function(){ viewProfile(hh); }; });
+      Array.prototype.forEach.call(wrap.querySelectorAll("[data-follow]"),function(btn){
+        btn.onclick=async function(){
+          if(!currentSession){ alert("Sign in to follow collectors."); return; }
+          const uid=btn.getAttribute("data-follow");
+          const handle=btn.getAttribute("data-handle");
+          btn.disabled=true;
+          if(myFollowing.has(uid)){
+            const d=await sb.from("follows").delete().eq("follower_id",currentSession.user.id).eq("following_id",uid);
+            if(!d.error){ myFollowing.delete(uid); btn.textContent="Follow"; btn.classList.remove("following-style"); }
+          } else {
+            const i=await sb.from("follows").insert({follower_id:currentSession.user.id,following_id:uid});
+            if(!i.error){ myFollowing.add(uid); btn.textContent="Following"; btn.classList.add("following-style"); }
+          }
+          btn.disabled=false;
+        };
+      });
+    }catch(e){ wrap.innerHTML='<div class="card" style="margin-top:14px"><div class="err">Could not load collectors.</div></div>'; }
+  }
+
+  // ---------- FOLLOW LIST MODAL ----------
+  async function showFollowList(userId,mode){
+    const modal=document.getElementById("followListModal");
+    const title=document.getElementById("followListTitle");
+    const body=document.getElementById("followListBody");
+    const closeBtn=document.getElementById("followListClose");
+    title.textContent=(mode==="followers"?"Followers":"Following");
+    body.innerHTML='<div class="insight" style="padding:12px 4px">Loading…</div>';
+    modal.style.display="flex";
+    closeBtn.onclick=function(){ modal.style.display="none"; };
+    modal.onclick=function(e){ if(e.target===modal) modal.style.display="none"; };
+    try{
+      let ids=[];
+      if(mode==="followers"){
+        const r=await sb.from("follows").select("follower_id").eq("following_id",userId).limit(200);
+        ids=(r.data||[]).map(function(x){return x.follower_id;});
+      } else {
+        const r=await sb.from("follows").select("following_id").eq("follower_id",userId).limit(200);
+        ids=(r.data||[]).map(function(x){return x.following_id;});
+      }
+      if(!ids.length){ body.innerHTML='<div class="insight" style="padding:12px 4px">No '+(mode==="followers"?"followers":"accounts followed")+' yet.</div>'; return; }
+      const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",ids);
+      const profs=pr.data||[];
+      let html="";
+      profs.forEach(function(p){
+        html+='<div class="followitem" data-h="'+escapeAttr(p.handle)+'">'+avatarHtml(p,"avatar")+
+          '<div><div class="finame">'+escapeHtml(p.display_name||("@"+p.handle))+'</div>'+
+          '<div class="fihandle">@'+escapeHtml(p.handle)+'</div></div></div>';
+      });
+      body.innerHTML=html;
+      Array.prototype.forEach.call(body.querySelectorAll(".followitem[data-h]"),function(el){
+        el.onclick=function(){ modal.style.display="none"; viewProfile(el.getAttribute("data-h")); };
+      });
+    }catch(e){ body.innerHTML='<div class="insight" style="padding:12px 4px">Could not load list.</div>'; }
   }
 
   // ---------- PORTFOLIO ----------
@@ -1079,7 +1229,7 @@ function renderPage(env = {}) {
       '<div class="mono" style="color:var(--gold);font-size:13px">@'+escapeHtml(p.handle)+'</div>'+
       (p.bio?('<p class="sub" style="font-size:14px;margin-top:8px">'+escapeHtml(p.bio)+'</p>'):"")+
       (links.length?('<div class="sociallinks">'+links.join("")+'</div>'):"")+
-      '<div class="pstats"><div><b id="followersN">'+followers+'</b>followers</div><div><b>'+following+'</b>following</div></div>'+
+      '<div class="pstats"><div><button class="pstat-btn" id="followersBtn"><b id="followersN">'+followers+'</b>followers</button></div><div><button class="pstat-btn" id="followingBtn"><b>'+following+'</b>following</button></div></div>'+
       '</div>'+
       '<div>'+actionBtn+'</div>'+
       '</div></div>'+
@@ -1097,6 +1247,10 @@ function renderPage(env = {}) {
       var mb=document.getElementById("msgBtn");
       if(mb) mb.onclick=function(){ startConversation(p.id, p.handle); };
     }
+    var frsBtn=document.getElementById("followersBtn");
+    if(frsBtn) frsBtn.onclick=function(){ showFollowList(p.id,"followers"); };
+    var fngBtn=document.getElementById("followingBtn");
+    if(fngBtn) fngBtn.onclick=function(){ showFollowList(p.id,"following"); };
 
     // public cards
     const cardsEl=document.getElementById("profCards");
@@ -1725,8 +1879,19 @@ function renderPage(env = {}) {
   // ---------- LEADERBOARDS ----------
   async function loadLeaderboard(){
     const wrap=document.getElementById("lbWrap");
+    const searchWrap=document.getElementById("lbSearchWrap");
     wrap.innerHTML='<div class="card">Crunching the rankings…</div>';
     Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.classList.toggle("on", b.getAttribute("data-lb")===lbTab); });
+    if(searchWrap) searchWrap.style.display=(lbTab==="subject")?"flex":"none";
+    if(lbTab==="subject"){
+      const inp=document.getElementById("lbSubjectInput");
+      const goBtn=document.getElementById("lbSubjectGo");
+      if(goBtn && !goBtn._wired){ goBtn._wired=true; goBtn.onclick=function(){ runSubjectLeaderboard(); }; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") runSubjectLeaderboard(); }); }
+      const term=(inp?inp.value.trim():"");
+      if(!term){ wrap.innerHTML='<div class="card">Type a player name, character, or set above to see who owns the best collection.</div>'; return; }
+      await runSubjectLeaderboard();
+      return;
+    }
     try{
       if(lbTab==="followers"){
         const fr=await sb.from("follows").select("following_id").limit(5000);
@@ -1741,16 +1906,30 @@ function renderPage(env = {}) {
       }
     }catch(e){ wrap.innerHTML='<div class="err">Could not load leaderboards.</div>'; }
   }
-  async function renderLeaderboard(counts,fmt){
+  async function runSubjectLeaderboard(){
+    const wrap=document.getElementById("lbWrap");
+    const inp=document.getElementById("lbSubjectInput");
+    const term=(inp?inp.value.trim():"");
+    if(!term){ wrap.innerHTML='<div class="card">Type a player name, character, or set above to see who owns the best collection.</div>'; return; }
+    wrap.innerHTML='<div class="card">Finding the top '+escapeHtml(term)+' collectors…</div>';
+    try{
+      const hr=await sb.from("holdings").select("user_id,added_value,manual_value,title,query").eq("is_public",true).or("title.ilike.%"+term+"%,query.ilike.%"+term+"%").limit(5000);
+      const agg={};
+      (hr.data||[]).forEach(function(h){ if(!h.user_id) return; if(!agg[h.user_id]) agg[h.user_id]={val:0,cards:0}; const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0; agg[h.user_id].val+=(isNaN(v)?0:v); agg[h.user_id].cards++; });
+      const byVal={}; for(var k in agg){ byVal[k]=agg[k].val; }
+      renderLeaderboard(byVal,function(v,id){ return money(v)+(agg[id]?' · '+(agg[id].cards)+' card'+(agg[id].cards===1?'':'s'):''); },"Top collectors of "+term);
+    }catch(e){ wrap.innerHTML='<div class="err">Could not run the search.</div>'; }
+  }
+  async function renderLeaderboard(counts,fmt,heading){
     const wrap=document.getElementById("lbWrap");
     const arr=Object.keys(counts).map(function(k){ return {id:k,v:counts[k]}; }).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,25);
-    if(!arr.length){ wrap.innerHTML='<div class="card">Not enough data yet. As collectors add public cards and follow each other, the rankings fill in.</div>'; return; }
+    if(!arr.length){ wrap.innerHTML='<div class="card">'+(heading?('<b>'+escapeHtml(heading)+'</b><br><br>'):"")+'Not enough data yet. As collectors add public cards and follow each other, the rankings fill in.</div>'; return; }
     let profs={};
     const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",arr.map(function(x){return x.id;}));
     (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
     let rows="";
-    arr.forEach(function(x,i){ const p=profs[x.id]; if(!p) return; rows+='<div class="lbrow"><div class="rank">'+(i+1)+'</div>'+avatarHtml(p)+'<div class="nm" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div><div class="val">'+fmt(x.v)+'</div></div>'; });
-    wrap.innerHTML='<div class="card">'+rows+'</div>';
+    arr.forEach(function(x,i){ const p=profs[x.id]; if(!p) return; const label=typeof fmt==="function"?fmt(x.v,x.id):fmt; rows+='<div class="lbrow"><div class="rank">'+(i+1)+'</div>'+avatarHtml(p)+'<div class="nm" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div><div class="val">'+escapeHtml(label)+'</div></div>'; });
+    wrap.innerHTML='<div class="card">'+(heading?('<div style="font-size:13px;color:var(--muted);margin-bottom:10px">'+escapeHtml(heading)+'</div>'):"")+rows+'</div>';
     Array.prototype.forEach.call(wrap.querySelectorAll(".nm[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
   }
 
