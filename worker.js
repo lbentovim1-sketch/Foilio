@@ -324,7 +324,7 @@ function renderPage(env = {}) {
   .pstat-btn{background:none;border:none;cursor:pointer;font-family:'Manrope',sans-serif;color:inherit;padding:0;text-align:left}
   .pstat-btn:hover b{color:var(--indigo)}
   .following-style{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important}
-  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}}
+  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}.home-features{grid-template-columns:repeat(2,1fr)!important}.home-hero-title{font-size:32px!important;letter-spacing:-1.5px!important}}
   /* Market Pulse widget */
   .pulse-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;border-radius:6px;padding-left:4px}
   .pulse-item:last-child{border-bottom:none}
@@ -367,6 +367,13 @@ function renderPage(env = {}) {
   .lbcard-mini img{width:32px;height:45px;object-fit:cover;border-radius:3px;background:var(--surface2);flex-shrink:0}
   /* Wl skeleton */
   .wl-loading .mono{color:var(--dim);font-size:13px}
+  /* Homepage social redesign */
+  .home-hero-title{font-size:44px;letter-spacing:-2px;line-height:1.08}
+  .home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
+  .home-feat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+  .home-feat:hover{border-color:var(--indigo);background:rgba(109,92,255,.07)}
+  .hf-label{font-size:13px;font-weight:700;margin-bottom:5px;color:var(--text)}
+  .hf-desc{font-size:11px;color:var(--muted);line-height:1.4}
 </style>
 </head>
 <body>
@@ -397,12 +404,29 @@ function renderPage(env = {}) {
 
 <div id="mainContent">
 <div id="searchView"><div class="wrap">
-  <h1 style="font-size:44px;letter-spacing:-2px">What's it <span class="foil">actually</span> worth?</h1>
-  <p class="sub" style="font-size:17px;margin-top:12px">The platform built <b style="color:var(--text)">by collectors, for collectors</b> — real sold prices, real community, real collections.</p>
-  <div class="card" style="margin-top:22px">
-    <input id="q" placeholder='e.g. "PSA 10 Jalen Brunson Prizm"' value="PSA 10 Jalen Brunson Prizm" style="font-size:17px;padding:16px 18px"/>
-    <div class="chips" id="chips"></div>
-    <button class="btn" id="go" style="margin-top:12px">Check price</button>
+  <h1 class="home-hero-title">A <span class="foil">Social Network</span> for Card Collectors</h1>
+  <p class="sub" style="font-size:17px;margin-top:14px">Connect with other collectors, show off your portfolio, buy, sell, trade &amp; more.</p>
+  <div id="homeGuestCta" style="display:none;margin-top:20px;gap:10px;flex-wrap:wrap">
+    <button class="btn" id="homeJoinBtn" style="width:auto;padding:12px 26px;font-size:15px">Join the Community</button>
+    <button class="authbtn" id="homeBrowseBtn" style="padding:12px 20px;font-weight:700;font-size:13px">Browse Collectors</button>
+  </div>
+  <div class="home-features">
+    <div class="home-feat" id="hfPortfolio">
+      <div class="hf-label">Portfolio</div>
+      <div class="hf-desc">Track &amp; show off your collection</div>
+    </div>
+    <div class="home-feat" id="hfDiscover">
+      <div class="hf-label">Discover</div>
+      <div class="hf-desc">Find &amp; follow other collectors</div>
+    </div>
+    <div class="home-feat" id="hfMarket">
+      <div class="hf-label">Marketplace</div>
+      <div class="hf-desc">Buy, sell &amp; trade cards</div>
+    </div>
+    <div class="home-feat" id="hfLeaders">
+      <div class="hf-label">Leaderboards</div>
+      <div class="hf-desc">Climb the ranks &amp; show your biggest PC</div>
+    </div>
   </div>
   <div class="home-dash">
     <div>
@@ -410,7 +434,16 @@ function renderPage(env = {}) {
         <label>COLLECTOR ACTIVITY</label>
         <div id="homeFeed"><div class="insight">Loading recent collector activity…</div></div>
       </div>
-      <div class="card" style="margin-top:14px">
+    </div>
+    <div>
+      <div class="card" style="margin-top:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label style="margin-bottom:0">TOP COLLECTORS</label>
+          <span id="lbLink" style="font-size:11px;color:var(--indigo);cursor:pointer">See all →</span>
+        </div>
+        <div id="homeTopCollectors"><div class="insight">Loading…</div></div>
+      </div>
+      <div class="card" style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <label style="margin-bottom:0">MARKET PULSE</label>
           <span style="font-size:10px;color:var(--dim)">live medians</span>
@@ -418,24 +451,12 @@ function renderPage(env = {}) {
         <div id="marketPulse"><div class="insight">Loading live prices…</div></div>
       </div>
     </div>
-    <div>
-      <div class="card" style="margin-top:0">
-        <label>THE FOILIO NETWORK</label>
-        <div class="pillars" style="margin-top:8px">
-          <div class="pillar"><b>Live prices</b><span>Median from confirmed recent sales.</span></div>
-          <div class="pillar"><b>Portfolios</b><span>Track and show off your collection.</span></div>
-          <div class="pillar"><b>Buy &amp; sell</b><span>Marketplace with offers and trades.</span></div>
-          <div class="pillar"><b>Leaderboards</b><span>Climb the ranks. Show your biggest PC.</span></div>
-        </div>
-      </div>
-      <div class="card" style="margin-top:12px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <label style="margin-bottom:0">TOP COLLECTORS</label>
-          <span id="lbLink" style="font-size:11px;color:var(--indigo);cursor:pointer">See all →</span>
-        </div>
-        <div id="homeTopCollectors"><div class="insight">Loading…</div></div>
-      </div>
-    </div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <label>CHECK A CARD'S VALUE</label>
+    <input id="q" placeholder='e.g. "PSA 10 Jalen Brunson Prizm"' value="PSA 10 Jalen Brunson Prizm" style="font-size:15px;padding:14px 16px"/>
+    <div class="chips" id="chips"></div>
+    <button class="btn" id="go" style="margin-top:12px">Check price</button>
   </div>
   <div id="out"></div>
 </div></div>
@@ -839,7 +860,7 @@ function renderPage(env = {}) {
     setTimeout(function(){ var el=document.getElementById("authEmail"); if(el) el.focus(); },40);
   }
   function renderAuth(){
-    if(!sb){ authArea.innerHTML='<div style="font-size:12px;color:var(--dim)">accounts setup pending</div>'; return; }
+    if(!sb){ authArea.innerHTML='<div style="font-size:12px;color:var(--dim)">accounts setup pending</div>'; updateHomeCta(); return; }
     if(currentSession && currentSession.user){
       const handle=myProfile?myProfile.handle:normalizeHandle((currentSession.user.user_metadata||{}).handle);
       const identity=handle?("@"+handle):currentSession.user.email;
@@ -856,6 +877,7 @@ function renderPage(env = {}) {
       authArea.innerHTML='<button class="authbtn primary" id="signinToggle" style="width:100%">Sign In</button>';
       document.getElementById("signinToggle").onclick=function(){ openAuthModal("login"); };
     }
+    updateHomeCta();
   }
   // Wire the auth modal (done once at boot)
   (function wireAuthModal(){
@@ -902,7 +924,7 @@ function renderPage(env = {}) {
   }
   function renderNav(){
     var items='';
-    items+=snavBtn('search','Search','navSearch',view==='search');
+    items+=snavBtn('search','Home','navSearch',view==='search');
     items+=snavBtn('trending','Trending','navTrending',view==='trending');
     items+=snavBtn('market','Market','navMarket',view==='market');
     items+=snavBtn('leaders','Leaders','navLeaders',view==='leaderboard');
@@ -957,6 +979,32 @@ function renderPage(env = {}) {
     if(v==="editProfile") renderEditProfile();
     window.scrollTo(0,0);
   }
+
+  // ---------- HOME GUEST CTA & FEATURE GRID ----------
+  function updateHomeCta(){
+    var cta=document.getElementById('homeGuestCta');
+    if(!cta) return;
+    if(!currentSession){
+      cta.style.display='flex';
+      var jb=document.getElementById('homeJoinBtn');
+      var bb=document.getElementById('homeBrowseBtn');
+      if(jb && !jb._wired){ jb._wired=true; jb.onclick=function(){ openAuthModal('signup'); }; }
+      if(bb && !bb._wired){ bb._wired=true; bb.onclick=function(){ setView('discover'); }; }
+    } else {
+      cta.style.display='none';
+    }
+  }
+  function wireHomeFeatures(){
+    var hfp=document.getElementById('hfPortfolio');
+    var hfd=document.getElementById('hfDiscover');
+    var hfm=document.getElementById('hfMarket');
+    var hfl=document.getElementById('hfLeaders');
+    if(hfp) hfp.onclick=function(){ if(currentSession){ setView('portfolio'); } else { openAuthModal('signup'); } };
+    if(hfd) hfd.onclick=function(){ setView('discover'); };
+    if(hfm) hfm.onclick=function(){ setView('market'); };
+    if(hfl) hfl.onclick=function(){ setView('leaderboard'); };
+  }
+  wireHomeFeatures();
 
   // Render the shell immediately so the header/nav never blanks out, even if
   // Supabase is slow, offline, or misconfigured. The async session check below
@@ -1031,8 +1079,8 @@ function renderPage(env = {}) {
   async function loadHomeFeed(){
     const el=document.getElementById("homeFeed");
     if(!el) return;
-    if(!sb){ el.innerHTML='<div class="insight">Sign in to see collector activity.</div>'; return; }
-    const rows=await recentPublicUploads(6);
+    if(!sb){ el.innerHTML='<div class="insight">Sign in to see what collectors are adding to their portfolios.</div>'; return; }
+    const rows=await recentPublicUploads(8);
     if(!rows.length){ el.innerHTML='<div class="activity"><div class="avatar">F</div><div class="copy"><b>Be the first.</b><span>Add a public card and it shows up here for the community.</span></div></div>'; return; }
     el.innerHTML=rows.map(function(h){
       const p=h._profile; const name=p?("@"+p.handle):"a collector";
