@@ -25,3 +25,8 @@ workers_dev = true
 #   SOLDCOMPS_API_KEY     - SoldComps API key (sc_...) for eBay sold-comps fallback
 #   PRICECHARTING_TOKEN   - SportsCardsPro/PriceCharting token for catalog + price guide
 #   GIPHY_API_KEY         - optional GIPHY key to enable in-app GIF search
+#   SUPABASE_SERVICE_KEY  - Supabase service-role key for server-side writes (cron cache)
+
+# Daily cron: refreshes the Market Pulse price cache at 6 AM UTC
+[triggers]
+crons = ["0 6 * * *"]

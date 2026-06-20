@@ -24,6 +24,56 @@ function jsonResponse(body, status) {
   });
 }
 
+// Cards tracked server-side for the daily Market Pulse cache
+const PULSE_CARDS_SERVER = [
+  "PSA 10 Victor Wembanyama Prizm",
+  "PSA 10 Jalen Brunson Prizm",
+  "PSA 10 Juan Soto Prizm",
+  "PSA 10 Caitlin Clark Prizm",
+  "PSA 10 Shohei Ohtani Topps Chrome",
+  "Charizard Base Set Holo PSA",
+  "PSA 10 Michael Jordan Fleer",
+  "PSA 10 LeBron James Prizm",
+  "PSA 10 Luka Doncic Prizm",
+  "PSA 9 Mickey Mantle Topps",
+];
+
+async function runPulseCache(env) {
+  const apiKey = envValue(env, "THE_CARD_API_KEY");
+  const sbUrl  = envValue(env, "SUPABASE_URL");
+  const sbKey  = envValue(env, "SUPABASE_SERVICE_KEY") ||
+                 envValue(env, "SUPABASE_ANON_KEY") ||
+                 envValue(env, "SUPABASE_PUBLISHABLE_KEY");
+  if (!apiKey || !sbUrl || !sbKey) return;
+  const rows = [];
+  for (const q of PULSE_CARDS_SERVER) {
+    try {
+      const r = await fetch(UPSTREAM + "?q=" + encodeURIComponent(q) + "&limit=50&sort=date_desc",
+        { headers: { "x-market-api-key": apiKey } });
+      const j = await r.json();
+      const prices = (j.data || [])
+        .map(s => Number(s.sale_price || s.price || 0))
+        .filter(p => p > 5)
+        .sort((a, b) => a - b);
+      if (!prices.length) continue;
+      const mid = Math.floor(prices.length / 2);
+      const median = prices.length % 2 === 0
+        ? Math.round((prices[mid - 1] + prices[mid]) / 2)
+        : prices[mid];
+      rows.push({ query: q, median, sales_count: prices.length, updated_at: new Date().toISOString() });
+    } catch (_) {}
+  }
+  if (!rows.length) return;
+  await fetch(sbUrl + "/rest/v1/market_pulse_cache", {
+    method: "POST",
+    headers: {
+      "apikey": sbKey, "Authorization": "Bearer " + sbKey,
+      "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates",
+    },
+    body: JSON.stringify(rows),
+  }).catch(() => {});
+}
+
 export default {
   async fetch(request, env = {}) {
     const url = new URL(request.url);
@@ -118,23 +168,56 @@ export default {
         return jsonResponse({ error: "Cert relay failed." }, 502);
       }
     }
-    return new Response(renderPage(env), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+    return new Response(await renderPage(env, url.pathname), { headers: { "Content-Type": "text/html; charset=utf-8" } });
+  },
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runPulseCache(env));
   },
 };
 
-function renderPage(env = {}) {
+async function renderPage(env = {}, pathname = "/") {
   const publicConfig = JSON.stringify({
     supabaseUrl: envValue(env, "SUPABASE_URL"),
     supabaseAnonKey: envValue(env, "SUPABASE_ANON_KEY") || envValue(env, "SUPABASE_PUBLISHABLE_KEY"),
     giphyApiKey: envValue(env, "GIPHY_API_KEY"),
   }).replace(/</g, "\\u003c");
 
+  // Dynamic OG meta tags
+  let ogTitle = "Foilio \u2014 A Social Network for Card Collectors";
+  let ogDesc  = "Connect with collectors, show off your portfolio, buy, sell & trade cards.";
+  const sbUrl = envValue(env, "SUPABASE_URL");
+  const sbKey = envValue(env, "SUPABASE_ANON_KEY") || envValue(env, "SUPABASE_PUBLISHABLE_KEY");
+  const esc   = s => String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+  const pm    = pathname.match(/^\/u\/([A-Za-z0-9_]{1,30})$/) || pathname.match(/^\/@([A-Za-z0-9_]{1,30})$/);
+  if (pm && sbUrl && sbKey) {
+    try {
+      const r = await fetch(
+        sbUrl + "/rest/v1/profiles?handle=eq." + encodeURIComponent(pm[1]) + "&select=display_name,handle&limit=1",
+        { headers: { "apikey": sbKey, "Authorization": "Bearer " + sbKey } }
+      );
+      const rows = await r.json();
+      if (rows && rows[0]) {
+        const name = rows[0].display_name || ("@" + rows[0].handle);
+        ogTitle = name + "'s Card Collection \u2014 Foilio";
+        ogDesc  = "See " + name + "'s card portfolio on Foilio, the social network for card collectors.";
+      }
+    } catch (_) {}
+  }
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Foilio — By Collectors, For Collectors</title>
+<title>${esc(ogTitle)}</title>
+<meta name="description" content="${esc(ogDesc)}"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Foilio"/>
+<meta property="og:title" content="${esc(ogTitle)}"/>
+<meta property="og:description" content="${esc(ogDesc)}"/>
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="${esc(ogTitle)}"/>
+<meta name="twitter:description" content="${esc(ogDesc)}"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
@@ -378,6 +461,18 @@ function renderPage(env = {}) {
   .act-meta{display:block;font-size:11px;color:var(--muted);margin-top:3px}
   .act-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
   .act-av-wrap{width:46px;height:64px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+  /* Homepage compose prompt */
+  .home-compose{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
+  .home-compose:hover{border-color:var(--borderB)}
+  .home-compose-text{flex:1;font-size:14px;color:var(--dim)}
+  .home-compose-btn{width:auto!important;padding:9px 18px!important;font-size:13px!important;margin-top:0!important}
+  /* Onboarding modal */
+  .onboard-box{background:var(--surface);border:1px solid var(--borderB);border-radius:16px;padding:28px;max-width:420px;width:100%}
+  .onboard-steps{display:flex;gap:6px;margin-bottom:4px}
+  .onboard-step{flex:1;text-align:center;font-size:10px;font-weight:700;padding:7px;border-radius:7px;background:var(--surface2);color:var(--dim);text-transform:uppercase;letter-spacing:.5px}
+  .onboard-step.on{background:var(--indigo);color:#fff}
+  /* Toast notification */
+  #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--borderB);color:var(--text);border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;z-index:500;opacity:0;transition:opacity .2s;pointer-events:none}
   /* Homepage social redesign */
   .home-hero-title{font-size:44px;letter-spacing:-2px;line-height:1.08}
   .home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
@@ -434,6 +529,20 @@ function renderPage(env = {}) {
   </div>
 </div>
 
+<div id="onboardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;padding:20px">
+  <div class="onboard-box">
+    <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Welcome to Foilio!</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:18px">Let's get your profile set up so other collectors can find you.</p>
+    <div class="onboard-steps" id="onboardSteps">
+      <div class="onboard-step">1. Your profile</div>
+      <div class="onboard-step">2. Add a card</div>
+    </div>
+    <div id="onboardContent" style="margin-top:18px"></div>
+    <button id="onboardSkip" style="background:none;border:none;color:var(--dim);font-size:12px;margin-top:14px;cursor:pointer;font-family:'Manrope',sans-serif;width:100%;text-align:center">Skip for now</button>
+  </div>
+</div>
+<div id="toast"></div>
+
 <div id="mainContent">
 <div id="searchView"><div class="wrap">
   <h1 class="home-hero-title">A <span class="foil">Social Network</span> for Card Collectors</h1>
@@ -472,6 +581,13 @@ function renderPage(env = {}) {
     <div class="cstat"><div class="cstat-v" id="cstatCollectors">—</div><div class="cstat-l">Collectors</div></div>
     <div class="cstat"><div class="cstat-v" id="cstatCards">—</div><div class="cstat-l">Cards Tracked</div></div>
     <div class="cstat"><div class="cstat-v" id="cstatValue">—</div><div class="cstat-l">Portfolio Value</div></div>
+  </div>
+  <div id="homeCompose" style="display:none;margin-top:14px">
+    <div class="home-compose" id="homeComposeInner">
+      <div id="homeComposeAv" style="flex-shrink:0"></div>
+      <div class="home-compose-text">What's new in your collection?</div>
+      <button class="btn home-compose-btn" id="homeComposeBtn">+ Add card</button>
+    </div>
   </div>
   <div class="home-dash">
     <div>
@@ -934,6 +1050,21 @@ function renderPage(env = {}) {
       document.getElementById("signinToggle").onclick=function(){ openAuthModal("login"); };
     }
     updateHomeCta();
+    // Homepage compose prompt (logged-in only)
+    var compose=document.getElementById("homeCompose");
+    if(compose){
+      if(currentSession && currentSession.user){
+        compose.style.display="block";
+        var cav=document.getElementById("homeComposeAv");
+        if(cav) cav.innerHTML=avatarHtml(myProfile||{},"avatar");
+        var cbtn=document.getElementById("homeComposeBtn");
+        if(cbtn && !cbtn._wired){ cbtn._wired=true; cbtn.onclick=function(e){ e.stopPropagation(); openManualModal(); }; }
+        var ci=document.getElementById("homeComposeInner");
+        if(ci && !ci._wired){ ci._wired=true; ci.onclick=function(){ openManualModal(); }; }
+      } else {
+        compose.style.display="none";
+      }
+    }
   }
   // Wire the auth modal (done once at boot)
   (function wireAuthModal(){
@@ -1036,6 +1167,73 @@ function renderPage(env = {}) {
     window.scrollTo(0,0);
   }
 
+  // ---------- TOAST ----------
+  function showToast(msg){
+    var t=document.getElementById("toast"); if(!t) return;
+    t.textContent=msg; t.style.opacity="1";
+    setTimeout(function(){ t.style.opacity="0"; }, 2500);
+  }
+
+  // ---------- SHARE PROFILE ----------
+  function shareProfile(handle){
+    var url=window.location.origin+"/u/"+handle;
+    if(navigator.share){ navigator.share({title:"Foilio — @"+handle, url:url}); }
+    else { navigator.clipboard.writeText(url).then(function(){ showToast("Link copied to clipboard!"); }).catch(function(){ showToast(url); }); }
+  }
+
+  // ---------- ONBOARDING ----------
+  function checkOnboarding(){
+    if(!currentSession||!myProfile) return;
+    if(localStorage.getItem("fo_onboarded")) return;
+    if(!myProfile.display_name) showOnboarding();
+    else localStorage.setItem("fo_onboarded","1");
+  }
+  function showOnboarding(){
+    var modal=document.getElementById("onboardModal");
+    if(!modal) return;
+    modal.style.display="flex";
+    renderOnboardStep(1);
+    document.getElementById("onboardSkip").onclick=function(){
+      modal.style.display="none"; localStorage.setItem("fo_onboarded","1");
+    };
+  }
+  function renderOnboardStep(step){
+    var steps=document.querySelectorAll(".onboard-step");
+    steps.forEach(function(s,i){ s.classList.toggle("on",i===step-1); });
+    var content=document.getElementById("onboardContent");
+    if(step===1){
+      content.innerHTML=
+        '<div class="field"><label>YOUR NAME</label><input id="obName" placeholder="Display name or collector alias" maxlength="40" style="margin-bottom:10px"/></div>'+
+        '<div class="field"><label>BIO (OPTIONAL)</label><textarea id="obBio" placeholder="e.g. Hoops collector, chasing the Brunson rainbow..." style="min-height:56px;font-size:13px"></textarea></div>'+
+        '<button class="btn" id="obNext" style="margin-top:12px">Save &amp; continue →</button>'+
+        '<div class="msg" id="obMsg" style="margin-top:8px;font-size:12px;color:var(--down)"></div>';
+      var btn=document.getElementById("obNext");
+      btn.onclick=async function(){
+        var name=document.getElementById("obName").value.trim();
+        if(!name){ document.getElementById("obMsg").textContent="Please enter a display name."; return; }
+        btn.disabled=true; btn.textContent="Saving…";
+        const r=await sb.from("profiles").update({display_name:name,bio:document.getElementById("obBio").value.trim()||null,updated_at:new Date().toISOString()}).eq("id",currentSession.user.id);
+        if(r.error){ document.getElementById("obMsg").textContent=r.error.message; btn.disabled=false; btn.textContent="Save & continue →"; return; }
+        if(myProfile) myProfile.display_name=name;
+        renderAuth(); renderNav(); renderOnboardStep(2);
+      };
+    } else if(step===2){
+      content.innerHTML=
+        '<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Add a card to your portfolio to show off your collection and appear in the community feed.</p>'+
+        '<button class="btn" id="obAddCard" style="margin-bottom:8px">+ Add my first card</button>'+
+        '<button id="obFinish" style="background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;font-family:\'Manrope\',sans-serif;width:100%;text-align:center">I\'ll do this later</button>';
+      document.getElementById("obAddCard").onclick=function(){
+        document.getElementById("onboardModal").style.display="none";
+        localStorage.setItem("fo_onboarded","1");
+        setView("portfolio");
+      };
+      document.getElementById("obFinish").onclick=function(){
+        document.getElementById("onboardModal").style.display="none";
+        localStorage.setItem("fo_onboarded","1");
+      };
+    }
+  }
+
   // ---------- HOME GUEST CTA & FEATURE GRID ----------
   function updateHomeCta(){
     var cta=document.getElementById('homeGuestCta');
@@ -1089,7 +1287,7 @@ function renderPage(env = {}) {
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadCommunityStats(); } if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadCommunityStats(); } if(currentSession){ initMessaging(); initNotif(); checkOnboarding(); } }catch(e){}
       },0);
     });
   }
@@ -1233,30 +1431,37 @@ function renderPage(env = {}) {
   }
 
   // ---------- HOME MARKET PULSE ----------
-  var PULSE_QUERIES=[
-    "PSA 10 Victor Wembanyama Prizm",
-    "PSA 10 Jalen Brunson Prizm",
-    "PSA 10 Caitlin Clark Prizm",
-    "PSA 10 Shohei Ohtani Topps Chrome",
-    "Charizard Base Set Holo PSA",
-    "PSA 10 Michael Jordan Fleer"
-  ];
+  function renderPulseRows(el, rows){
+    const good=rows.filter(function(r){ return (r.median||r.sm&&r.sm.median)>0; });
+    if(!good.length){
+      el.innerHTML='<div class="insight">Pricing data is refreshing — <span style="color:var(--indigo);cursor:pointer" id="mpRetry">try again</span>.</div>';
+      var rt=document.getElementById("mpRetry"); if(rt) rt.onclick=loadMarketPulse; return;
+    }
+    el.innerHTML=good.map(function(r){
+      const q=r.query||r.q; const med=r.median||(r.sm&&r.sm.median)||0; const n=r.sales_count||(r.sm&&r.sm.n)||0;
+      return '<div class="pulse-item" data-look="'+escapeAttr(q)+'">'+
+        '<div class="pulse-label">'+escapeHtml(q)+'</div>'+
+        '<div style="text-align:right;flex-shrink:0"><div class="pulse-price">'+money(med)+'</div>'+
+        (n?'<div class="pulse-sales">'+n+' sales</div>':'')+
+        '</div></div>';
+    }).join("");
+    el.innerHTML+='<div style="font-size:10px;color:var(--dim);margin-top:8px;text-align:right">Updated daily</div>';
+    Array.prototype.forEach.call(el.querySelectorAll("[data-look]"),function(c){ c.onclick=function(){ setView("search"); document.getElementById("q").value=c.getAttribute("data-look"); run(); }; });
+  }
   async function loadMarketPulse(){
     const el=document.getElementById("marketPulse");
     if(!el) return;
+    // Try Supabase cache first (populated by daily cron)
+    if(sb){
+      try{
+        const cr=await sb.from("market_pulse_cache").select("query,median,sales_count,updated_at").order("sales_count",{ascending:false}).limit(12);
+        if(cr.data && cr.data.length>0){ renderPulseRows(el, cr.data); return; }
+      }catch(e){}
+    }
+    // Fallback: hit live API for a couple of cards
+    const PULSE_QUERIES=["PSA 10 Victor Wembanyama Prizm","PSA 10 Jalen Brunson Prizm","PSA 10 Caitlin Clark Prizm","Charizard Base Set Holo PSA"];
     const results=await Promise.all(PULSE_QUERIES.map(async function(q){ const sm=await liveMedian(q); return {q:q,sm:sm}; }));
-    const hasData=results.some(function(r){return r.sm.median>0;});
-    if(!hasData){ el.innerHTML='<div class="insight">Pricing data is refreshing — <span style="color:var(--indigo);cursor:pointer" id="mpRetry">try again</span>.</div>'; var rt=document.getElementById("mpRetry"); if(rt) rt.onclick=loadMarketPulse; return; }
-    el.innerHTML=results.map(function(r){
-      const price=r.sm.median?money(r.sm.median):"\u2014";
-      const sales=r.sm.n?r.sm.n+" sales":"";
-      return '<div class="pulse-item" data-look="'+escapeAttr(r.q)+'">'+
-        '<div class="pulse-label">'+escapeHtml(r.q)+'</div>'+
-        '<div style="text-align:right;flex-shrink:0"><div class="pulse-price">'+price+'</div>'+
-        (sales?'<div class="pulse-sales">'+escapeHtml(sales)+'</div>':'')+
-        '</div></div>';
-    }).join("");
-    Array.prototype.forEach.call(el.querySelectorAll("[data-look]"),function(c){ c.onclick=function(){ setView("search"); document.getElementById("q").value=c.getAttribute("data-look"); run(); }; });
+    renderPulseRows(el, results);
   }
 
   // ---------- HOME TOP COLLECTORS ----------
@@ -1724,9 +1929,10 @@ function renderPage(env = {}) {
     if(p.instagram){ links.push('<a href="'+escapeAttr(/^https?:/.test(p.instagram)?p.instagram:("https://instagram.com/"+p.instagram.replace(/^@/,"")))+'" target="_blank" rel="noopener">Instagram</a>'); }
     if(p.website){ links.push('<a href="'+escapeAttr(/^https?:/.test(p.website)?p.website:("https://"+p.website))+'" target="_blank" rel="noopener">Website</a>'); }
 
+    const shareBtn='<button class="followbtn following" id="shareBtn" style="margin-left:6px">Share</button>';
     const actionBtn=isMe
-      ? '<button class="followbtn following" id="editProfBtn">Edit profile</button>'
-      : (currentSession?('<button class="followbtn'+(iFollow?" following":"")+'" id="followBtn">'+(iFollow?"Following":"Follow")+'</button> <button class="followbtn following" id="msgBtn">Message</button>'):'');
+      ? '<button class="followbtn following" id="editProfBtn">Edit profile</button>'+shareBtn
+      : (currentSession?('<button class="followbtn'+(iFollow?" following":"")+'" id="followBtn">'+(iFollow?"Following":"Follow")+'</button> <button class="followbtn following" id="msgBtn">Message</button>'+shareBtn):shareBtn);
 
     body.innerHTML='<div class="card"><div class="profhead">'+
       avatarHtml(p,"bigav")+
@@ -1752,6 +1958,8 @@ function renderPage(env = {}) {
       var mb=document.getElementById("msgBtn");
       if(mb) mb.onclick=function(){ startConversation(p.id, p.handle); };
     }
+    var sb2=document.getElementById("shareBtn");
+    if(sb2) sb2.onclick=function(){ shareProfile(p.handle); };
     var frsBtn=document.getElementById("followersBtn");
     if(frsBtn) frsBtn.onclick=function(){ showFollowList(p.id,"followers"); };
     var fngBtn=document.getElementById("followingBtn");

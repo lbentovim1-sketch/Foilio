@@ -168,3 +168,21 @@ drop policy if exists "users delete own avatar" on storage.objects;
 create policy "users delete own avatar"
   on storage.objects for delete
   using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+-- ============================================================
+--  MARKET PULSE CACHE  (populated by daily Cloudflare cron)
+-- ============================================================
+create table if not exists public.market_pulse_cache (
+  query        text primary key,
+  median       integer not null default 0,
+  sales_count  integer not null default 0,
+  updated_at   timestamptz not null default now()
+);
+alter table public.market_pulse_cache enable row level security;
+drop policy if exists "pulse cache readable by all" on public.market_pulse_cache;
+create policy "pulse cache readable by all"
+  on public.market_pulse_cache for select using (true);
+-- Allow upserts from the Worker cron (using anon or service key)
+drop policy if exists "pulse cache writable by all" on public.market_pulse_cache;
+create policy "pulse cache writable by all"
+  on public.market_pulse_cache for all using (true);
