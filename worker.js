@@ -723,7 +723,7 @@ function renderPage(env = {}) {
         '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+listTag+'</div>'+
         '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+' · added '+money(add)+' · '+pubTag+'</div></div>'+
         '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+manualTag+'</div>'+glHtml+'</div>'+
-        '<button class="ed" data-sell="'+h.id+'">'+((h.for_sale||h.for_trade)?"Listing":"Sell/Trade")+'</button>'+
+        '<button class="ed" data-sell="'+h.id+'">'+((h.for_sale||h.for_trade)?"Listed":"Sell/Trade")+'</button>'+
         '<button class="ed" data-pub="'+h.id+'">'+((h.is_public!==false)?"Hide":"Show")+'</button>'+
         '<button class="ed" data-edit="'+h.id+'">Edit</button>'+
         '<button class="rm" data-id="'+h.id+'">Remove</button></div>';
