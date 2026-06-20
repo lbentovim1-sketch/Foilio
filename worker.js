@@ -149,13 +149,27 @@ function renderPage(env = {}) {
   ::-webkit-scrollbar-thumb{background:var(--borderB);border-radius:4px}
   a{color:var(--indigo)}
   .mono{font-family:'JetBrains Mono',monospace}
-  .top{border-bottom:1px solid var(--border);background:rgba(10,11,18,.88);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);position:sticky;top:0;z-index:50}
-  .topin{max-width:960px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:12px}
+  #sidebar{width:220px;background:#0c0d17;border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;z-index:40;display:flex;flex-direction:column;overflow:hidden}
+  #mainContent{margin-left:220px;min-height:100vh}
+  #mobileTopBar{display:none;align-items:center;padding:12px 18px;border-bottom:1px solid var(--border);background:var(--ink);position:sticky;top:0;z-index:39}
+  .sidebar-logo{padding:22px 18px 16px;border-bottom:1px solid var(--border);cursor:pointer;flex-shrink:0}
+  .sidebar-tagline{font-size:11px;color:var(--dim);margin-top:3px;display:block;font-family:'Manrope',sans-serif}
+  .sidebar-nav{flex:1;overflow-y:auto;overflow-x:hidden;padding:8px 0;scrollbar-width:none}
+  .sidebar-nav::-webkit-scrollbar{display:none}
+  .sidebar-divider{height:1px;background:var(--border);margin:8px 14px}
+  .sidebar-footer{border-top:1px solid var(--border);padding:14px 12px;flex-shrink:0}
+  .snav-item{display:flex;align-items:center;gap:11px;padding:9px 16px;border-radius:9px;margin:1px 8px;color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;font-family:'Manrope',sans-serif;border:none;background:none;width:calc(100% - 16px);text-align:left;transition:color .15s,background .15s;white-space:nowrap}
+  .snav-item:hover{color:var(--text);background:rgba(255,255,255,.05)}
+  .snav-item.on{color:var(--text);background:rgba(109,92,255,.18)}
+  .snav-item.on .snav-icon{color:var(--indigo);opacity:1}
+  .snav-icon{width:16px;height:16px;flex-shrink:0;opacity:.65;transition:opacity .15s}
+  .snav-label{flex:1}
+  .snav-badge{background:var(--down);color:#fff;border-radius:9px;font-size:10px;font-weight:800;padding:1px 6px;line-height:16px;min-width:16px;text-align:center;flex-shrink:0}
   .foil{background:linear-gradient(100deg,#a78bfa,#22d3ee 28%,#34d399 52%,#fbbf24 74%,#f472b6);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:foil 6s linear infinite}
   @keyframes foil{to{background-position:200% center}}
   @media (prefers-reduced-motion:reduce){.foil{animation:none}}
-  .wrap{max-width:920px;margin:0 auto;padding:40px 20px 90px}
-  h1{font-family:'Space Grotesk',sans-serif;font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1.1}
+  .wrap{max-width:900px;margin:0 auto;padding:36px 28px 80px}
+  h1{font-family:'Space Grotesk',sans-serif;font-size:36px;font-weight:700;letter-spacing:-1.2px;line-height:1.1}
   .sub{color:var(--muted);font-size:16px;margin-top:10px;max-width:560px}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-top:18px}
   input,textarea{width:100%;background:var(--ink);border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text);font-size:16px;outline:none;font-family:'Manrope',sans-serif}
@@ -187,23 +201,16 @@ function renderPage(env = {}) {
   .err{background:rgba(255,93,108,.1);border:1px solid var(--down);border-radius:10px;padding:14px 16px;color:#ffb4bc;font-size:13px;margin-top:14px}
   .err b{color:#fff}
   .insight{font-size:13px;color:var(--muted);margin-top:6px}
-  .foot{max-width:920px;margin:0 auto;padding:24px 20px 50px;color:var(--dim);font-size:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  .foot{max-width:900px;margin:0 auto;padding:24px 28px 50px;color:var(--dim);font-size:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
   @keyframes spin{to{transform:rotate(360deg)}}
   .authbtn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Manrope',sans-serif}
   .authbtn.primary{background:var(--indigo);border-color:var(--indigo);color:#fff}
   .who{font-size:13px;color:var(--muted);cursor:pointer} .who b{color:var(--text)}
-  .panel{position:absolute;right:0;top:42px;width:280px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;z-index:30;box-shadow:0 16px 50px rgba(0,0,0,.55)}
-  .panel input{margin-bottom:8px;font-size:14px;padding:10px 12px}
-  .panel .msg{font-size:12px;margin-top:9px;line-height:1.45}
   .tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:3px}
   .tab{flex:1;background:transparent;border:none;color:var(--muted);border-radius:6px;padding:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif}
   .tab.on{background:var(--indigo);color:#fff}
-  .nav{display:flex;gap:2px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:4px;margin-left:auto;overflow-x:auto;scrollbar-width:none;max-width:100%}
-  .nav::-webkit-scrollbar{display:none}
-  .nav button{background:transparent;border:none;color:var(--muted);border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Manrope',sans-serif;white-space:nowrap;transition:color .15s}
-  .nav button:hover:not(.on){color:var(--text)}
-  .nav button.on{background:var(--surface2);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.35)}
+  .authmodal-box{background:var(--surface);border:1px solid var(--borderB);border-radius:16px;padding:28px;max-width:380px;width:100%}
   .addbtn{background:var(--up);color:#04210f;border:none;border-radius:10px;padding:12px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Manrope',sans-serif;margin-top:12px;width:100%}
   .addbtn:disabled{opacity:.7}
   .hrow{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--border)}
@@ -317,41 +324,59 @@ function renderPage(env = {}) {
   .pstat-btn{background:none;border:none;cursor:pointer;font-family:'Manrope',sans-serif;color:inherit;padding:0;text-align:left}
   .pstat-btn:hover b{color:var(--indigo)}
   .following-style{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important}
-  @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}}
+  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}}
 </style>
 </head>
 <body>
-<div class="top"><div class="topin">
-  <span class="foil" id="logo" style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;cursor:pointer">Foilio</span>
-  <span style="font-size:13px;color:var(--muted)" id="tagline">real sold prices, every card</span>
-  <div id="navArea"></div>
-  <div style="position:relative" id="authArea"></div>
-</div></div>
-
-<div id="searchView"><div class="wrap">
-  <h1>What's it <span class="foil">actually</span> worth?</h1>
-  <p class="sub">Search any trading card — sports, Pokémon, or any TCG — and see what it's really selling for, based on actual recent marketplace sales.</p>
-  <div class="card">
-    <label>SEARCH A CARD</label>
-    <input id="q" placeholder='e.g. "PSA 10 Jalen Brunson Prizm"' value="PSA 10 Jalen Brunson Prizm"/>
-    <div class="chips" id="chips"></div>
-    <button class="btn" id="go">Check price</button>
+<div id="sidebar">
+  <div class="sidebar-logo" id="logo">
+    <span class="foil" style="font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;display:block">Foilio</span>
+    <span class="sidebar-tagline">real sold prices, every card</span>
   </div>
-  <div class="vision">
-    <div class="card" style="margin-top:0">
-      <label>THE FOILIO NETWORK</label>
-      <h2>Card Ladder data, portfolio tracking, and collector reputation in one place.</h2>
-      <p class="sub" style="font-size:14px">Foilio starts with live sold prices and saved portfolios. The next layer is a social market where every collector can build an @handle, post cards, follow trusted sellers, and react to new market moves.</p>
-      <div class="pillars">
-        <div class="pillar"><b>Live market tape</b><span>Trend cards by category, price velocity, and recent confirmed sales.</span></div>
-        <div class="pillar"><b>Public portfolios</b><span>Show holdings, gains, grails, and cards available for sale or trade.</span></div>
-        <div class="pillar"><b>Buy, sell &amp; trade</b><span>List cards for sale or trade and make offers or buy now from other collectors.</span></div>
-        <div class="pillar"><b>Messaging + leaderboards</b><span>DM collectors, negotiate deals, and climb the value and follower rankings.</span></div>
-      </div>
-    </div>
-    <div class="network-card">
+  <div id="navArea"></div>
+  <div class="sidebar-footer" id="authArea"></div>
+</div>
+
+<div id="mobileTopBar">
+  <span class="foil" id="mobileLogo" style="font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;cursor:pointer">Foilio</span>
+</div>
+
+<div id="authModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;padding:20px">
+  <div class="authmodal-box">
+    <div class="tabs" style="margin-bottom:18px"><button class="tab on" id="tabLogin">Log in</button><button class="tab" id="tabSignup">Sign up</button></div>
+    <input id="authEmail" type="email" placeholder="Email" autocomplete="email" style="margin-bottom:10px"/>
+    <div id="authHandleWrap" style="display:none;margin-bottom:10px"><input id="authHandle" type="text" placeholder="@handle (3–20 letters / numbers)" autocomplete="username" maxlength="21"/></div>
+    <input id="authPass" type="password" placeholder="Password (6+ chars)" autocomplete="current-password" style="margin-bottom:12px"/>
+    <button class="btn" id="authAction" style="margin-top:0">Log in</button>
+    <div class="msg" id="authMsg" style="margin-top:10px;font-size:13px;line-height:1.4"></div>
+    <button id="authModalClose" style="background:none;border:none;color:var(--muted);font-size:12px;margin-top:16px;cursor:pointer;display:block;text-align:center;width:100%">Cancel</button>
+  </div>
+</div>
+
+<div id="mainContent">
+<div id="searchView"><div class="wrap">
+  <h1 style="font-size:44px;letter-spacing:-2px">What's it <span class="foil">actually</span> worth?</h1>
+  <p class="sub" style="font-size:17px;margin-top:12px">Real sold prices for any trading card — sports, Pokémon, or any TCG.</p>
+  <div class="card" style="margin-top:22px">
+    <input id="q" placeholder='e.g. "PSA 10 Jalen Brunson Prizm"' value="PSA 10 Jalen Brunson Prizm" style="font-size:17px;padding:16px 18px"/>
+    <div class="chips" id="chips"></div>
+    <button class="btn" id="go" style="margin-top:12px">Check price</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:20px;align-items:start">
+    <div class="network-card" style="margin-top:0">
       <label>COLLECTOR ACTIVITY</label>
       <div id="homeFeed"><div class="insight">Loading recent collector activity…</div></div>
+    </div>
+    <div>
+      <div class="card" style="margin-top:0">
+        <label>THE FOILIO NETWORK</label>
+        <div class="pillars" style="margin-top:8px">
+          <div class="pillar"><b>Live prices</b><span>Median from confirmed recent sales.</span></div>
+          <div class="pillar"><b>Portfolios</b><span>Track and show off your collection.</span></div>
+          <div class="pillar"><b>Buy &amp; sell</b><span>Marketplace with offers and trades.</span></div>
+          <div class="pillar"><b>Social</b><span>Follow collectors, climb leaderboards.</span></div>
+        </div>
+      </div>
     </div>
   </div>
   <div id="out"></div>
@@ -569,6 +594,7 @@ function renderPage(env = {}) {
   <span class="foil" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px">Foilio</span>
   <span>Prices from real recent sales · a social market for collectors</span>
 </div>
+</div><!-- /#mainContent -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -717,34 +743,46 @@ function renderPage(env = {}) {
   // ---------- AUTH UI ----------
   const authArea=document.getElementById("authArea");
   const navArea=document.getElementById("navArea");
-  function panelHTML(){
-    return '<div class="panel">'+
-      '<div class="tabs"><button class="tab'+(authMode==="login"?" on":"")+'" id="tabLogin">Log in</button>'+
-      '<button class="tab'+(authMode==="signup"?" on":"")+'" id="tabSignup">Sign up</button></div>'+
-      '<input id="authEmail" type="email" placeholder="Email" autocomplete="email"/>'+
-      (authMode==="signup"?'<input id="authHandle" type="text" placeholder="@handle (3-20 letters/numbers)" autocomplete="username" maxlength="21"/>':"")+
-      '<input id="authPass" type="password" placeholder="Password (6+ chars)" autocomplete="current-password"/>'+
-      '<button class="authbtn primary" id="authAction" style="width:100%;margin-top:2px">'+(authMode==="login"?"Log in":"Create account")+'</button>'+
-      '<div class="msg" id="authMsg"></div></div>';
+  function openAuthModal(mode){
+    authMode=mode||"login";
+    const modal=document.getElementById("authModal");
+    const hw=document.getElementById("authHandleWrap");
+    const btn=document.getElementById("authAction");
+    const tl=document.getElementById("tabLogin"); const ts=document.getElementById("tabSignup");
+    tl.classList.toggle("on",authMode==="login"); ts.classList.toggle("on",authMode==="signup");
+    hw.style.display=authMode==="signup"?"":"none";
+    btn.textContent=authMode==="login"?"Log in":"Create account";
+    document.getElementById("authMsg").textContent="";
+    ["authEmail","authPass","authHandle"].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=""; });
+    modal.style.display="flex";
+    setTimeout(function(){ var el=document.getElementById("authEmail"); if(el) el.focus(); },40);
   }
   function renderAuth(){
-    if(!sb){ authArea.innerHTML='<span class="who">accounts setup pending</span>'; return; }
+    if(!sb){ authArea.innerHTML='<div style="font-size:12px;color:var(--dim)">accounts setup pending</div>'; return; }
     if(currentSession && currentSession.user){
       const handle=myProfile?myProfile.handle:normalizeHandle((currentSession.user.user_metadata||{}).handle);
       const identity=handle?("@"+handle):currentSession.user.email;
-      authArea.innerHTML='<span class="who" id="meLink">\u2713 <b>'+escapeHtml(identity)+'</b></span> <button class="authbtn" id="logoutBtn">Log out</button>';
+      const p=myProfile||{handle:handle};
+      authArea.innerHTML=
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;cursor:pointer" id="meLink">'+
+        avatarHtml(p,"avatar")+
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(handle?("@"+handle):currentSession.user.email)+'</div></div></div>'+
+        '<button class="authbtn" id="logoutBtn" style="width:100%;font-size:12px">Sign out</button>';
       var meL=document.getElementById("meLink");
       if(meL) meL.onclick=function(){ if(handle) viewProfile(handle); };
       document.getElementById("logoutBtn").onclick=function(){ sb.auth.signOut(); };
     } else {
-      authArea.innerHTML='<button class="authbtn primary" id="signinToggle">Sign in</button>'+(panelOpen?panelHTML():"");
-      document.getElementById("signinToggle").onclick=function(){ panelOpen=!panelOpen; renderAuth(); };
-      if(panelOpen) wirePanel();
+      authArea.innerHTML='<button class="authbtn primary" id="signinToggle" style="width:100%">Sign In</button>';
+      document.getElementById("signinToggle").onclick=function(){ openAuthModal("login"); };
     }
   }
-  function wirePanel(){
-    document.getElementById("tabLogin").onclick=function(){ authMode="login"; renderAuth(); };
-    document.getElementById("tabSignup").onclick=function(){ authMode="signup"; renderAuth(); };
+  // Wire the auth modal (done once at boot)
+  (function wireAuthModal(){
+    const modal=document.getElementById("authModal");
+    document.getElementById("tabLogin").onclick=function(){ authMode="login"; openAuthModal("login"); };
+    document.getElementById("tabSignup").onclick=function(){ authMode="signup"; openAuthModal("signup"); };
+    document.getElementById("authModalClose").onclick=function(){ modal.style.display="none"; };
+    modal.addEventListener("click",function(e){ if(e.target===modal) modal.style.display="none"; });
     const gE=function(){return document.getElementById("authEmail").value.trim();};
     const gP=function(){return document.getElementById("authPass").value;};
     const gH=function(){var el=document.getElementById("authHandle");return el?el.value:"";};
@@ -754,43 +792,60 @@ function renderPage(env = {}) {
         if(!gE()||!gP()){say("Enter your email and password.");return;}
         const r=await sb.auth.signInWithPassword({email:gE(),password:gP()});
         if(r.error) say(r.error.message);
+        else modal.style.display="none";
       } else {
         if(!gE()||gP().length<6){say("Use a valid email and a 6+ character password.");return;}
         const handle=normalizeHandle(gH());
         if(!handle){say("Choose a 3-20 character handle using letters, numbers, or underscores.");return;}
         const r=await sb.auth.signUp({email:gE(),password:gP(),options:{data:{handle:handle}}});
         if(r.error) say(r.error.message);
-        else if(r.data && r.data.session) say("Account created \u2014 you are signed in!",true);
-        else say("Account created. If email confirmation is on, check your inbox; otherwise just log in.",true);
+        else if(r.data && r.data.session){ modal.style.display="none"; }
+        else say("Account created. Check your inbox to confirm, then log in.",true);
       }
     };
+  })();
+  var NAV_ICONS={
+    search:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>',
+    trending:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>',
+    market:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>',
+    leaders:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>',
+    people:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    portfolio:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>',
+    watchlist:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>',
+    messages:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    bell:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+    profile:'<svg class="snav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'
+  };
+  function snavBtn(iconKey,label,id,isOn,badge){
+    return '<button class="snav-item'+(isOn?' on':'')+'" id="'+id+'">'+NAV_ICONS[iconKey]+'<span class="snav-label">'+label+'</span>'+(badge?'<span class="snav-badge">'+badge+'</span>':'')+'</button>';
   }
   function renderNav(){
     var items='';
-    items+='<button id="navSearch" class="'+(view==="search"?"on":"")+'">Search</button>';
-    items+='<button id="navTrending" class="'+(view==="trending"?"on":"")+'">Trending</button>';
-    items+='<button id="navMarket" class="'+(view==="market"?"on":"")+'">Market</button>';
-    items+='<button id="navLeaders" class="'+(view==="leaderboard"?"on":"")+'">Leaders</button>';
-    items+='<button id="navDiscover" class="'+(view==="discover"?"on":"")+'">People</button>';
+    items+=snavBtn('search','Search','navSearch',view==='search');
+    items+=snavBtn('trending','Trending','navTrending',view==='trending');
+    items+=snavBtn('market','Market','navMarket',view==='market');
+    items+=snavBtn('leaders','Leaders','navLeaders',view==='leaderboard');
+    items+=snavBtn('people','People','navDiscover',view==='discover');
     if(sb && currentSession){
-      items+='<button id="navPortfolio" class="'+(view==="portfolio"?"on":"")+'">Portfolio</button>';
-      items+='<button id="navWatch" class="'+(view==="watchlist"?"on":"")+'">Watchlist</button>';
-      items+='<button id="navMsgs" class="'+(view==="messages"?"on":"")+'">Messages'+(unreadCount?'<span class="navbadge">'+unreadCount+'</span>':"")+'</button>';
-      items+='<button id="navNotif" class="'+(view==="notifications"?"on":"")+'">\uD83D\uDD14'+(notifCount?'<span class="navbadge">'+notifCount+'</span>':"")+'</button>';
-      items+='<button id="navProfile" class="'+(view==="profile"||view==="editProfile"?"on":"")+'">Profile</button>';
+      items+='<div class="sidebar-divider"></div>';
+      items+=snavBtn('portfolio','Portfolio','navPortfolio',view==='portfolio');
+      items+=snavBtn('watchlist','Watchlist','navWatch',view==='watchlist');
+      items+=snavBtn('messages','Messages','navMsgs',view==='messages',unreadCount||'');
+      items+=snavBtn('bell','Notifications','navNotif',view==='notifications',notifCount||'');
+      items+=snavBtn('profile','Profile','navProfile',view==='profile'||view==='editProfile');
     }
-    navArea.innerHTML='<div class="nav">'+items+'</div>';
-    document.getElementById("navSearch").onclick=function(){ setView("search"); };
-    document.getElementById("navTrending").onclick=function(){ setView("trending"); };
-    document.getElementById("navMarket").onclick=function(){ setView("market"); };
-    document.getElementById("navLeaders").onclick=function(){ setView("leaderboard"); };
-    document.getElementById("navDiscover").onclick=function(){ setView("discover"); };
+    navArea.innerHTML='<div class="sidebar-nav">'+items+'</div>';
+    document.getElementById('navSearch').onclick=function(){ setView('search'); };
+    document.getElementById('navTrending').onclick=function(){ setView('trending'); };
+    document.getElementById('navMarket').onclick=function(){ setView('market'); };
+    document.getElementById('navLeaders').onclick=function(){ setView('leaderboard'); };
+    document.getElementById('navDiscover').onclick=function(){ setView('discover'); };
     if(sb && currentSession){
-      document.getElementById("navPortfolio").onclick=function(){ setView("portfolio"); };
-      document.getElementById("navWatch").onclick=function(){ setView("watchlist"); };
-      document.getElementById("navMsgs").onclick=function(){ setView("messages"); };
-      document.getElementById("navNotif").onclick=function(){ setView("notifications"); };
-      document.getElementById("navProfile").onclick=function(){ if(myProfile&&myProfile.handle){ viewProfile(myProfile.handle); } else { setView("editProfile"); } };
+      document.getElementById('navPortfolio').onclick=function(){ setView('portfolio'); };
+      document.getElementById('navWatch').onclick=function(){ setView('watchlist'); };
+      document.getElementById('navMsgs').onclick=function(){ setView('messages'); };
+      document.getElementById('navNotif').onclick=function(){ setView('notifications'); };
+      document.getElementById('navProfile').onclick=function(){ if(myProfile&&myProfile.handle){ viewProfile(myProfile.handle); } else { setView('editProfile'); } };
     }
   }
   function applyView(){
@@ -836,7 +891,7 @@ function renderPage(env = {}) {
       }catch(e){}
     }).catch(function(){});
     sb.auth.onAuthStateChange(function(_e,session){
-      currentSession=session; panelOpen=false;
+      currentSession=session;
       if(!session){
         unreadCount=0; notifCount=0; myProfile=null;
         try{ if(msgChannel){ sb.removeChannel(msgChannel); msgChannel=null; } if(notifChannel){ sb.removeChannel(notifChannel); notifChannel=null; } }catch(e){}
@@ -871,6 +926,7 @@ function renderPage(env = {}) {
   }
   window.addEventListener("popstate",function(){ routeFromPath(false); });
   document.getElementById("logo").onclick=function(){ setView("search"); };
+  var _ml=document.getElementById("mobileLogo"); if(_ml) _ml.onclick=function(){ setView("search"); };
 
   // ---------- HOME FEED (recent community uploads) ----------
   async function recentPublicUploads(limit){
