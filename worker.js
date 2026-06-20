@@ -1125,24 +1125,35 @@ function renderPage(env = {}) {
     ['rgba(251,191,36,.18)','#fbbf24'],
     ['rgba(167,139,250,.18)','#c4b5fd'],
   ];
-  function cardInitials(name){
-    var words=(name||"").trim().split(/\s+/).filter(function(w){ return /^[A-Za-z]/.test(w); });
-    if(words.length>=2) return (words[0][0]+words[1][0]).toUpperCase();
-    if(words.length===1) return words[0].slice(0,2).toUpperCase();
-    return "";
+  var CARD_STOP=/^(psa|bgs|sgc|cgc|tag|raw|the|and|for|with|black|white|silver|gold|red|blue|green|orange|purple|pink|prizm|chrome|draft|base|rookie|auto|refractor|holo|all|aces|sp|ssp|rc|numbered|parallel|variation|prospect|autograph|bowman|topps|panini|donruss|fleer|upper|deck|optic|select|chronicles|heritage|tribute|mosaic|contenders|finest|stadium|national|treasures|absolute|leaf|score|insert|short|print)$/i;
+  function cardInitials(raw, fallback){
+    function extract(s){
+      var words=(s||"").replace(/#\S+/g,"").trim().split(/\s+/);
+      // Prefer words that start with a letter AND aren't known card terms
+      var nameWords=words.filter(function(w){ return /^[A-Za-z]{2}/.test(w) && !CARD_STOP.test(w); });
+      if(nameWords.length>=2) return (nameWords[0][0]+nameWords[1][0]).toUpperCase();
+      if(nameWords.length===1) return nameWords[0].slice(0,2).toUpperCase();
+      // Loosen: any word starting with a letter
+      var anyWords=words.filter(function(w){ return /^[A-Za-z]/.test(w) && w.length>1; });
+      if(anyWords.length>=2) return (anyWords[0][0]+anyWords[1][0]).toUpperCase();
+      if(anyWords.length===1) return anyWords[0].slice(0,2).toUpperCase();
+      return "";
+    }
+    return extract(raw) || extract(fallback) || "";
   }
-  function cardFallbackHtml(name, id){
+  function cardFallbackHtml(name, id, rawTitle){
     var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
     var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
-    var init=cardInitials(name);
+    var init=cardInitials(name, rawTitle);
     return '<div class="act-ph" style="background:'+bg+';color:'+col+'">'+escapeHtml(init||"•")+'</div>';
   }
   function actImgErr(el){
     var name=el.getAttribute("data-name")||"";
+    var raw=el.getAttribute("data-raw")||"";
     var id=el.getAttribute("data-card")||"";
     var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
     var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
-    var init=cardInitials(name);
+    var init=cardInitials(name, raw);
     var ph=document.createElement("div");
     ph.className="act-ph"; ph.style.background=bg; ph.style.color=col; ph.textContent=init||"•";
     if(el.parentNode) el.parentNode.insertBefore(ph,el);
@@ -1191,10 +1202,11 @@ function renderPage(env = {}) {
     el.innerHTML=rows.map(function(h){
       const p=h._profile;
       const img=thumbOf(h);
-      const cardName=shortCardName(h.title||h.query);
+      const rawTitle=h.title||h.query||"";
+      const cardName=shortCardName(rawTitle)||rawTitle;
       const val=h.added_value?money(h.added_value):"";
       return '<div class="activity" data-card="'+h.id+'">'+
-        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="actImgErr(this)" data-card="'+h.id+'" data-name="'+escapeAttr(cardName)+'">'):cardFallbackHtml(cardName,h.id))+
+        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="actImgErr(this)" data-card="'+h.id+'" data-name="'+escapeAttr(cardName)+'" data-raw="'+escapeAttr(rawTitle)+'">'): cardFallbackHtml(cardName,h.id,rawTitle))+
         '<div class="act-info">'+
           '<div class="act-who" data-h="'+(p?escapeAttr(p.handle):"")+'">@'+(p?escapeHtml(p.handle):"collector")+'</div>'+
           '<span class="act-card" data-card="'+h.id+'">'+escapeHtml(cardName)+'</span>'+
@@ -1239,7 +1251,7 @@ function renderPage(env = {}) {
     if(!el) return;
     const results=await Promise.all(PULSE_QUERIES.map(async function(q){ const sm=await liveMedian(q); return {q:q,sm:sm}; }));
     const hasData=results.some(function(r){return r.sm.median>0;});
-    if(!hasData){ el.innerHTML='<div class="insight">No price data right now — check back shortly.</div>'; return; }
+    if(!hasData){ el.innerHTML='<div class="insight">Pricing data is refreshing — <span style="color:var(--indigo);cursor:pointer" id="mpRetry">try again</span>.</div>'; var rt=document.getElementById("mpRetry"); if(rt) rt.onclick=loadMarketPulse; return; }
     el.innerHTML=results.map(function(r){
       const price=r.sm.median?money(r.sm.median):"\u2014";
       const sales=r.sm.n?r.sm.n+" sales":"";
