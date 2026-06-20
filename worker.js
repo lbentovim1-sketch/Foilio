@@ -1287,7 +1287,7 @@ function renderPage(env = {}) {
       const h=v.h; const img=thumbOf(h);
       const listTag=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
       cards+='<div class="showcase-card" data-card="'+h.id+'">'+
-        (img?('<img src="'+escapeAttr(img)+'" onerror="this.style.display=\'none\'"/>'):('<div style="width:100%;height:110px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px">🃏</div>'))+
+        (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()"/>'):('<div style="width:100%;height:110px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px">🃏</div>'))+
         '<div class="sc-info">'+
           '<div class="sc-name">'+escapeHtml(h.title||h.query)+listTag+'</div>'+
           '<div class="sc-grade">'+escapeHtml(h.grade||"Raw")+'</div>'+
@@ -1537,7 +1537,7 @@ function renderPage(env = {}) {
       withImgs.map(function(v){
         const h=v.h; const img=thumbOf(h);
         return '<div class="showcase-card" data-card="'+h.id+'">'+
-          '<img src="'+escapeAttr(img)+'" onerror="this.style.display=\'none\'"/>'+
+          '<img src="'+escapeAttr(img)+'" onerror="this.remove()"/>'+
           '<div class="sc-info"><div class="sc-name">'+escapeHtml(h.title||h.query)+'</div>'+
           '<div class="sc-grade">'+escapeHtml(h.grade||"Raw")+'</div>'+
           '<div class="sc-val">'+money(v.current)+'</div></div></div>';
