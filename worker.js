@@ -1148,6 +1148,58 @@ function renderPage(env = {}) {
   }
   function isImgUrl(u){ return /^https?:\\/\\/\\S+\\.(gif|png|jpe?g|webp)(\\?\\S*)?$/i.test(u||"") || /giphy\\.com|tenor\\.com|media\\d?\\.giphy/i.test(u||""); }
 
+  // ---------- PRICE CHART (from recent sales) ----------
+  function buildSalesChart(sales){
+    var pts=[];
+    sales.forEach(function(s){
+      if(typeof s.price!=="number" || s.price_confirmed===false) return;
+      var t=s.sale_date?Date.parse(s.sale_date):NaN;
+      pts.push({t:(isNaN(t)?null:t), p:s.price});
+    });
+    pts=pts.filter(function(x){return x.p>0;});
+    if(pts.length>=2 && pts.every(function(x){return x.t!=null;})){ pts.sort(function(a,b){return a.t-b.t;}); }
+    else { pts=pts.slice().reverse(); pts.forEach(function(x,i){ x.t=i; }); }
+    if(pts.length<2) return null;
+    var W=600,H=180,padL=8,padR=8,padT=14,padB=18;
+    var xs=pts.map(function(p){return p.t;}), ps=pts.map(function(p){return p.p;});
+    var minX=Math.min.apply(null,xs), maxX=Math.max.apply(null,xs);
+    var minP=Math.min.apply(null,ps), maxP=Math.max.apply(null,ps);
+    if(maxX===minX) maxX=minX+1;
+    var spanP=(maxP-minP)||1;
+    var sx=function(x){ return padL+(x-minX)/(maxX-minX)*(W-padL-padR); };
+    var sy=function(p){ return padT+(1-(p-minP)/spanP)*(H-padT-padB); };
+    var line="",area="";
+    pts.forEach(function(p,i){ var X=sx(p.t).toFixed(1), Y=sy(p.p).toFixed(1); line+=(i?" L":"M")+X+" "+Y; });
+    area="M"+sx(pts[0].t).toFixed(1)+" "+(H-padB)+" L"+line.slice(1)+" L"+sx(pts[pts.length-1].t).toFixed(1)+" "+(H-padB)+" Z";
+    var dots=pts.map(function(p){ return '<circle cx="'+sx(p.t).toFixed(1)+'" cy="'+sy(p.p).toFixed(1)+'" r="2.4" fill="#6d5cff"/>'; }).join("");
+    var first=pts[0].p, last=pts[pts.length-1].p; var up=last>=first;
+    var datelbl="";
+    if(pts[0].t>100000){ var d1=new Date(minX), d2=new Date(maxX); var fmt=function(d){return (d.getMonth()+1)+"/"+d.getDate();}; datelbl='<text x="'+padL+'" y="'+(H-4)+'" fill="#565a73" font-size="11">'+fmt(d1)+'</text><text x="'+(W-padR)+'" y="'+(H-4)+'" fill="#565a73" font-size="11" text-anchor="end">'+fmt(d2)+'</text>'; }
+    return '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:180px">'+
+      '<defs><linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+(up?"#2bd673":"#ff5d6c")+'" stop-opacity="0.28"/><stop offset="1" stop-color="'+(up?"#2bd673":"#ff5d6c")+'" stop-opacity="0"/></linearGradient></defs>'+
+      '<path d="'+area+'" fill="url(#pg)"/>'+
+      '<path d="'+line+'" fill="none" stroke="'+(up?"#2bd673":"#ff5d6c")+'" stroke-width="2"/>'+
+      dots+
+      '<text x="'+padL+'" y="12" fill="#8a8ea8" font-size="11">'+money(maxP)+'</text>'+
+      '<text x="'+padL+'" y="'+(H-padB-2)+'" fill="#8a8ea8" font-size="11">'+money(minP)+'</text>'+
+      datelbl+
+      '</svg>';
+  }
+  async function renderCardChart(query){
+    const el=document.getElementById("cChart"); if(!el) return;
+    el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label><div class="insight">Loading recent sales…</div></div>';
+    try{
+      const res=await fetch("/api?q="+encodeURIComponent(query)+"&limit=50&sort=date_desc");
+      const j=await res.json();
+      const sales=j.data||[];
+      const svg=buildSalesChart(sales);
+      if(!svg){ el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label><div class="insight">Not enough recent confirmed sales to chart yet.</div></div>'; return; }
+      const sm=summarize(sales);
+      el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label>'+svg+
+        '<div class="insight" style="margin-top:6px">Median '+money(sm.median)+' across '+(sm.n||sales.length)+' recent sales. Long-term history is coming with scheduled tracking.</div></div>';
+    }catch(e){ el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label><div class="insight">Could not load the price trend.</div></div>'; }
+  }
+
   // ---------- CARD DETAIL ----------
   async function openCard(id,skipPush){
     activeCard=id; view="card"; applyView(); renderNav();
@@ -1183,6 +1235,7 @@ function renderPage(env = {}) {
       (h.ask_price!=null?('<div class="insight">Asking '+money(h.ask_price)+(h.sale_note?(' \u2014 '+escapeHtml(h.sale_note)):"")+'</div>'):"")+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px"><button class="likebtn'+(iLike?" on":"")+'" id="cLike">\u2665 <span id="cLikeN">'+likeCount+'</span></button> '+actions+'</div>'+
       '</div>'+
+      '<div id="cChart"></div>'+
       '<div class="card"><label>COMMENTS</label><div id="cComments">Loading…</div>'+
       (currentSession?('<div class="composer"><input id="cCommentInput" placeholder="Add a comment…"/><button class="gifbtn" id="cGif">GIF</button><button class="authbtn primary" id="cCommentSend">Post</button></div>'):'<div class="insight" style="margin-top:10px">Sign in to comment.</div>')+
       '</div>';
@@ -1206,6 +1259,7 @@ function renderPage(env = {}) {
     var cg=document.getElementById("cGif"); if(cg) cg.onclick=function(){ openGifPicker("comment"); };
     var cs=document.getElementById("cCommentSend"); if(cs) cs.onclick=function(){ var inp=document.getElementById("cCommentInput"); addComment(id,null,inp?inp.value:""); };
     var ci=document.getElementById("cCommentInput"); if(ci) ci.addEventListener("keydown",function(e){ if(e.key==="Enter") addComment(id,null,ci.value); });
+    renderCardChart(h.query);
     loadComments(id, h);
   }
   async function uploadCardPhoto(e,holdingId){
