@@ -11,6 +11,9 @@ Foilio is a trading-card market and social portfolio app. The Cloudflare Worker 
 - follow / unfollow other collectors
 - track cards on a watchlist with optional in-app price alerts
 - browse a live "market tape" of trending medians and a community feed of recently added cards
+- list cards **for sale / trade** with an asking price, and let other collectors **buy now**, **make an offer**, or **propose a trade**
+- **direct message** other collectors (with realtime delivery), with offers/buy requests threaded into the conversation and accept/decline controls for the seller
+- **leaderboards** ranking collectors by public portfolio value, followers, and collection size
 
 The product direction is a mix of Card Ladder, LinkedIn, stock-market tools, and Instagram for trading cards: live trends, uploaded card portfolios, public collector profiles, follows, messaging, and upload/price alerts.
 
@@ -21,7 +24,8 @@ tables and security rules in Supabase. This is a one-time, copy-paste step:
 
 1. Open your project at [supabase.com](https://supabase.com) → **SQL Editor** → **New query**.
 2. Open [`supabase/schema.sql`](supabase/schema.sql) in this repo, copy its entire contents, paste into the editor, and click **Run**.
-3. You should see "Success. No rows returned." That's it — the script is safe to run again any time.
+3. Then open [`supabase/02_marketplace_messaging.sql`](supabase/02_marketplace_messaging.sql), and run it the same way (it adds the marketplace, offers, and messaging tables).
+4. You should see "Success. No rows returned." after each. The scripts are safe to run again any time.
 
 The script creates `profiles`, `follows`, and `watchlist` tables, adds `user_id` + `is_public`
 columns to `holdings`, sets up Row Level Security so users can only edit their own data (while
