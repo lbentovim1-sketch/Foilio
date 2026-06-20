@@ -14,7 +14,8 @@ Foilio is a trading-card market and social portfolio app. The Cloudflare Worker 
 - list cards **for sale / trade** with an asking price, and let other collectors **buy now**, **make an offer**, or **propose a trade**
 - **direct message** other collectors (with realtime delivery), with offers/buy requests threaded into the conversation and accept/decline controls for the seller
 - **leaderboards** ranking collectors by public portfolio value, followers, and collection size
-- **card detail pages** with **likes**, **comments** (text + GIFs), and owner **photo uploads**
+- **card detail pages** with a price trend, last-sale + median/avg/high/low, a recent-sales list, PSA population (when a cert is known), **likes**, **comments** (text + GIFs), and owner **photo uploads**
+- **manual card entry** for raw/ungraded cards and any grading company (PSA, Beckett/BGS, SGC, CGC, TAG, Other)
 - **GIFs/images in direct messages**
 - an in-app **notifications center** (follows, likes, comments, offers, offer responses)
 
