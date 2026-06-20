@@ -134,7 +134,7 @@ function renderPage(env = {}) {
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Foilio — Real sold prices for any trading card</title>
+<title>Foilio — By Collectors, For Collectors</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
 <style>
@@ -324,14 +324,56 @@ function renderPage(env = {}) {
   .pstat-btn{background:none;border:none;cursor:pointer;font-family:'Manrope',sans-serif;color:inherit;padding:0;text-align:left}
   .pstat-btn:hover b{color:var(--indigo)}
   .following-style{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important}
-  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}}
+  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}}
+  /* Market Pulse widget */
+  .pulse-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;border-radius:6px;padding-left:4px}
+  .pulse-item:last-child{border-bottom:none}
+  .pulse-item:hover{background:rgba(255,255,255,.03)}
+  .pulse-label{flex:1;min-width:0;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pulse-price{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;flex-shrink:0;color:var(--gold)}
+  .pulse-sales{font-size:10px;color:var(--dim);text-align:right}
+  /* Top Collectors home widget */
+  .tc-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .12s}
+  .tc-row:last-child{border-bottom:none}
+  .tc-row:hover{opacity:.8}
+  .tc-rank{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);width:20px;text-align:center;flex-shrink:0;font-weight:700}
+  .tc-name{font-size:13px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tc-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--text)}
+  /* Home dashboard 2-col grid */
+  .home-dash{display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;margin-top:20px;align-items:start}
+  /* Portfolio showcase grid */
+  .showcase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:14px}
+  .showcase-card{background:var(--ink);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+  .showcase-card:hover{border-color:var(--borderB);transform:translateY(-2px)}
+  .showcase-card img{width:100%;height:110px;object-fit:contain;background:var(--surface2)}
+  .showcase-card .sc-info{padding:8px 8px 10px}
+  .showcase-card .sc-name{font-size:11px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px;line-height:1.2}
+  .showcase-card .sc-grade{font-size:10px;color:var(--dim);margin-bottom:2px}
+  .showcase-card .sc-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--gold)}
+  /* Leaderboard enhancements */
+  .lbrow .medal{font-size:16px;line-height:1;flex-shrink:0;width:26px;text-align:center}
+  .lbrow-cards{display:flex;gap:5px;margin-top:8px;overflow-x:auto;padding-bottom:2px}
+  .lbrow-cards img{width:38px;height:53px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0}
+  .lbrow-wrap{flex:1;min-width:0}
+  .lbrow .rank-num{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--dim);width:26px;text-align:center;flex-shrink:0}
+  .lb-subject-row{flex-direction:column;align-items:flex-start;gap:6px}
+  .lb-subject-row .lb-top{display:flex;align-items:center;gap:12px;width:100%}
+  /* View toggle for portfolio */
+  .view-toggle{display:flex;gap:6px;margin-bottom:0}
+  .view-toggle button{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif}
+  .view-toggle button.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+  /* Leaderboard subject enhanced card */
+  .lbcard-mini{display:flex;align-items:center;gap:8px;padding:4px 0;flex-wrap:nowrap}
+  .lbcard-mini img{width:32px;height:45px;object-fit:cover;border-radius:3px;background:var(--surface2);flex-shrink:0}
+  /* Wl skeleton */
+  .wl-loading .mono{color:var(--dim);font-size:13px}
 </style>
 </head>
 <body>
 <div id="sidebar">
   <div class="sidebar-logo" id="logo">
     <span class="foil" style="font-family:'Space Grotesk',sans-serif;font-size:21px;font-weight:700;display:block">Foilio</span>
-    <span class="sidebar-tagline">real sold prices, every card</span>
+    <span class="sidebar-tagline">by collectors, for collectors</span>
   </div>
   <div id="navArea"></div>
   <div class="sidebar-footer" id="authArea"></div>
@@ -356,16 +398,25 @@ function renderPage(env = {}) {
 <div id="mainContent">
 <div id="searchView"><div class="wrap">
   <h1 style="font-size:44px;letter-spacing:-2px">What's it <span class="foil">actually</span> worth?</h1>
-  <p class="sub" style="font-size:17px;margin-top:12px">Real sold prices for any trading card — sports, Pokémon, or any TCG.</p>
+  <p class="sub" style="font-size:17px;margin-top:12px">The platform built <b style="color:var(--text)">by collectors, for collectors</b> — real sold prices, real community, real collections.</p>
   <div class="card" style="margin-top:22px">
     <input id="q" placeholder='e.g. "PSA 10 Jalen Brunson Prizm"' value="PSA 10 Jalen Brunson Prizm" style="font-size:17px;padding:16px 18px"/>
     <div class="chips" id="chips"></div>
     <button class="btn" id="go" style="margin-top:12px">Check price</button>
   </div>
-  <div style="display:grid;grid-template-columns:1.15fr .85fr;gap:16px;margin-top:20px;align-items:start">
-    <div class="network-card" style="margin-top:0">
-      <label>COLLECTOR ACTIVITY</label>
-      <div id="homeFeed"><div class="insight">Loading recent collector activity…</div></div>
+  <div class="home-dash">
+    <div>
+      <div class="network-card" style="margin-top:0">
+        <label>COLLECTOR ACTIVITY</label>
+        <div id="homeFeed"><div class="insight">Loading recent collector activity…</div></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label style="margin-bottom:0">MARKET PULSE</label>
+          <span style="font-size:10px;color:var(--dim)">live medians</span>
+        </div>
+        <div id="marketPulse"><div class="insight">Loading live prices…</div></div>
+      </div>
     </div>
     <div>
       <div class="card" style="margin-top:0">
@@ -374,8 +425,15 @@ function renderPage(env = {}) {
           <div class="pillar"><b>Live prices</b><span>Median from confirmed recent sales.</span></div>
           <div class="pillar"><b>Portfolios</b><span>Track and show off your collection.</span></div>
           <div class="pillar"><b>Buy &amp; sell</b><span>Marketplace with offers and trades.</span></div>
-          <div class="pillar"><b>Social</b><span>Follow collectors, climb leaderboards.</span></div>
+          <div class="pillar"><b>Leaderboards</b><span>Climb the ranks. Show your biggest PC.</span></div>
         </div>
+      </div>
+      <div class="card" style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label style="margin-bottom:0">TOP COLLECTORS</label>
+          <span id="lbLink" style="font-size:11px;color:var(--indigo);cursor:pointer">See all →</span>
+        </div>
+        <div id="homeTopCollectors"><div class="insight">Loading…</div></div>
       </div>
     </div>
   </div>
@@ -390,8 +448,16 @@ function renderPage(env = {}) {
 </div></div>
 
 <div id="portfolioView" style="display:none"><div class="wrap">
-  <h1 style="font-size:28px">My Portfolio</h1>
-  <p class="sub">Your saved cards, valued from recent sales. Tap <b>Edit</b> to set your own value, or <b>toggle</b> whether a card shows on your public profile.</p>
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 style="font-size:28px">My Portfolio</h1>
+      <p class="sub">Your saved cards, valued from recent sales. Toggle <b>showcase</b> for a visual card grid.</p>
+    </div>
+    <div class="view-toggle" id="pfViewToggle">
+      <button id="pfListViewBtn" class="on">≡ List</button>
+      <button id="pfGridViewBtn">⊞ Showcase</button>
+    </div>
+  </div>
   <div class="card">
     <label>ADD A CARD BY PSA CERT</label>
     <div style="display:flex;gap:8px">
@@ -438,17 +504,18 @@ function renderPage(env = {}) {
 
 <div id="leaderboardView" style="display:none"><div class="wrap">
   <h1 style="font-size:28px">Leaderboards</h1>
-  <p class="sub">Top collectors ranked by portfolio value, followers, card count — or search by any player or character to see who owns the best collection.</p>
-  <div class="lbtabs" id="lbTabs">
-    <button data-lb="value" class="on">Portfolio value</button>
-    <button data-lb="followers">Followers</button>
-    <button data-lb="cards">Cards</button>
-    <button data-lb="subject">By player / character</button>
+  <p class="sub">Who's got the biggest collection? The rarest PC? The most followers? Find out — and show off yours.</p>
+  <div class="lbtabs" id="lbTabs" style="flex-wrap:wrap">
+    <button data-lb="value" class="on">💰 Portfolio Value</button>
+    <button data-lb="followers">👥 Followers</button>
+    <button data-lb="cards">📦 Most Cards</button>
+    <button data-lb="subject">🔍 By Player / Character</button>
   </div>
   <div class="lbsearch" id="lbSearchWrap" style="display:none">
-    <input id="lbSubjectInput" placeholder='e.g. "Juan Soto" or "Charizard"'/>
-    <button class="authbtn primary" id="lbSubjectGo">Search</button>
+    <input id="lbSubjectInput" placeholder='e.g. "Michael Jordan" or "Charizard" or "Ohtani"'/>
+    <button class="authbtn primary" id="lbSubjectGo">Find Top Collectors</button>
   </div>
+  <div id="lbSubjectHint" style="display:none;font-size:12px;color:var(--muted);margin-bottom:10px">Shows who owns the most cards matching that player or character — great for finding the biggest PC holders.</div>
   <div id="lbWrap"></div>
 </div></div>
 
@@ -592,7 +659,7 @@ function renderPage(env = {}) {
 
 <div class="foot">
   <span class="foil" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px">Foilio</span>
-  <span>Prices from real recent sales · a social market for collectors</span>
+  <span>Built by collectors, for collectors · real prices, real community</span>
 </div>
 </div><!-- /#mainContent -->
 
@@ -654,21 +721,34 @@ function renderPage(env = {}) {
     if(p&&p.avatar_url){ return '<div class="'+cls+'"><img src="'+escapeAttr(p.avatar_url)+'" alt="" onerror="this.remove()"/></div>'; }
     return '<div class="'+cls+'">'+escapeHtml(initials(p&&(p.display_name||p.handle)))+'</div>';
   }
+  // ---------- PRICE CACHE (session-scoped, 10-minute TTL) ----------
+  var _priceCache={};
+  var _CACHE_TTL=10*60*1000;
+  function _cachedMedian(query){ var c=_priceCache[query]; return (c && Date.now()-c.ts<_CACHE_TTL)?c.data:null; }
+  function _setCachedMedian(query,data){ _priceCache[query]={ts:Date.now(),data:data}; }
+
   async function valueHolding(h){
     const manual=(h.manual_value!=null && h.manual_value!=="")?Number(h.manual_value):null;
     if(manual!=null && !isNaN(manual)){ return {current:manual, manual:true}; }
+    const cached=_cachedMedian(h.query);
+    if(cached) return {current:cached.median, manual:false};
     try{
       const res=await fetch("/api?q="+encodeURIComponent(h.query)+"&limit=20&sort=date_desc");
       const j=await res.json();
       const sm=summarize(j.data||[]);
+      _setCachedMedian(h.query,sm);
       return {current:sm.median, manual:false};
     }catch(e){ return {current:0, manual:false}; }
   }
   async function liveMedian(query){
+    const cached=_cachedMedian(query);
+    if(cached) return cached;
     try{
       const res=await fetch("/api?q="+encodeURIComponent(query)+"&limit=20&sort=date_desc");
       const j=await res.json();
-      return summarize(j.data||[]);
+      const result=summarize(j.data||[]);
+      _setCachedMedian(query,result);
+      return result;
     }catch(e){ return {median:0,n:0,top:null}; }
   }
   // For cards with no stock image, fall back to an owner-uploaded photo as the thumbnail.
@@ -881,6 +961,8 @@ function renderPage(env = {}) {
   // Supabase is slow, offline, or misconfigured. The async session check below
   // re-renders once it knows who (if anyone) is signed in.
   renderAuth(); renderNav(); routeFromPath(true); loadHomeFeed();
+  // Home widgets load after the full script executes (so PULSE_QUERIES / sb are defined)
+  setTimeout(function(){ if(view==="search"){ loadMarketPulse(); loadHomeTopCollectors(); } },0);
   if(sb){
     sb.auth.getSession().then(async function(res){
       try{
@@ -902,7 +984,7 @@ function renderPage(env = {}) {
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); } if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
       },0);
     });
   }
@@ -949,13 +1031,71 @@ function renderPage(env = {}) {
     const el=document.getElementById("homeFeed");
     if(!el) return;
     if(!sb){ el.innerHTML='<div class="insight">Sign in to see collector activity.</div>'; return; }
-    const rows=await recentPublicUploads(4);
+    const rows=await recentPublicUploads(6);
     if(!rows.length){ el.innerHTML='<div class="activity"><div class="avatar">F</div><div class="copy"><b>Be the first.</b><span>Add a public card and it shows up here for the community.</span></div></div>'; return; }
     el.innerHTML=rows.map(function(h){
       const p=h._profile; const name=p?("@"+p.handle):"a collector";
-      return '<div class="activity">'+avatarHtml(p)+'<div class="copy"><b data-h="'+(p?escapeAttr(p.handle):"")+'">'+escapeHtml(name)+'</b> added '+escapeHtml(h.title||h.query)+'<span>'+escapeHtml(h.grade||"")+(h.added_value?(' · '+money(h.added_value)):"")+'</span></div></div>';
+      const img=thumbOf(h);
+      return '<div class="activity">'+
+        (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0;cursor:pointer" data-card="'+h.id+'"/>'):avatarHtml(p))+
+        '<div class="copy"><b data-h="'+(p?escapeAttr(p.handle):"")+'">'+escapeHtml(name)+'</b> added <span style="color:var(--text);font-weight:600;cursor:pointer" data-card="'+h.id+'">'+escapeHtml(h.title||h.query)+'</span><span>'+escapeHtml(h.grade||"")+(h.added_value?(' · '+money(h.added_value)):"")+'</span></div></div>';
     }).join("");
     Array.prototype.forEach.call(el.querySelectorAll("b[data-h]"),function(b){ var hh=b.getAttribute("data-h"); if(hh) b.onclick=function(){ viewProfile(hh); }; });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
+  }
+
+  // ---------- HOME MARKET PULSE ----------
+  var PULSE_QUERIES=[
+    "PSA 10 Victor Wembanyama Prizm",
+    "PSA 10 Jalen Brunson Prizm",
+    "PSA 10 Caitlin Clark Prizm",
+    "PSA 10 Shohei Ohtani Topps Chrome",
+    "Charizard Base Set Holo PSA",
+    "PSA 10 Michael Jordan Fleer"
+  ];
+  async function loadMarketPulse(){
+    const el=document.getElementById("marketPulse");
+    if(!el) return;
+    const results=await Promise.all(PULSE_QUERIES.map(async function(q){ const sm=await liveMedian(q); return {q:q,sm:sm}; }));
+    const hasData=results.some(function(r){return r.sm.median>0;});
+    if(!hasData){ el.innerHTML='<div class="insight">No price data right now — check back shortly.</div>'; return; }
+    el.innerHTML=results.map(function(r){
+      const price=r.sm.median?money(r.sm.median):"\u2014";
+      const sales=r.sm.n?r.sm.n+" sales":"";
+      return '<div class="pulse-item" data-look="'+escapeAttr(r.q)+'">'+
+        '<div class="pulse-label">'+escapeHtml(r.q)+'</div>'+
+        '<div style="text-align:right;flex-shrink:0"><div class="pulse-price">'+price+'</div>'+
+        (sales?'<div class="pulse-sales">'+escapeHtml(sales)+'</div>':'')+
+        '</div></div>';
+    }).join("");
+    Array.prototype.forEach.call(el.querySelectorAll("[data-look]"),function(c){ c.onclick=function(){ setView("search"); document.getElementById("q").value=c.getAttribute("data-look"); run(); }; });
+  }
+
+  // ---------- HOME TOP COLLECTORS ----------
+  async function loadHomeTopCollectors(){
+    const el=document.getElementById("homeTopCollectors");
+    const lbL=document.getElementById("lbLink");
+    if(lbL) lbL.onclick=function(){ setView("leaderboard"); };
+    if(!el || !sb) return;
+    try{
+      const hr=await sb.from("holdings").select("user_id,added_value,manual_value").eq("is_public",true).limit(3000);
+      const agg={};
+      (hr.data||[]).forEach(function(h){ if(!h.user_id) return; if(!agg[h.user_id]) agg[h.user_id]=0; const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0; agg[h.user_id]+=(isNaN(v)?0:v); });
+      const arr=Object.keys(agg).map(function(k){return{id:k,v:agg[k]};}).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,5);
+      if(!arr.length){ el.innerHTML='<div class="insight">No collectors yet. Add public cards to appear here.</div>'; return; }
+      const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",arr.map(function(x){return x.id;}));
+      const profs={}; (pr.data||[]).forEach(function(p){profs[p.id]=p;});
+      const medals=["🥇","🥈","🥉","",""];
+      el.innerHTML=arr.map(function(x,i){
+        const p=profs[x.id]; if(!p) return "";
+        return '<div class="tc-row" data-h="'+escapeAttr(p.handle)+'">'+
+          '<span class="tc-rank">'+(medals[i]||("#"+(i+1)))+'</span>'+
+          avatarHtml(p,"avatar")+
+          '<span class="tc-name">'+escapeHtml(p.display_name||("@"+p.handle))+'</span>'+
+          '<span class="tc-val">'+money(x.v)+'</span></div>';
+      }).join("");
+      Array.prototype.forEach.call(el.querySelectorAll("[data-h]"),function(r){ r.onclick=function(){viewProfile(r.getAttribute("data-h"));}; });
+    }catch(e){ el.innerHTML='<div class="insight">Could not load.</div>'; }
   }
 
   // ---------- DISCOVER COLLECTORS ----------
@@ -1073,26 +1213,51 @@ function renderPage(env = {}) {
     document.getElementById("modal").style.display="none";
     if(u.error){ alert("Could not update: "+u.error.message); } else { loadPortfolio(); }
   }
+  var _pfView="list"; // "list" or "grid"
   async function loadPortfolio(){
     const sum=document.getElementById("pfSummary");
     const list=document.getElementById("pfList");
     sum.innerHTML=""; list.innerHTML='<div class="card">Loading your portfolio…</div>';
     if(!currentSession){ list.innerHTML='<div class="card">Sign in to see your portfolio.</div>'; return; }
+
     const r=await sb.from("holdings").select("*").eq("user_id",currentSession.user.id).order("added_at",{ascending:false});
     if(r.error){ list.innerHTML='<div class="err"><b>Could not load portfolio.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
     const holds=r.data||[];
     if(!holds.length){ list.innerHTML='<div class="card">No cards yet. Go to <b>Search</b>, look up a card, and tap <b>"+ Add"</b> on the one you own.</div>'; return; }
     await fillThumbs(holds);
+
+    // Show skeleton immediately, load values async
+    list.innerHTML='<div class="card"><label>YOUR CARDS</label><div class="insight">Fetching current market values…</div></div>';
     const valued=await Promise.all(holds.map(async function(h){ const v=await valueHolding(h); return {h:h, current:v.current, manual:v.manual}; }));
+
+    // Wire view toggle (after valued is resolved so closures are safe)
+    var lBtn=document.getElementById("pfListViewBtn"); var gBtn=document.getElementById("pfGridViewBtn");
+    if(lBtn){ lBtn.onclick=function(){ _pfView="list"; lBtn.classList.add("on"); gBtn.classList.remove("on"); renderPfList(valued,list); }; }
+    if(gBtn){ gBtn.onclick=function(){ _pfView="grid"; gBtn.classList.add("on"); lBtn.classList.remove("on"); renderPfGrid(valued,list); }; }
+
     let totalCur=0, totalAdd=0;
     valued.forEach(function(v){ totalCur+=v.current; totalAdd+=(Number(v.h.added_value)||0); });
     const gl=totalCur-totalAdd; const glPct=totalAdd?(gl/totalAdd*100):0;
+
+    // Collection breakdown by "subject" — group by first significant word in title
+    var subjects={};
+    valued.forEach(function(v){ var t=(v.h.title||v.h.query||""); var words=t.split(/\s+/); var key=words.slice(0,2).join(" "); if(!subjects[key]) subjects[key]={val:0,n:0}; subjects[key].val+=v.current; subjects[key].n++; });
+    var topSubjects=Object.keys(subjects).map(function(k){return{k:k,val:subjects[k].val,n:subjects[k].n};}).sort(function(a,b){return b.val-a.val;}).slice(0,4);
+
     sum.innerHTML='<div class="card"><div class="stats">'+
       '<div class="stat"><div class="l">Cards</div><div class="v">'+holds.length+'</div></div>'+
       '<div class="stat hl"><div class="l">Current value</div><div class="v">'+money(totalCur)+'</div></div>'+
       '<div class="stat"><div class="l">Added value</div><div class="v">'+money(totalAdd)+'</div></div>'+
       '<div class="stat"><div class="l">Gain / loss</div><div class="v" style="color:'+(gl>=0?"var(--up)":"var(--down)")+'">'+(gl>=0?"+":"")+money(gl)+' ('+(glPct>=0?"+":"")+glPct.toFixed(0)+'%)</div></div>'+
-      '</div><div class="insight" style="margin-top:10px">Values are estimates from recent confirmed sales (median). Best Offer data can be imperfect.</div></div>';
+      '</div>'+
+      (topSubjects.length>1?('<div style="margin-top:12px"><label style="margin-bottom:8px">TOP COLLECTION GROUPS</label><div style="display:flex;gap:8px;flex-wrap:wrap">'+topSubjects.map(function(s){return '<div style="background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px"><div style="font-weight:700">'+escapeHtml(s.k)+'…</div><div style="color:var(--gold);font-family:JetBrains Mono,monospace;font-size:11px">'+money(s.val)+' · '+s.n+' card'+(s.n===1?"":"s")+'</div></div>';}).join("")+'</div></div>'):"")+'<div class="insight" style="margin-top:10px">Values from recent confirmed sales (median). Best Offer data can be imperfect.</div></div>';
+
+    if(_pfView==="grid"){ renderPfGrid(valued,list); } else { renderPfList(valued,list); }
+    if(lBtn){ lBtn.classList.toggle("on",_pfView==="list"); } if(gBtn){ gBtn.classList.toggle("on",_pfView==="grid"); }
+  }
+
+  function renderPfList(valued,list){
+    if(!valued||!valued.length){ list.innerHTML='<div class="card">No cards yet.</div>'; return; }
     let rows="";
     valued.forEach(function(v){
       const h=v.h; const add=Number(h.added_value)||0; const diff=v.current-add; const dpct=add?(diff/add*100):0;
@@ -1112,11 +1277,32 @@ function renderPage(env = {}) {
         '<button class="rm" data-id="'+h.id+'">Remove</button></div>';
     });
     list.innerHTML='<div class="card"><label>YOUR CARDS</label>'+rows+'</div>';
+    wirePfButtons(valued,list);
+  }
+
+  function renderPfGrid(valued,list){
+    if(!valued||!valued.length){ list.innerHTML='<div class="card">No cards yet.</div>'; return; }
+    let cards="";
+    valued.forEach(function(v){
+      const h=v.h; const img=thumbOf(h);
+      const listTag=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
+      cards+='<div class="showcase-card" data-card="'+h.id+'">'+
+        (img?('<img src="'+escapeAttr(img)+'" onerror="this.style.display=\'none\'"/>'):('<div style="width:100%;height:110px;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:28px">🃏</div>'))+
+        '<div class="sc-info">'+
+          '<div class="sc-name">'+escapeHtml(h.title||h.query)+listTag+'</div>'+
+          '<div class="sc-grade">'+escapeHtml(h.grade||"Raw")+'</div>'+
+          '<div class="sc-val">'+money(v.current)+'</div>'+
+        '</div></div>';
+    });
+    list.innerHTML='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label style="margin-bottom:0">SHOWCASE</label><span style="font-size:11px;color:var(--dim)">'+valued.length+' cards · click to open</span></div><div class="showcase-grid">'+cards+'</div></div>';
+    Array.prototype.forEach.call(list.querySelectorAll(".showcase-card[data-card]"),function(c){ c.onclick=function(){ openCard(c.getAttribute("data-card")); }; });
+  }
+
+  function wirePfButtons(valued,list){
     Array.prototype.forEach.call(list.querySelectorAll(".lk[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
     Array.prototype.forEach.call(list.querySelectorAll(".rm"),function(b){
       b.onclick=async function(){
-        const id=b.getAttribute("data-id");
-        b.disabled=true; b.textContent="…";
+        const id=b.getAttribute("data-id"); b.disabled=true; b.textContent="…";
         const d=await sb.from("holdings").delete().eq("id",id);
         if(d.error){ b.disabled=false; b.textContent="Remove"; alert("Could not remove: "+d.error.message); }
         else loadPortfolio();
@@ -1174,33 +1360,59 @@ function renderPage(env = {}) {
   async function loadWatchlist(){
     const el=document.getElementById("watchList");
     el.innerHTML='<div class="card">Loading your watchlist…</div>';
-    const r=await sb.from("watchlist").select("*").order("created_at",{ascending:false});
+    if(!currentSession){ el.innerHTML='<div class="card">Sign in to view your watchlist.</div>'; return; }
+    let r;
+    try{ r=await sb.from("watchlist").select("*").order("created_at",{ascending:false}); }
+    catch(e){ el.innerHTML='<div class="err">Could not load watchlist.</div>'; return; }
     if(r.error){ el.innerHTML='<div class="err"><b>Could not load watchlist.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
     const items=r.data||[];
     if(!items.length){ el.innerHTML='<div class="card">Nothing tracked yet. Search a card and tap the <b>\u2606 watch</b> button to track it here.</div>'; return; }
-    const valued=await Promise.all(items.map(async function(w){ const sm=await liveMedian(w.query); return {w:w, current:sm.median, n:sm.n}; }));
-    let rows="";
-    valued.forEach(function(v){
-      const w=v.w; const cur=v.current; const target=(w.target_price!=null)?Number(w.target_price):null;
-      let alerted=false;
-      if(target!=null && cur){ alerted=(w.direction==="below")?(cur<=target):(cur>=target); }
+
+    // Render rows immediately — prices load progressively (cached = instant, uncached = async update)
+    function wlRowHtml(w){
+      const target=(w.target_price!=null)?Number(w.target_price):null;
       const img=w.image_url||"";
       const targetTxt=(target!=null)?((w.direction==="below"?"below ":"above ")+money(target)):"no target";
-      rows+='<div class="hrow"'+(alerted?' style="background:rgba(43,214,115,.08)"':'')+'>'+
+      const cached=_cachedMedian(w.query);
+      const cur=cached?cached.median:null;
+      const n=cached?cached.n:0;
+      const alerted=target!=null&&cur?(w.direction==="below"?cur<=target:cur>=target):false;
+      return '<div class="hrow wl-item"'+(alerted?' style="background:rgba(43,214,115,.08)"':'')+' id="wlrow_'+w.id+'">'+
         (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
-        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(w.label||w.query)+(alerted?' <span style="font-size:9px;color:var(--up);border:1px solid var(--up);border-radius:3px;padding:0 5px">ALERT</span>':"")+'</div>'+
-        '<div style="font-size:11px;color:var(--dim)">target: '+escapeHtml(targetTxt)+(v.n?(' · '+v.n+' sales'):"")+'</div></div>'+
-        '<div style="text-align:right"><div class="mono" style="font-weight:700">'+(cur?money(cur):"\u2014")+'</div></div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(w.label||w.query)+'<span id="wlalert_'+w.id+'">'+(alerted?' <span style="font-size:9px;color:var(--up);border:1px solid var(--up);border-radius:3px;padding:0 5px">ALERT</span>':"")+'</span></div>'+
+          '<div style="font-size:11px;color:var(--dim)">target: '+escapeHtml(targetTxt)+'<span id="wlsales_'+w.id+'">'+(n?' · '+n+' sales':'')+'</span></div>'+
+        '</div>'+
+        '<div style="text-align:right"><div class="mono" style="font-weight:700" id="wlprice_'+w.id+'">'+(cur?money(cur):'<span class="spinner" style="width:10px;height:10px;border-width:1.5px"></span>')+'</div></div>'+
         '<button class="ed" data-look="'+escapeAttr(w.query)+'">View</button>'+
         '<button class="rm" data-wid="'+w.id+'">Remove</button></div>';
-    });
-    el.innerHTML='<div class="card"><label>TRACKED CARDS</label>'+rows+
-      '<div class="insight" style="margin-top:12px">Targets are checked each time you open this page. Automated email/push alerts are coming next.</div></div>';
-    Array.prototype.forEach.call(el.querySelectorAll("[data-wid]"),function(b){
+    }
+
+    el.innerHTML='<div class="card"><label>TRACKED CARDS</label>'+items.map(wlRowHtml).join('')+
+      '<div class="insight" style="margin-top:12px">Prices load in real-time. Targets are checked on each visit — email/push alerts coming soon.</div></div>';
+
+    Array.prototype.forEach.call(el.querySelectorAll(".rm"),function(b){
       b.onclick=async function(){ const id=b.getAttribute("data-wid"); b.disabled=true; b.textContent="…"; const d=await sb.from("watchlist").delete().eq("id",id); if(d.error){ b.disabled=false; b.textContent="Remove"; alert("Could not remove: "+d.error.message); } else loadWatchlist(); };
     });
     Array.prototype.forEach.call(el.querySelectorAll("[data-look]"),function(b){
       b.onclick=function(){ const qv=b.getAttribute("data-look"); setView("search"); document.getElementById("q").value=qv; run(); };
+    });
+
+    // Load prices async — update each row as it resolves
+    items.forEach(async function(w){
+      try{
+        const sm=await liveMedian(w.query);
+        const priceEl=document.getElementById("wlprice_"+w.id);
+        if(priceEl) priceEl.textContent=sm.median?money(sm.median):"\u2014";
+        const salesEl=document.getElementById("wlsales_"+w.id);
+        if(salesEl) salesEl.textContent=sm.n?' · '+sm.n+' sales':'';
+        const target=w.target_price!=null?Number(w.target_price):null;
+        const alerted=target!=null&&sm.median?(w.direction==="below"?sm.median<=target:sm.median>=target):false;
+        const alertEl=document.getElementById("wlalert_"+w.id);
+        if(alertEl) alertEl.innerHTML=alerted?' <span style="font-size:9px;color:var(--up);border:1px solid var(--up);border-radius:3px;padding:0 5px">ALERT</span>':'';
+        const row=document.getElementById("wlrow_"+w.id);
+        if(row){ row.style.background=alerted?"rgba(43,214,115,.08)":""; }
+      }catch(e){}
     });
   }
 
@@ -1312,10 +1524,27 @@ function renderPage(env = {}) {
     const cardsEl=document.getElementById("profCards");
     const hr=await sb.from("holdings").select("*").eq("user_id",p.id).eq("is_public",true).order("added_at",{ascending:false});
     const holds=(hr.data||[]);
-    if(!holds.length){ cardsEl.innerHTML='<div class="card"><label>PUBLIC CARDS</label><div class="insight">This collector has no public cards yet.</div></div>'; return; }
+    if(!holds.length){ cardsEl.innerHTML='<div class="card"><label>PUBLIC COLLECTION</label><div class="insight">This collector has no public cards yet.</div></div>'; return; }
     await fillThumbs(holds);
     const valued=await Promise.all(holds.slice(0,40).map(async function(h){ const v=await valueHolding(h); return {h:h, current:v.current}; }));
     let total=0; valued.forEach(function(v){ total+=v.current; });
+
+    // Trophy room: top 6 most-valued cards with images (non-sold)
+    const withImgs=valued.filter(function(v){ return thumbOf(v.h) && !v.h.sold; }).sort(function(a,b){return b.current-a.current;}).slice(0,6);
+    const trophyHtml=withImgs.length>1?(
+      '<div class="card" style="margin-bottom:0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><label style="margin-bottom:0">🏆 TROPHY ROOM</label><span style="font-size:11px;color:var(--dim)">top pieces by value</span></div>'+
+      '<div class="showcase-grid" style="grid-template-columns:repeat(auto-fill,minmax(110px,1fr))">'+
+      withImgs.map(function(v){
+        const h=v.h; const img=thumbOf(h);
+        return '<div class="showcase-card" data-card="'+h.id+'">'+
+          '<img src="'+escapeAttr(img)+'" onerror="this.style.display=\'none\'"/>'+
+          '<div class="sc-info"><div class="sc-name">'+escapeHtml(h.title||h.query)+'</div>'+
+          '<div class="sc-grade">'+escapeHtml(h.grade||"Raw")+'</div>'+
+          '<div class="sc-val">'+money(v.current)+'</div></div></div>';
+      }).join("")+
+      '</div></div>'
+    ):"";
+
     let rows="";
     valued.forEach(function(v,idx){
       const h=v.h; const img=thumbOf(h);
@@ -1331,13 +1560,16 @@ function renderPage(env = {}) {
         '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+(h.ask_price!=null?(' · asking '+money(h.ask_price)):"")+'</div></div>'+
         '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+'</div></div>'+act+'</div>';
     });
-    cardsEl.innerHTML='<div class="card"><div class="stats"><div class="stat"><div class="l">Public cards</div><div class="v">'+holds.length+'</div></div>'+
+    cardsEl.innerHTML=
+      '<div class="card"><div class="stats"><div class="stat"><div class="l">Public cards</div><div class="v">'+holds.length+'</div></div>'+
       '<div class="stat hl"><div class="l">Public value</div><div class="v">'+money(total)+'</div></div></div></div>'+
-      '<div class="card"><label>PUBLIC CARDS</label>'+rows+'</div>';
+      trophyHtml+
+      '<div class="card"><label>FULL COLLECTION</label>'+rows+'</div>';
     holds.forEach(function(h){ h._profile=p; });
     Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
     Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-pbuy]"),function(b){ b.onclick=function(){ openOfferModal(holds[Number(b.getAttribute("data-pbuy"))],"buy_now"); }; });
     Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-poffer]"),function(b){ b.onclick=function(){ var h=holds[Number(b.getAttribute("data-poffer"))]; openOfferModal(h, h.for_trade&&!h.for_sale?"trade":"offer"); }; });
+    Array.prototype.forEach.call(cardsEl.querySelectorAll(".showcase-card[data-card]"),function(c){ c.onclick=function(){ openCard(c.getAttribute("data-card")); }; });
   }
 
   // ---------- EDIT PROFILE ----------
@@ -1936,18 +2168,21 @@ function renderPage(env = {}) {
   async function loadLeaderboard(){
     const wrap=document.getElementById("lbWrap");
     const searchWrap=document.getElementById("lbSearchWrap");
+    const hintEl=document.getElementById("lbSubjectHint");
     wrap.innerHTML='<div class="card">Crunching the rankings…</div>';
     Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.classList.toggle("on", b.getAttribute("data-lb")===lbTab); });
     if(searchWrap) searchWrap.style.display=(lbTab==="subject")?"flex":"none";
+    if(hintEl) hintEl.style.display=(lbTab==="subject")?"":"none";
     if(lbTab==="subject"){
       const inp=document.getElementById("lbSubjectInput");
       const goBtn=document.getElementById("lbSubjectGo");
       if(goBtn && !goBtn._wired){ goBtn._wired=true; goBtn.onclick=function(){ runSubjectLeaderboard(); }; inp.addEventListener("keydown",function(e){ if(e.key==="Enter") runSubjectLeaderboard(); }); }
       const term=(inp?inp.value.trim():"");
-      if(!term){ wrap.innerHTML='<div class="card">Type a player name, character, or set above to see who owns the best collection.</div>'; return; }
+      if(!term){ wrap.innerHTML='<div class="card" style="text-align:center;padding:32px 20px"><div style="font-size:36px;margin-bottom:12px">🏆</div><div style="font-size:16px;font-weight:700;margin-bottom:8px">Who owns the biggest collection?</div><div class="insight">Search any player, character, or set above — e.g. <b>Michael Jordan</b>, <b>Charizard</b>, <b>Shohei Ohtani</b>, or <b>Prizm Rookie</b>. See who has the most cards and the highest-valued PC.</div></div>'; return; }
       await runSubjectLeaderboard();
       return;
     }
+    if(!sb){ wrap.innerHTML='<div class="card"><div class="insight">Accounts not configured.</div></div>'; return; }
     try{
       if(lbTab==="followers"){
         const fr=await sb.from("follows").select("following_id").limit(5000);
@@ -1962,29 +2197,74 @@ function renderPage(env = {}) {
       }
     }catch(e){ wrap.innerHTML='<div class="err">Could not load leaderboards.</div>'; }
   }
+
   async function runSubjectLeaderboard(){
     const wrap=document.getElementById("lbWrap");
     const inp=document.getElementById("lbSubjectInput");
     const term=(inp?inp.value.trim():"");
-    if(!term){ wrap.innerHTML='<div class="card">Type a player name, character, or set above to see who owns the best collection.</div>'; return; }
-    wrap.innerHTML='<div class="card">Finding the top '+escapeHtml(term)+' collectors…</div>';
+    if(!term){ wrap.innerHTML='<div class="card">Type a player name, character, or set above.</div>'; return; }
+    wrap.innerHTML='<div class="card">Finding the top <b>'+escapeHtml(term)+'</b> collectors…</div>';
     try{
-      const hr=await sb.from("holdings").select("user_id,added_value,manual_value,title,query").eq("is_public",true).or("title.ilike.%"+term+"%,query.ilike.%"+term+"%").limit(5000);
+      const hr=await sb.from("holdings").select("user_id,added_value,manual_value,title,query,image_url,grade,id").eq("is_public",true).or("title.ilike.%"+term+"%,query.ilike.%"+term+"%").limit(5000);
+      const holds=hr.data||[];
+      // Fill thumbs for image display
+      try{ const need=holds.filter(function(h){return !h.image_url;}).map(function(h){return h.id;}); if(need.length){ const ph=await sb.from("card_photos").select("holding_id,url").in("holding_id",need).order("created_at",{ascending:true}); const byH={}; (ph.data||[]).forEach(function(x){if(!byH[x.holding_id])byH[x.holding_id]=x.url;}); holds.forEach(function(h){if(!h.image_url&&byH[h.id])h._thumb=byH[h.id];}); } }catch(e){}
       const agg={};
-      (hr.data||[]).forEach(function(h){ if(!h.user_id) return; if(!agg[h.user_id]) agg[h.user_id]={val:0,cards:0}; const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0; agg[h.user_id].val+=(isNaN(v)?0:v); agg[h.user_id].cards++; });
-      const byVal={}; for(var k in agg){ byVal[k]=agg[k].val; }
-      renderLeaderboard(byVal,function(v,id){ return money(v)+(agg[id]?' · '+(agg[id].cards)+' card'+(agg[id].cards===1?'':'s'):''); },"Top collectors of "+term);
+      holds.forEach(function(h){
+        if(!h.user_id) return;
+        if(!agg[h.user_id]) agg[h.user_id]={val:0,cards:0,imgs:[]};
+        const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0;
+        agg[h.user_id].val+=(isNaN(v)?0:v);
+        agg[h.user_id].cards++;
+        if(agg[h.user_id].imgs.length<3){ const img=h.image_url||h._thumb||""; if(img) agg[h.user_id].imgs.push(img); }
+      });
+      const arr=Object.keys(agg).map(function(k){return{id:k,val:agg[k].val,cards:agg[k].cards,imgs:agg[k].imgs};}).filter(function(x){return x.cards>0;}).sort(function(a,b){return b.cards-a.cards||b.val-a.val;}).slice(0,20);
+      if(!arr.length){ wrap.innerHTML='<div class="card">No public collections found for "<b>'+escapeHtml(term)+'</b>". Collectors need to set their cards as public.</div>'; return; }
+      const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url,bio").in("id",arr.map(function(x){return x.id;}));
+      const profs={}; (pr.data||[]).forEach(function(p){profs[p.id]=p;});
+      const medals=["🥇","🥈","🥉"];
+      let rows="";
+      arr.forEach(function(x,i){
+        const p=profs[x.id]; if(!p) return;
+        const medal=medals[i]||(""+( i+1));
+        const isMedal=i<3;
+        const cardPreview=x.imgs.length?('<div class="lbrow-cards">'+x.imgs.map(function(u){return '<img src="'+escapeAttr(u)+'" onerror="this.remove()"/>';}).join("")+'</div>'):"";
+        rows+='<div class="lbrow" style="flex-wrap:nowrap;align-items:flex-start">'+
+          '<div style="font-size:'+(isMedal?"18px":"13px")+';width:28px;text-align:center;flex-shrink:0;padding-top:2px">'+escapeHtml(medal)+'</div>'+
+          avatarHtml(p)+
+          '<div style="flex:1;min-width:0">'+
+            '<div class="nm" data-h="'+escapeAttr(p.handle)+'" style="cursor:pointer">'+escapeHtml(p.display_name||("@"+p.handle))+'</div>'+
+            '<div style="font-size:11px;color:var(--muted);margin-top:1px">'+escapeHtml(x.cards)+' card'+(x.cards===1?"":"s")+' · '+money(x.val)+(p.bio?(' · '+escapeHtml(p.bio.slice(0,40))+(p.bio.length>40?"…":"")):"")+'</div>'+
+            cardPreview+
+          '</div>'+
+          '<button class="authbtn" data-h="'+escapeAttr(p.handle)+'" style="font-size:11px;flex-shrink:0;align-self:flex-start">View PC</button>'+
+        '</div>';
+      });
+      wrap.innerHTML='<div class="card"><div style="font-size:13px;color:var(--muted);margin-bottom:14px">Top collectors of <b style="color:var(--text)">'+escapeHtml(term)+'</b> · ranked by card count</div>'+rows+'</div>';
+      Array.prototype.forEach.call(wrap.querySelectorAll(".nm[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
+      Array.prototype.forEach.call(wrap.querySelectorAll("button[data-h]"),function(b){ var hh=b.getAttribute("data-h"); if(hh) b.onclick=function(){ viewProfile(hh); }; });
     }catch(e){ wrap.innerHTML='<div class="err">Could not run the search.</div>'; }
   }
+
   async function renderLeaderboard(counts,fmt,heading){
     const wrap=document.getElementById("lbWrap");
     const arr=Object.keys(counts).map(function(k){ return {id:k,v:counts[k]}; }).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,25);
-    if(!arr.length){ wrap.innerHTML='<div class="card">'+(heading?('<b>'+escapeHtml(heading)+'</b><br><br>'):"")+'Not enough data yet. As collectors add public cards and follow each other, the rankings fill in.</div>'; return; }
+    if(!arr.length){ wrap.innerHTML='<div class="card" style="text-align:center;padding:28px 20px"><div style="font-size:32px;margin-bottom:10px">📊</div>'+(heading?('<b>'+escapeHtml(heading)+'</b><br><br>'):"")+'Not enough data yet. As collectors add public cards and follow each other, the rankings fill in.</div>'; return; }
     let profs={};
     const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",arr.map(function(x){return x.id;}));
     (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
+    const medals=["🥇","🥈","🥉"];
     let rows="";
-    arr.forEach(function(x,i){ const p=profs[x.id]; if(!p) return; const label=typeof fmt==="function"?fmt(x.v,x.id):fmt; rows+='<div class="lbrow"><div class="rank">'+(i+1)+'</div>'+avatarHtml(p)+'<div class="nm" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div><div class="val">'+escapeHtml(label)+'</div></div>'; });
+    arr.forEach(function(x,i){
+      const p=profs[x.id]; if(!p) return;
+      const label=typeof fmt==="function"?fmt(x.v,x.id):fmt;
+      const medal=i<3?medals[i]:null;
+      rows+='<div class="lbrow">'+
+        (medal?('<div style="font-size:18px;width:28px;text-align:center;flex-shrink:0">'+medal+'</div>'):('<div class="rank">'+(i+1)+'</div>'))+
+        avatarHtml(p)+
+        '<div class="nm" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div>'+
+        '<div class="val">'+escapeHtml(label)+'</div></div>';
+    });
     wrap.innerHTML='<div class="card">'+(heading?('<div style="font-size:13px;color:var(--muted);margin-bottom:10px">'+escapeHtml(heading)+'</div>'):"")+rows+'</div>';
     Array.prototype.forEach.call(wrap.querySelectorAll(".nm[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
   }
@@ -2222,7 +2502,7 @@ function renderPage(env = {}) {
   var _oc=document.getElementById("offerCancel"); if(_oc) _oc.onclick=function(){ document.getElementById("offerModal").style.display="none"; pendingOffer=null; };
   var _om=document.getElementById("offerModal"); if(_om) _om.addEventListener("click",function(e){ if(e.target.id==="offerModal"){ _om.style.display="none"; pendingOffer=null; } });
   Array.prototype.forEach.call(document.querySelectorAll("#mktTabs button"),function(b){ b.onclick=function(){ mktFilter=b.getAttribute("data-mkt"); loadMarket(); }; });
-  Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.onclick=function(){ lbTab=b.getAttribute("data-lb"); loadLeaderboard(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.onclick=function(){ lbTab=b.getAttribute("data-lb"); loadLeaderboard(); window.scrollTo(0,0); }; });
   var _gc=document.getElementById("gifCancel"); if(_gc) _gc.onclick=function(){ document.getElementById("gifModal").style.display="none"; gifTarget=null; };
   var _gm=document.getElementById("gifModal"); if(_gm) _gm.addEventListener("click",function(e){ if(e.target.id==="gifModal"){ _gm.style.display="none"; gifTarget=null; } });
   var _gu=document.getElementById("gifUseUrl"); if(_gu) _gu.onclick=function(){ var v=(document.getElementById("gifSearch").value||"").trim(); if(isImgUrl(v)){ pickGif(v); } else { alert("Paste a direct GIF or image URL (ending in .gif/.png/.jpg) or a Giphy/Tenor link."); } };
