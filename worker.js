@@ -1258,6 +1258,14 @@ function renderPage(env = {}) {
     const lo=prices.length?Math.min.apply(null,prices):0;
     const avg=prices.length?(prices.reduce(function(a,b){return a+b;},0)/prices.length):0;
     const svg=buildSalesChart(sales);
+    if(!basis.length){
+      const ownerVal=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):(Number(h.added_value)||0);
+      el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label>'+
+        (ownerVal?('<div class="stats"><div class="stat hl"><div class="l">Saved value</div><div class="v">'+money(ownerVal)+'</div></div></div>'):'')+
+        '<div class="insight" style="margin-top:10px">No marketplace sales found for this card in our live data source (The Card API). Niche cards and 1-of-1 parallels often aren\\'t indexed there yet, so your saved value is used across the app. Popular cards show a full sales history and trend.</div></div>';
+      if(h.cert) loadPopulation(h.cert);
+      return;
+    }
     const stats='<div class="stats">'+
       '<div class="stat hl"><div class="l">Last sold</div><div class="v">'+(last?money(last.price):"\u2014")+'</div></div>'+
       '<div class="stat"><div class="l">Last sale date</div><div class="v" style="font-size:13px">'+escapeHtml(last&&last.sale_date?last.sale_date:"\u2014")+'</div></div>'+
