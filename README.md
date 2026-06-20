@@ -14,6 +14,9 @@ Foilio is a trading-card market and social portfolio app. The Cloudflare Worker 
 - list cards **for sale / trade** with an asking price, and let other collectors **buy now**, **make an offer**, or **propose a trade**
 - **direct message** other collectors (with realtime delivery), with offers/buy requests threaded into the conversation and accept/decline controls for the seller
 - **leaderboards** ranking collectors by public portfolio value, followers, and collection size
+- **card detail pages** with **likes**, **comments** (text + GIFs), and owner **photo uploads**
+- **GIFs/images in direct messages**
+- an in-app **notifications center** (follows, likes, comments, offers, offer responses)
 
 The product direction is a mix of Card Ladder, LinkedIn, stock-market tools, and Instagram for trading cards: live trends, uploaded card portfolios, public collector profiles, follows, messaging, and upload/price alerts.
 
@@ -25,7 +28,12 @@ tables and security rules in Supabase. This is a one-time, copy-paste step:
 1. Open your project at [supabase.com](https://supabase.com) → **SQL Editor** → **New query**.
 2. Open [`supabase/schema.sql`](supabase/schema.sql) in this repo, copy its entire contents, paste into the editor, and click **Run**.
 3. Then open [`supabase/02_marketplace_messaging.sql`](supabase/02_marketplace_messaging.sql), and run it the same way (it adds the marketplace, offers, and messaging tables).
-4. You should see "Success. No rows returned." after each. The scripts are safe to run again any time.
+4. Then open [`supabase/03_engagement.sql`](supabase/03_engagement.sql) and run it (likes, comments, card photos, notifications, and a `cards` storage bucket).
+5. You should see "Success. No rows returned." after each. The scripts are safe to run again any time.
+
+### Optional: GIF search
+
+GIFs in comments and DMs work by pasting a GIF/image URL out of the box. To enable an in-app **GIF search picker**, create a free [GIPHY developer API key](https://developers.giphy.com/) and add it as a Cloudflare Worker variable named `GIPHY_API_KEY` (it is a public client key, so a plain Variable is fine). Without it, the GIF button falls back to "paste a URL".
 
 The script creates `profiles`, `follows`, and `watchlist` tables, adds `user_id` + `is_public`
 columns to `holdings`, sets up Row Level Security so users can only edit their own data (while
