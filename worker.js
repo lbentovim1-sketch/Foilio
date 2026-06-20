@@ -695,7 +695,8 @@ function renderPage(env = {}) {
     const sum=document.getElementById("pfSummary");
     const list=document.getElementById("pfList");
     sum.innerHTML=""; list.innerHTML='<div class="card">Loading your portfolio…</div>';
-    const r=await sb.from("holdings").select("*").order("added_at",{ascending:false});
+    if(!currentSession){ list.innerHTML='<div class="card">Sign in to see your portfolio.</div>'; return; }
+    const r=await sb.from("holdings").select("*").eq("user_id",currentSession.user.id).order("added_at",{ascending:false});
     if(r.error){ list.innerHTML='<div class="err"><b>Could not load portfolio.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
     const holds=r.data||[];
     if(!holds.length){ list.innerHTML='<div class="card">No cards yet. Go to <b>Search</b>, look up a card, and tap <b>"+ Add"</b> on the one you own.</div>'; return; }
@@ -1316,7 +1317,7 @@ function renderPage(env = {}) {
         '</div>';
       document.getElementById("certAdd").onclick=async function(){
         const b=document.getElementById("certAdd"); b.disabled=true; b.textContent="Adding…";
-        const r=await sb.from("holdings").insert({ query:certResult.query, title:certResult.title, grade:certResult.grade, image_url:certResult.image, added_value:certResult.median, cert:certResult.cert });
+        const r=await sb.from("holdings").insert({ user_id:currentSession.user.id, query:certResult.query, title:certResult.title, grade:certResult.grade, image_url:certResult.image, added_value:certResult.median, cert:certResult.cert });
         if(r.error){ b.disabled=false; b.textContent="+ Add this card to my portfolio"; alert("Could not add: "+r.error.message); }
         else { b.textContent="\u2713 Added — refreshing…"; loadPortfolio(); }
       };
@@ -1354,6 +1355,7 @@ function renderPage(env = {}) {
     const grade=gradeOf(s);
     const value=(typeof s.price==="number")?s.price:(lastResult?lastResult.median:0);
     const r=await sb.from("holdings").insert({
+      user_id:currentSession.user.id,
       query:(lastResult&&lastResult.query)||"",
       title:s.title||(lastResult&&lastResult.title)||"",
       grade:grade,
