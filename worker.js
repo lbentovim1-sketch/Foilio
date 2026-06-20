@@ -1091,7 +1091,7 @@ function renderPage(env = {}) {
       if(fb) fb.onclick=async function(){
         fb.disabled=true;
         if(iFollow){ const d=await sb.from("follows").delete().eq("follower_id",currentSession.user.id).eq("following_id",p.id); if(!d.error){ iFollow=false; fb.textContent="Follow"; fb.classList.remove("following"); followers=Math.max(0,followers-1); document.getElementById("followersN").textContent=followers; } }
-        else { const i=await sb.from("follows").insert({follower_id:currentSession.user.id, following_id:p.id}); if(!i.error){ iFollow=true; fb.textContent="Following"; fb.classList.add("following"); followers=followers+1; document.getElementById("followersN").textContent=followers; notify(p.id,"follow",null,null); } }
+        else { const i=await sb.from("follows").insert({follower_id:currentSession.user.id, following_id:p.id}); if(!i.error){ iFollow=true; fb.textContent="Following"; fb.classList.add("following"); followers=followers+1; document.getElementById("followersN").textContent=followers; } }
         fb.disabled=false;
       };
       var mb=document.getElementById("msgBtn");
@@ -1197,12 +1197,7 @@ function renderPage(env = {}) {
   }
 
   // ---------- NOTIFICATIONS ----------
-  async function notify(recipientId,type,holdingId,body){
-    try{
-      if(!currentSession || !recipientId || recipientId===currentSession.user.id) return;
-      await sb.from("notifications").insert({ user_id:recipientId, actor_id:currentSession.user.id, type:type, holding_id:holdingId||null, body:body||null });
-    }catch(e){}
-  }
+  // notify() removed — notifications are now created by database triggers
   async function refreshNotif(){
     if(!sb || !currentSession){ notifCount=0; return; }
     try{ const r=await sb.from("notifications").select("id",{count:"exact",head:true}).eq("user_id",currentSession.user.id).is("read_at",null); notifCount=r.count||0; }catch(e){ notifCount=0; }
@@ -1434,7 +1429,7 @@ function renderPage(env = {}) {
       if(!currentSession){ alert("Sign in to like cards."); return; }
       lb.disabled=true;
       if(iLike){ const d=await sb.from("card_likes").delete().eq("holding_id",id).eq("user_id",currentSession.user.id); if(!d.error){ iLike=false; likeCount=Math.max(0,likeCount-1); lb.classList.remove("on"); } }
-      else { const i=await sb.from("card_likes").insert({holding_id:id,user_id:currentSession.user.id}); if(!i.error){ iLike=true; likeCount++; lb.classList.add("on"); notify(h.user_id,"like",id,h.title||h.query); } }
+      else { const i=await sb.from("card_likes").insert({holding_id:id,user_id:currentSession.user.id}); if(!i.error){ iLike=true; likeCount++; lb.classList.add("on"); } }
       document.getElementById("cLikeN").textContent=likeCount; lb.disabled=false;
     };
     var bBuy=document.getElementById("cBuy"); if(bBuy) bBuy.onclick=function(){ h._profile=owner; openOfferModal(h,"buy_now"); };
@@ -1494,7 +1489,6 @@ function renderPage(env = {}) {
     const inp=document.getElementById("cCommentInput"); if(inp) inp.value="";
     const r=await sb.from("card_comments").insert(payload);
     if(r.error){ alert("Could not post: "+r.error.message); return; }
-    try{ const hr=await sb.from("holdings").select("user_id,title,query").eq("id",id).maybeSingle(); if(hr.data){ notify(hr.data.user_id,"comment",id,hr.data.title||hr.data.query); } }catch(e){}
     loadComments(id);
   }
 
@@ -1615,7 +1609,6 @@ function renderPage(env = {}) {
       try{ const o=await sb.from("offers").select("holding_id").eq("id",offerId).maybeSingle(); if(o.data&&o.data.holding_id){ await sb.from("holdings").update({sold:true,for_sale:false,for_trade:false}).eq("id",o.data.holding_id); } }catch(e){}
     }
     await sb.from("messages").insert({ sender_id:currentSession.user.id, recipient_id:userId, body:body, offer_id:offerId });
-    notify(userId, status==="accepted"?"offer_accepted":"offer_declined", null, null);
     openConversation(userId,true);
   }
 
@@ -1724,7 +1717,6 @@ function renderPage(env = {}) {
     const kindLbl=kind==="buy_now"?"Buy-now request":(kind==="trade"?"Trade proposal":"Offer");
     const body=kindLbl+" for "+(h.title||h.query)+(amount!=null?(" — "+money(amount)):"")+(note?(" — "+note):"");
     await sb.from("messages").insert({ sender_id:currentSession.user.id, recipient_id:h.user_id, body:body, holding_id:h.id, offer_id:off.data.id });
-    notify(h.user_id,"offer",h.id,kindLbl+(amount!=null?(" — "+money(amount)):"")+" for "+(h.title||h.query));
     document.getElementById("offerModal").style.display="none"; pendingOffer=null;
     btn.disabled=false; btn.textContent="Send";
     startConversation(h.user_id, h._profile&&h._profile.handle);
