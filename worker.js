@@ -187,8 +187,45 @@ function renderPage(env = {}) {
   .field{margin-bottom:14px}
   .field label{margin-bottom:6px}
   .switch{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text)}
-  .modalbox{background:var(--surface);border:1px solid var(--borderB);border-radius:16px;padding:24px;max-width:380px;width:100%}
-  @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%;justify-content:center}.nav button{flex:1}}
+  .modalbox{background:var(--surface);border:1px solid var(--borderB);border-radius:16px;padding:24px;max-width:420px;width:100%}
+  .navbadge{display:inline-block;min-width:16px;padding:0 5px;margin-left:5px;background:var(--down);color:#fff;border-radius:9px;font-size:10px;font-weight:800;line-height:16px;text-align:center;vertical-align:1px}
+  .badge{display:inline-block;font-size:9px;font-weight:800;border-radius:4px;padding:1px 5px;vertical-align:1px;margin-left:5px}
+  .badge.sale{color:var(--up);border:1px solid var(--up)}
+  .badge.trade{color:var(--gold);border:1px solid var(--gold)}
+  .mkt{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
+  .mktcard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;display:flex;flex-direction:column}
+  .mktcard img{width:100%;height:170px;object-fit:contain;border-radius:8px;background:var(--ink);margin-bottom:10px}
+  .mktcard .nm{font-size:13px;font-weight:700;line-height:1.3;min-height:34px}
+  .mktcard .seller{font-size:11px;color:var(--indigo);cursor:pointer;margin-top:4px}
+  .mktcard .ask{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;margin-top:8px}
+  .mktcard .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .mktcard .acts button{flex:1;min-width:80px;font-size:12px;padding:8px 6px;border-radius:8px;cursor:pointer;font-family:'Manrope',sans-serif;font-weight:700;border:1px solid var(--border);background:var(--surface2);color:var(--text)}
+  .mktcard .acts button.buy{background:var(--up);color:#04210f;border-color:var(--up)}
+  .mktcard .acts button.offer{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+  .lbtabs,.msgtabs{display:flex;gap:6px;margin:14px 0}
+  .lbtabs button,.msgtabs button{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif}
+  .lbtabs button.on,.msgtabs button.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+  .lbrow{display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid var(--border)}
+  .lbrow .rank{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--dim);width:26px;text-align:center;flex-shrink:0}
+  .lbrow .nm{flex:1;min-width:0;font-size:14px;font-weight:600;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lbrow .val{font-family:'JetBrains Mono',monospace;font-weight:700}
+  .convo{display:flex;align-items:center;gap:12px;padding:12px 6px;border-bottom:1px solid var(--border);cursor:pointer}
+  .convo:hover{background:var(--surface2)}
+  .convo .cmeta{flex:1;min-width:0}
+  .convo .cmeta .cn{font-size:14px;font-weight:700}
+  .convo .cmeta .cp{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .convo .dot{width:9px;height:9px;border-radius:50%;background:var(--indigo);flex-shrink:0}
+  .thread{display:flex;flex-direction:column;gap:8px;max-height:52vh;overflow-y:auto;padding:6px 2px;margin-top:12px}
+  .bubble{max-width:80%;padding:9px 13px;border-radius:14px;font-size:14px;line-height:1.4;word-wrap:break-word}
+  .bubble.me{align-self:flex-end;background:var(--indigo);color:#fff;border-bottom-right-radius:4px}
+  .bubble.them{align-self:flex-start;background:var(--surface2);border:1px solid var(--border);border-bottom-left-radius:4px}
+  .bubble .bt{font-size:10px;opacity:.7;margin-top:4px}
+  .offercard{align-self:stretch;background:var(--ink);border:1px solid var(--borderB);border-radius:12px;padding:12px;font-size:13px}
+  .offercard .oa{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:700}
+  .offercard .obtns{display:flex;gap:8px;margin-top:10px}
+  .composer{display:flex;gap:8px;margin-top:12px}
+  .composer input{flex:1}
+  @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%;justify-content:center}.nav button{flex:1}.mkt{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -216,8 +253,8 @@ function renderPage(env = {}) {
       <div class="pillars">
         <div class="pillar"><b>Live market tape</b><span>Trend cards by category, price velocity, and recent confirmed sales.</span></div>
         <div class="pillar"><b>Public portfolios</b><span>Show holdings, gains, grails, and cards available for sale or trade.</span></div>
-        <div class="pillar"><b>@handles + follow graph</b><span>Build collector profiles that make reputation and taste visible.</span></div>
-        <div class="pillar"><b>Watchlists + alerts</b><span>Track cards and get flagged when a watchlist price moves.</span></div>
+        <div class="pillar"><b>Buy, sell &amp; trade</b><span>List cards for sale or trade and make offers or buy now from other collectors.</span></div>
+        <div class="pillar"><b>Messaging + leaderboards</b><span>DM collectors, negotiate deals, and climb the value and follower rankings.</span></div>
       </div>
     </div>
     <div class="network-card">
@@ -266,6 +303,34 @@ function renderPage(env = {}) {
   <div class="card" id="editForm"></div>
 </div></div>
 
+<div id="marketView" style="display:none"><div class="wrap">
+  <h1 style="font-size:28px">Marketplace</h1>
+  <p class="sub">Cards collectors have listed for sale or trade. Buy now, make an offer, or message the seller to work out a deal.</p>
+  <div class="msgtabs" id="mktTabs">
+    <button data-mkt="all" class="on">All</button>
+    <button data-mkt="sale">For sale</button>
+    <button data-mkt="trade">For trade</button>
+  </div>
+  <div id="mktWrap"></div>
+</div></div>
+
+<div id="leaderboardView" style="display:none"><div class="wrap">
+  <h1 style="font-size:28px">Leaderboards</h1>
+  <p class="sub">The most notable collectors on Foilio, ranked by public portfolio value, followers, and collection size.</p>
+  <div class="lbtabs" id="lbTabs">
+    <button data-lb="value" class="on">Portfolio value</button>
+    <button data-lb="followers">Followers</button>
+    <button data-lb="cards">Cards</button>
+  </div>
+  <div id="lbWrap"></div>
+</div></div>
+
+<div id="messagesView" style="display:none"><div class="wrap">
+  <h1 style="font-size:28px">Messages</h1>
+  <p class="sub" id="msgSub">Your conversations with other collectors.</p>
+  <div id="msgWrap"></div>
+</div></div>
+
 <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px">
   <div class="modalbox">
     <div id="modalTitle" style="font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3"></div>
@@ -297,6 +362,36 @@ function renderPage(env = {}) {
   </div>
 </div>
 
+<div id="sellModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div class="modalbox">
+    <div id="sellTitle" style="font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3"></div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px">List this card on the marketplace. Listing it makes the card public.</div>
+    <label class="switch" style="margin-bottom:12px"><input type="checkbox" id="sellFor" style="width:auto"/> For sale</label>
+    <input id="sellPrice" type="text" inputmode="decimal" placeholder="Asking / buy-now price (optional)" style="margin-bottom:12px"/>
+    <label class="switch" style="margin-bottom:12px"><input type="checkbox" id="sellOffers" checked style="width:auto"/> Accept offers</label>
+    <label class="switch" style="margin-bottom:12px"><input type="checkbox" id="sellTrade" style="width:auto"/> Open to trades</label>
+    <input id="sellNote" type="text" placeholder="Note for buyers (optional)" style="margin-bottom:4px"/>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="authbtn primary" id="sellSave" style="flex:1">Save listing</button>
+      <button class="authbtn" id="sellCancel">Cancel</button>
+    </div>
+    <button id="sellRemove" style="background:none;border:none;color:var(--muted);font-size:12px;margin-top:14px;cursor:pointer;text-decoration:underline;display:block">Remove from marketplace</button>
+  </div>
+</div>
+
+<div id="offerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div class="modalbox">
+    <div id="offerTitle" style="font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3"></div>
+    <div id="offerSub" style="font-size:12px;color:var(--dim);margin-bottom:16px"></div>
+    <input id="offerAmount" type="text" inputmode="decimal" placeholder="Your offer ($)" style="margin-bottom:10px"/>
+    <input id="offerNote" type="text" placeholder="Add a message (optional)" style="margin-bottom:4px"/>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="authbtn primary" id="offerSend" style="flex:1">Send</button>
+      <button class="authbtn" id="offerCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="foot">
   <span class="foil" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px">Foilio</span>
   <span>Prices from real recent sales · a social market for collectors</span>
@@ -322,6 +417,13 @@ function renderPage(env = {}) {
   let certResult=null;
   let editingId=null;
   let pendingWatch=null;
+  let pendingSell=null;
+  let pendingOffer=null;
+  let mktFilter="all";
+  let lbTab="value";
+  let activeConvo=null;
+  let unreadCount=0;
+  let msgChannel=null;
 
   // ---------- HELPERS ----------
   const money=function(n){return "$"+Math.round(n||0).toLocaleString();};
@@ -449,35 +551,46 @@ function renderPage(env = {}) {
     var items='';
     items+='<button id="navSearch" class="'+(view==="search"?"on":"")+'">Search</button>';
     items+='<button id="navTrending" class="'+(view==="trending"?"on":"")+'">Trending</button>';
+    items+='<button id="navMarket" class="'+(view==="market"?"on":"")+'">Market</button>';
+    items+='<button id="navLeaders" class="'+(view==="leaderboard"?"on":"")+'">Leaders</button>';
     if(sb && currentSession){
       items+='<button id="navPortfolio" class="'+(view==="portfolio"?"on":"")+'">Portfolio</button>';
       items+='<button id="navWatch" class="'+(view==="watchlist"?"on":"")+'">Watchlist</button>';
-      items+='<button id="navProfile" class="'+(view==="profile"||view==="editProfile"?"on":"")+'">My Profile</button>';
+      items+='<button id="navMsgs" class="'+(view==="messages"?"on":"")+'">Messages'+(unreadCount?'<span class="navbadge">'+unreadCount+'</span>':"")+'</button>';
+      items+='<button id="navProfile" class="'+(view==="profile"||view==="editProfile"?"on":"")+'">Profile</button>';
     }
     navArea.innerHTML='<div class="nav">'+items+'</div>';
     document.getElementById("navSearch").onclick=function(){ setView("search"); };
     document.getElementById("navTrending").onclick=function(){ setView("trending"); };
+    document.getElementById("navMarket").onclick=function(){ setView("market"); };
+    document.getElementById("navLeaders").onclick=function(){ setView("leaderboard"); };
     if(sb && currentSession){
       document.getElementById("navPortfolio").onclick=function(){ setView("portfolio"); };
       document.getElementById("navWatch").onclick=function(){ setView("watchlist"); };
+      document.getElementById("navMsgs").onclick=function(){ setView("messages"); };
       document.getElementById("navProfile").onclick=function(){ if(myProfile&&myProfile.handle){ viewProfile(myProfile.handle); } else { setView("editProfile"); } };
     }
   }
-  const VIEWS=["search","trending","portfolio","watchlist","profile","editProfile"];
   function applyView(){
     document.getElementById("searchView").style.display=(view==="search")?"":"none";
     document.getElementById("trendingView").style.display=(view==="trending")?"":"none";
+    document.getElementById("marketView").style.display=(view==="market")?"":"none";
+    document.getElementById("leaderboardView").style.display=(view==="leaderboard")?"":"none";
     document.getElementById("portfolioView").style.display=(view==="portfolio")?"":"none";
     document.getElementById("watchlistView").style.display=(view==="watchlist")?"":"none";
+    document.getElementById("messagesView").style.display=(view==="messages")?"":"none";
     document.getElementById("profileView").style.display=(view==="profile")?"":"none";
     document.getElementById("editProfileView").style.display=(view==="editProfile")?"":"none";
   }
   function setView(v,skipPush){
-    view=v; applyView(); renderNav();
-    if(!skipPush){ try{ history.pushState({view:v}, "", v==="search"?"/":("/"+ (v==="trending"?"trending":v))); }catch(e){} }
+    view=v; activeConvo=null; applyView(); renderNav();
+    if(!skipPush){ try{ history.pushState({view:v}, "", v==="search"?"/":("/"+v)); }catch(e){} }
     if(v==="portfolio") loadPortfolio();
     if(v==="watchlist") loadWatchlist();
     if(v==="trending") loadTrending();
+    if(v==="market") loadMarket();
+    if(v==="leaderboard") loadLeaderboard();
+    if(v==="messages") loadConversations();
     if(v==="editProfile") renderEditProfile();
     window.scrollTo(0,0);
   }
@@ -492,18 +605,22 @@ function renderPage(env = {}) {
         currentSession=(res&&res.data)?res.data.session:null;
         await ensureMyProfile();
         renderAuth(); renderNav();
-        if(currentSession) loadHomeFeed();
+        if(currentSession){ loadHomeFeed(); initMessaging(); }
       }catch(e){}
     }).catch(function(){});
     sb.auth.onAuthStateChange(function(_e,session){
       currentSession=session; panelOpen=false;
-      if(!session && (view==="portfolio"||view==="watchlist"||view==="editProfile")){ setView("search"); }
+      if(!session){
+        unreadCount=0; myProfile=null;
+        try{ if(msgChannel){ sb.removeChannel(msgChannel); msgChannel=null; } }catch(e){}
+        if(view==="portfolio"||view==="watchlist"||view==="editProfile"||view==="messages"){ setView("search"); }
+      }
       renderAuth(); renderNav();
       // Defer any Supabase calls out of the auth callback. supabase-js holds an
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(currentSession) initMessaging(); }catch(e){}
       },0);
     });
   }
@@ -514,8 +631,11 @@ function renderPage(env = {}) {
     var m=path.match(/^\\/u\\/([A-Za-z0-9_]{1,30})$/)||path.match(/^\\/@([A-Za-z0-9_]{1,30})$/);
     if(m){ viewProfile(m[1], true); return; }
     if(path==="/trending"){ setView("trending", true); return; }
+    if(path==="/market"){ setView("market", true); return; }
+    if(path==="/leaderboard"){ setView("leaderboard", true); return; }
     if(path==="/watchlist" && currentSession){ setView("watchlist", true); return; }
     if(path==="/portfolio" && currentSession){ setView("portfolio", true); return; }
+    if(path==="/messages" && currentSession){ setView("messages", true); return; }
     setView("search", true);
   }
   window.addEventListener("popstate",function(){ routeFromPath(false); });
@@ -595,12 +715,14 @@ function renderPage(env = {}) {
       const img=h.image_url||"";
       const manualTag=v.manual?' <span style="font-size:9px;color:var(--gold);border:1px solid var(--gold);border-radius:3px;padding:0 4px;vertical-align:1px">MANUAL</span>':"";
       const pubTag=(h.is_public!==false)?'<span style="font-size:9px;color:var(--up)">public</span>':'<span style="font-size:9px;color:var(--dim)">private</span>';
+      const listTag=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
       const glHtml=add>0?('<div style="font-size:12px;color:'+(diff>=0?"var(--up)":"var(--down)")+'">'+(diff>=0?"+":"")+money(diff)+' ('+(dpct>=0?"+":"")+dpct.toFixed(0)+'%)</div>'):'<div style="font-size:12px;color:var(--dim)">\u2014</div>';
       rows+='<div class="hrow">'+
         (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
-        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+'</div>'+
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+listTag+'</div>'+
         '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+' · added '+money(add)+' · '+pubTag+'</div></div>'+
         '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+manualTag+'</div>'+glHtml+'</div>'+
+        '<button class="ed" data-sell="'+h.id+'">'+((h.for_sale||h.for_trade)?"Listing":"Sell/Trade")+'</button>'+
         '<button class="ed" data-pub="'+h.id+'">'+((h.is_public!==false)?"Hide":"Show")+'</button>'+
         '<button class="ed" data-edit="'+h.id+'">Edit</button>'+
         '<button class="rm" data-id="'+h.id+'">Remove</button></div>';
@@ -632,6 +754,13 @@ function renderPage(env = {}) {
         b.disabled=true;
         const u=await sb.from("holdings").update({is_public:!cur}).eq("id",id);
         if(u.error){ b.disabled=false; alert("Could not update: "+u.error.message); } else loadPortfolio();
+      };
+    });
+    Array.prototype.forEach.call(list.querySelectorAll("[data-sell]"),function(b){
+      b.onclick=function(){
+        const id=b.getAttribute("data-sell");
+        const found=valued.filter(function(v){return v.h.id===id;})[0];
+        if(found) openSellModal(found.h);
       };
     });
   }
@@ -763,7 +892,7 @@ function renderPage(env = {}) {
 
     const actionBtn=isMe
       ? '<button class="followbtn following" id="editProfBtn">Edit profile</button>'
-      : (currentSession?('<button class="followbtn'+(iFollow?" following":"")+'" id="followBtn">'+(iFollow?"Following":"Follow")+'</button>'):'');
+      : (currentSession?('<button class="followbtn'+(iFollow?" following":"")+'" id="followBtn">'+(iFollow?"Following":"Follow")+'</button> <button class="followbtn following" id="msgBtn">Message</button>'):'');
 
     body.innerHTML='<div class="card"><div class="profhead">'+
       avatarHtml(p,"bigav")+
@@ -786,6 +915,8 @@ function renderPage(env = {}) {
         else { const i=await sb.from("follows").insert({follower_id:currentSession.user.id, following_id:p.id}); if(!i.error){ iFollow=true; fb.textContent="Following"; fb.classList.add("following"); followers=followers+1; document.getElementById("followersN").textContent=followers; } }
         fb.disabled=false;
       };
+      var mb=document.getElementById("msgBtn");
+      if(mb) mb.onclick=function(){ startConversation(p.id, p.handle); };
     }
 
     // public cards
@@ -796,17 +927,26 @@ function renderPage(env = {}) {
     const valued=await Promise.all(holds.slice(0,40).map(async function(h){ const v=await valueHolding(h); return {h:h, current:v.current}; }));
     let total=0; valued.forEach(function(v){ total+=v.current; });
     let rows="";
-    valued.forEach(function(v){
+    valued.forEach(function(v,idx){
       const h=v.h; const img=h.image_url||"";
+      const tags=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
+      let act="";
+      if(!isMe && currentSession && !h.sold && (h.for_sale||h.for_trade)){
+        if(h.for_sale && h.ask_price!=null) act='<button class="ed" data-pbuy="'+idx+'">Buy '+money(h.ask_price)+'</button>';
+        else act='<button class="ed" data-poffer="'+idx+'">'+(h.for_trade&&!h.for_sale?"Trade":"Offer")+'</button>';
+      }
       rows+='<div class="hrow">'+
         (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
-        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+'</div>'+
-        '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+'</div></div>'+
-        '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+'</div></div></div>';
+        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+tags+'</div>'+
+        '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+(h.ask_price!=null?(' · asking '+money(h.ask_price)):"")+'</div></div>'+
+        '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+'</div></div>'+act+'</div>';
     });
     cardsEl.innerHTML='<div class="card"><div class="stats"><div class="stat"><div class="l">Public cards</div><div class="v">'+holds.length+'</div></div>'+
       '<div class="stat hl"><div class="l">Public value</div><div class="v">'+money(total)+'</div></div></div></div>'+
       '<div class="card"><label>PUBLIC CARDS</label>'+rows+'</div>';
+    holds.forEach(function(h){ h._profile=p; });
+    Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-pbuy]"),function(b){ b.onclick=function(){ openOfferModal(holds[Number(b.getAttribute("data-pbuy"))],"buy_now"); }; });
+    Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-poffer]"),function(b){ b.onclick=function(){ var h=holds[Number(b.getAttribute("data-poffer"))]; openOfferModal(h, h.for_trade&&!h.for_sale?"trade":"offer"); }; });
   }
 
   // ---------- EDIT PROFILE ----------
@@ -873,6 +1013,265 @@ function renderPage(env = {}) {
     myProfile=Object.assign({},myProfile,payload);
     msg.style.color="var(--up)"; msg.textContent="Profile saved.";
     renderAuth();
+  }
+
+  // ---------- MESSAGING ----------
+  function otherId(m){ return m.sender_id===currentSession.user.id ? m.recipient_id : m.sender_id; }
+  async function refreshUnread(){
+    if(!sb || !currentSession){ unreadCount=0; return; }
+    try{
+      const r=await sb.from("messages").select("id",{count:"exact",head:true}).eq("recipient_id",currentSession.user.id).is("read_at",null);
+      unreadCount=r.count||0;
+    }catch(e){ unreadCount=0; }
+  }
+  function initMessaging(){
+    if(!sb || !currentSession) return;
+    setTimeout(async function(){ try{ await refreshUnread(); renderNav(); }catch(e){} },0);
+    try{
+      if(msgChannel){ sb.removeChannel(msgChannel); msgChannel=null; }
+      msgChannel=sb.channel("dm_"+currentSession.user.id)
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"recipient_id=eq."+currentSession.user.id},function(payload){
+          if(view==="messages" && activeConvo && payload.new && payload.new.sender_id===activeConvo){ openConversation(activeConvo,true); }
+          else { unreadCount=unreadCount+1; renderNav(); }
+        }).subscribe();
+    }catch(e){}
+  }
+  async function startConversation(userId,handle){
+    if(!currentSession){ alert("Sign in to send messages."); return; }
+    if(userId===currentSession.user.id){ return; }
+    view="messages"; activeConvo=userId; applyView(); renderNav();
+    try{ history.pushState({view:"messages"},"","/messages"); }catch(e){}
+    window.scrollTo(0,0);
+    openConversation(userId,false,handle);
+  }
+  async function loadConversations(){
+    const wrap=document.getElementById("msgWrap");
+    activeConvo=null;
+    document.getElementById("msgSub").textContent="Your conversations with other collectors.";
+    wrap.innerHTML='<div class="card">Loading conversations…</div>';
+    const r=await sb.from("messages").select("*").or("sender_id.eq."+currentSession.user.id+",recipient_id.eq."+currentSession.user.id).order("created_at",{ascending:false}).limit(400);
+    if(r.error){ wrap.innerHTML='<div class="err"><b>Could not load messages.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
+    const msgs=r.data||[];
+    const byUser={}; const order=[];
+    msgs.forEach(function(m){ const o=otherId(m); if(!byUser[o]){ byUser[o]={last:m,unread:0}; order.push(o); } if(m.recipient_id===currentSession.user.id && !m.read_at) byUser[o].unread++; });
+    if(!order.length){ wrap.innerHTML='<div class="card">No messages yet. Visit a collector\\'s profile or a marketplace card and tap <b>Message</b> to start a conversation.</div>'; return; }
+    let profs={};
+    const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",order);
+    (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
+    let rows="";
+    order.forEach(function(o){
+      const p=profs[o]||{handle:"collector"}; const c=byUser[o];
+      rows+='<div class="convo" data-uid="'+o+'">'+avatarHtml(p)+
+        '<div class="cmeta"><div class="cn">'+escapeHtml(p.display_name||("@"+p.handle))+(c.unread?' <span class="navbadge">'+c.unread+'</span>':"")+'</div>'+
+        '<div class="cp">'+escapeHtml((c.last.sender_id===currentSession.user.id?"You: ":"")+(c.last.body||"(card / offer)"))+'</div></div>'+
+        (c.unread?'<div class="dot"></div>':'')+'</div>';
+    });
+    wrap.innerHTML='<div class="card"><label>CONVERSATIONS</label>'+rows+'</div>';
+    Array.prototype.forEach.call(wrap.querySelectorAll(".convo"),function(c){ c.onclick=function(){ openConversation(c.getAttribute("data-uid")); }; });
+  }
+  async function openConversation(userId,keepScroll,handleHint){
+    activeConvo=userId;
+    const wrap=document.getElementById("msgWrap");
+    const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").eq("id",userId).maybeSingle();
+    const p=pr.data||{handle:handleHint||"collector",id:userId};
+    document.getElementById("msgSub").textContent="";
+    const r=await sb.from("messages").select("*").or("and(sender_id.eq."+currentSession.user.id+",recipient_id.eq."+userId+"),and(sender_id.eq."+userId+",recipient_id.eq."+currentSession.user.id+")").order("created_at",{ascending:true}).limit(300);
+    const msgs=(r.data||[]);
+    // gather referenced offers
+    const offerIds=[]; msgs.forEach(function(m){ if(m.offer_id && offerIds.indexOf(m.offer_id)<0) offerIds.push(m.offer_id); });
+    let offers={};
+    if(offerIds.length){ const orr=await sb.from("offers").select("*").in("id",offerIds); (orr.data||[]).forEach(function(o){ offers[o.id]=o; }); }
+    let bubbles="";
+    msgs.forEach(function(m){
+      const mine=m.sender_id===currentSession.user.id;
+      if(m.offer_id && offers[m.offer_id]){
+        const o=offers[m.offer_id];
+        const kindLbl=o.kind==="buy_now"?"Buy-now request":(o.kind==="trade"?"Trade proposal":"Offer");
+        const canAct=(o.seller_id===currentSession.user.id && o.status==="pending");
+        bubbles+='<div class="offercard"><div style="font-size:11px;color:var(--dim)">'+escapeHtml(kindLbl)+' · '+escapeHtml(o.status)+'</div>'+
+          (o.amount?('<div class="oa">'+money(o.amount)+'</div>'):"")+
+          (m.body?('<div style="margin-top:4px">'+escapeHtml(m.body)+'</div>'):"")+
+          (canAct?('<div class="obtns"><button class="authbtn primary" data-acc="'+o.id+'">Accept</button><button class="authbtn" data-dec="'+o.id+'">Decline</button></div>'):"")+
+          '</div>';
+      } else {
+        bubbles+='<div class="bubble '+(mine?"me":"them")+'">'+escapeHtml(m.body||"")+'<div class="bt">'+escapeHtml((m.created_at||"").slice(5,16).replace("T"," "))+'</div></div>';
+      }
+    });
+    if(!bubbles) bubbles='<div class="insight">No messages yet — say hello.</div>';
+    wrap.innerHTML='<div class="card"><div style="display:flex;align-items:center;gap:10px"><button class="authbtn" id="backConvos">\u2190</button>'+avatarHtml(p)+
+      '<div style="flex:1"><div style="font-weight:700;cursor:pointer" id="convoName">'+escapeHtml(p.display_name||("@"+p.handle))+'</div><div style="font-size:11px;color:var(--dim)">@'+escapeHtml(p.handle||"")+'</div></div></div>'+
+      '<div class="thread" id="thread">'+bubbles+'</div>'+
+      '<div class="composer"><input id="msgInput" placeholder="Write a message…"/><button class="authbtn primary" id="msgSend">Send</button></div></div>';
+    const th=document.getElementById("thread"); if(th) th.scrollTop=th.scrollHeight;
+    document.getElementById("backConvos").onclick=function(){ loadConversations(); };
+    document.getElementById("convoName").onclick=function(){ if(p.handle) viewProfile(p.handle); };
+    document.getElementById("msgSend").onclick=function(){ sendMessage(userId); };
+    document.getElementById("msgInput").addEventListener("keydown",function(e){ if(e.key==="Enter") sendMessage(userId); });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-acc]"),function(b){ b.onclick=function(){ respondOffer(b.getAttribute("data-acc"),"accepted",userId); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-dec]"),function(b){ b.onclick=function(){ respondOffer(b.getAttribute("data-dec"),"declined",userId); }; });
+    // mark incoming as read
+    try{ await sb.from("messages").update({read_at:new Date().toISOString()}).eq("recipient_id",currentSession.user.id).eq("sender_id",userId).is("read_at",null); await refreshUnread(); renderNav(); }catch(e){}
+  }
+  async function sendMessage(userId,extra){
+    const inp=document.getElementById("msgInput");
+    const body=inp?inp.value.trim():"";
+    if(!body && !(extra&&extra.offer_id)) return;
+    const payload=Object.assign({ sender_id:currentSession.user.id, recipient_id:userId, body:body||null }, extra||{});
+    if(inp){ inp.value=""; inp.disabled=true; }
+    const r=await sb.from("messages").insert(payload);
+    if(inp){ inp.disabled=false; inp.focus(); }
+    if(r.error){ alert("Could not send: "+r.error.message); return; }
+    openConversation(userId,true);
+  }
+  async function respondOffer(offerId,status,userId){
+    const u=await sb.from("offers").update({status:status}).eq("id",offerId);
+    if(u.error){ alert("Could not update offer: "+u.error.message); return; }
+    let body=(status==="accepted")?"\u2705 Offer accepted — let's arrange the details.":"\u274c Offer declined.";
+    if(status==="accepted"){
+      try{ const o=await sb.from("offers").select("holding_id").eq("id",offerId).maybeSingle(); if(o.data&&o.data.holding_id){ await sb.from("holdings").update({sold:true,for_sale:false,for_trade:false}).eq("id",o.data.holding_id); } }catch(e){}
+    }
+    await sb.from("messages").insert({ sender_id:currentSession.user.id, recipient_id:userId, body:body, offer_id:offerId });
+    openConversation(userId,true);
+  }
+
+  // ---------- MARKETPLACE ----------
+  function openSellModal(h){
+    pendingSell=h;
+    document.getElementById("sellTitle").textContent=h.title||h.query;
+    document.getElementById("sellFor").checked=!!h.for_sale;
+    document.getElementById("sellTrade").checked=!!h.for_trade;
+    document.getElementById("sellOffers").checked=(h.accept_offers!==false);
+    document.getElementById("sellPrice").value=(h.ask_price!=null?h.ask_price:"");
+    document.getElementById("sellNote").value=h.sale_note||"";
+    document.getElementById("sellModal").style.display="flex";
+  }
+  async function saveSell(remove){
+    if(!pendingSell){ document.getElementById("sellModal").style.display="none"; return; }
+    let payload;
+    if(remove){ payload={for_sale:false,for_trade:false,ask_price:null,sale_note:null}; }
+    else {
+      const forSale=document.getElementById("sellFor").checked;
+      const forTrade=document.getElementById("sellTrade").checked;
+      const priceRaw=(document.getElementById("sellPrice").value||"").replace(/[^0-9.]/g,"");
+      const price=priceRaw!==""?Number(priceRaw):null;
+      payload={ for_sale:forSale, for_trade:forTrade, accept_offers:document.getElementById("sellOffers").checked,
+        ask_price:(price!=null&&!isNaN(price))?price:null, sale_note:document.getElementById("sellNote").value.trim()||null, sold:false };
+      if(forSale||forTrade){ payload.is_public=true; }
+    }
+    const u=await sb.from("holdings").update(payload).eq("id",pendingSell.id);
+    document.getElementById("sellModal").style.display="none"; pendingSell=null;
+    if(u.error){ alert("Could not update listing: "+u.error.message); return; }
+    if(view==="portfolio") loadPortfolio();
+  }
+  async function marketHoldings(filter){
+    let qb=sb.from("holdings").select("*").eq("is_public",true).eq("sold",false).order("added_at",{ascending:false}).limit(60);
+    if(filter==="sale") qb=qb.eq("for_sale",true);
+    else if(filter==="trade") qb=qb.eq("for_trade",true);
+    else qb=qb.or("for_sale.eq.true,for_trade.eq.true");
+    const r=await qb;
+    const rows=r.data||[];
+    const ids=[]; rows.forEach(function(h){ if(h.user_id && ids.indexOf(h.user_id)<0) ids.push(h.user_id); });
+    let profs={};
+    if(ids.length){ const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",ids); (pr.data||[]).forEach(function(p){ profs[p.id]=p; }); }
+    rows.forEach(function(h){ h._profile=profs[h.user_id]||null; });
+    return rows;
+  }
+  async function loadMarket(){
+    const wrap=document.getElementById("mktWrap");
+    wrap.innerHTML='<div class="card">Loading the marketplace…</div>';
+    Array.prototype.forEach.call(document.querySelectorAll("#mktTabs button"),function(b){ b.classList.toggle("on", b.getAttribute("data-mkt")===mktFilter); });
+    let rows;
+    try{ rows=await marketHoldings(mktFilter); }catch(e){ wrap.innerHTML='<div class="err">Could not load the marketplace.</div>'; return; }
+    if(!rows.length){ wrap.innerHTML='<div class="card">No cards listed yet. List one of your own from <b>Portfolio</b> → <b>Sell/Trade</b>.</div>'; return; }
+    let cards="";
+    rows.forEach(function(h,idx){
+      const p=h._profile; const seller=p?("@"+p.handle):"a collector";
+      const mine=currentSession && h.user_id===currentSession.user.id;
+      const img=h.image_url||"";
+      const tags=(h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"");
+      let acts="";
+      if(mine){ acts='<button data-edit="'+idx+'">Edit listing</button>'; }
+      else if(currentSession){
+        if(h.for_sale && h.ask_price!=null) acts+='<button class="buy" data-buy="'+idx+'">Buy '+money(h.ask_price)+'</button>';
+        if(h.for_sale && h.accept_offers!==false) acts+='<button class="offer" data-offer="'+idx+'">Make offer</button>';
+        if(h.for_trade) acts+='<button data-trade="'+idx+'">Propose trade</button>';
+        acts+='<button data-msg="'+idx+'">Message</button>';
+      } else { acts='<button data-signin="1">Sign in to buy</button>'; }
+      cards+='<div class="mktcard">'+
+        (img?('<img src="'+escapeAttr(img)+'" onerror="this.style.display=\\'none\\'"/>'):'')+
+        '<div class="nm">'+escapeHtml(h.title||h.query)+tags+'</div>'+
+        '<div class="seller" data-h="'+(p?escapeAttr(p.handle):"")+'">'+escapeHtml(seller)+'</div>'+
+        (h.ask_price!=null?('<div class="ask">'+money(h.ask_price)+'</div>'):'<div class="ask" style="color:var(--muted);font-size:13px">Open to offers</div>')+
+        (h.sale_note?('<div class="insight" style="margin-top:6px">'+escapeHtml(h.sale_note)+'</div>'):"")+
+        '<div class="acts">'+acts+'</div></div>';
+    });
+    wrap.innerHTML='<div class="mkt">'+cards+'</div>';
+    Array.prototype.forEach.call(wrap.querySelectorAll(".seller[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-edit]"),function(b){ b.onclick=function(){ openSellModal(rows[Number(b.getAttribute("data-edit"))]); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-buy]"),function(b){ b.onclick=function(){ openOfferModal(rows[Number(b.getAttribute("data-buy"))],"buy_now"); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-offer]"),function(b){ b.onclick=function(){ openOfferModal(rows[Number(b.getAttribute("data-offer"))],"offer"); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-trade]"),function(b){ b.onclick=function(){ openOfferModal(rows[Number(b.getAttribute("data-trade"))],"trade"); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-msg]"),function(b){ b.onclick=function(){ var h=rows[Number(b.getAttribute("data-msg"))]; startConversation(h.user_id, h._profile&&h._profile.handle); }; });
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-signin]"),function(b){ b.onclick=function(){ alert("Sign in to buy, offer, or message."); }; });
+  }
+  function openOfferModal(h,kind){
+    pendingOffer={holding:h,kind:kind};
+    const t=document.getElementById("offerTitle"); const sub=document.getElementById("offerSub");
+    const amt=document.getElementById("offerAmount"); const note=document.getElementById("offerNote");
+    t.textContent=h.title||h.query;
+    if(kind==="buy_now"){ sub.textContent="Buy it now at the seller's asking price."; amt.value=(h.ask_price!=null?h.ask_price:""); amt.style.display=""; note.placeholder="Add a message (optional)"; }
+    else if(kind==="trade"){ sub.textContent="Propose a trade. Describe what you're offering."; amt.value=""; amt.style.display="none"; note.placeholder="What are you offering to trade?"; }
+    else { sub.textContent="Make an offer to the seller."; amt.value=""; amt.style.display=""; note.placeholder="Add a message (optional)"; }
+    document.getElementById("offerSend").textContent=(kind==="buy_now"?"Send buy request":(kind==="trade"?"Send proposal":"Send offer"));
+    document.getElementById("offerModal").style.display="flex";
+  }
+  async function submitOffer(){
+    if(!pendingOffer){ document.getElementById("offerModal").style.display="none"; return; }
+    const h=pendingOffer.holding; const kind=pendingOffer.kind;
+    const note=document.getElementById("offerNote").value.trim();
+    let amount=null;
+    if(kind!=="trade"){ const raw=(document.getElementById("offerAmount").value||"").replace(/[^0-9.]/g,""); amount=raw!==""?Number(raw):null; if(kind==="offer" && (amount==null||isNaN(amount))){ alert("Enter an offer amount."); return; } }
+    const btn=document.getElementById("offerSend"); btn.disabled=true; btn.textContent="Sending…";
+    const off=await sb.from("offers").insert({ holding_id:h.id, buyer_id:currentSession.user.id, seller_id:h.user_id, amount:(amount!=null&&!isNaN(amount))?amount:null, kind:kind, note:note||null }).select("id").maybeSingle();
+    if(off.error||!off.data){ btn.disabled=false; btn.textContent="Send"; alert("Could not send: "+((off.error&&off.error.message)||"try again")); return; }
+    const kindLbl=kind==="buy_now"?"Buy-now request":(kind==="trade"?"Trade proposal":"Offer");
+    const body=kindLbl+" for "+(h.title||h.query)+(amount!=null?(" — "+money(amount)):"")+(note?(" — "+note):"");
+    await sb.from("messages").insert({ sender_id:currentSession.user.id, recipient_id:h.user_id, body:body, holding_id:h.id, offer_id:off.data.id });
+    document.getElementById("offerModal").style.display="none"; pendingOffer=null;
+    btn.disabled=false; btn.textContent="Send";
+    startConversation(h.user_id, h._profile&&h._profile.handle);
+  }
+
+  // ---------- LEADERBOARDS ----------
+  async function loadLeaderboard(){
+    const wrap=document.getElementById("lbWrap");
+    wrap.innerHTML='<div class="card">Crunching the rankings…</div>';
+    Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.classList.toggle("on", b.getAttribute("data-lb")===lbTab); });
+    try{
+      if(lbTab==="followers"){
+        const fr=await sb.from("follows").select("following_id").limit(5000);
+        const counts={}; (fr.data||[]).forEach(function(f){ counts[f.following_id]=(counts[f.following_id]||0)+1; });
+        renderLeaderboard(counts,function(v){ return v+" follower"+(v===1?"":"s"); });
+      } else {
+        const hr=await sb.from("holdings").select("user_id,added_value,manual_value").eq("is_public",true).limit(5000);
+        const agg={};
+        (hr.data||[]).forEach(function(h){ if(!h.user_id) return; if(!agg[h.user_id]) agg[h.user_id]={val:0,cards:0}; const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0; agg[h.user_id].val+=(isNaN(v)?0:v); agg[h.user_id].cards++; });
+        if(lbTab==="cards"){ const c={}; for(var k in agg){ c[k]=agg[k].cards; } renderLeaderboard(c,function(v){ return v+" card"+(v===1?"":"s"); }); }
+        else { const c={}; for(var k2 in agg){ c[k2]=agg[k2].val; } renderLeaderboard(c,function(v){ return money(v); }); }
+      }
+    }catch(e){ wrap.innerHTML='<div class="err">Could not load leaderboards.</div>'; }
+  }
+  async function renderLeaderboard(counts,fmt){
+    const wrap=document.getElementById("lbWrap");
+    const arr=Object.keys(counts).map(function(k){ return {id:k,v:counts[k]}; }).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,25);
+    if(!arr.length){ wrap.innerHTML='<div class="card">Not enough data yet. As collectors add public cards and follow each other, the rankings fill in.</div>'; return; }
+    let profs={};
+    const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",arr.map(function(x){return x.id;}));
+    (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
+    let rows="";
+    arr.forEach(function(x,i){ const p=profs[x.id]; if(!p) return; rows+='<div class="lbrow"><div class="rank">'+(i+1)+'</div>'+avatarHtml(p)+'<div class="nm" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div><div class="val">'+fmt(x.v)+'</div></div>'; });
+    wrap.innerHTML='<div class="card">'+rows+'</div>';
+    Array.prototype.forEach.call(wrap.querySelectorAll(".nm[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
   }
 
   // ---------- CERT LOOKUP ----------
@@ -1048,6 +1447,15 @@ function renderPage(env = {}) {
   var _ws=document.getElementById("watchSave"); if(_ws) _ws.onclick=saveWatch;
   var _wc=document.getElementById("watchCancel"); if(_wc) _wc.onclick=function(){ document.getElementById("watchModal").style.display="none"; pendingWatch=null; };
   var _wm=document.getElementById("watchModal"); if(_wm) _wm.addEventListener("click",function(e){ if(e.target.id==="watchModal"){ _wm.style.display="none"; pendingWatch=null; } });
+  var _ss=document.getElementById("sellSave"); if(_ss) _ss.onclick=function(){ saveSell(false); };
+  var _sc=document.getElementById("sellCancel"); if(_sc) _sc.onclick=function(){ document.getElementById("sellModal").style.display="none"; pendingSell=null; };
+  var _sr=document.getElementById("sellRemove"); if(_sr) _sr.onclick=function(){ saveSell(true); };
+  var _sm=document.getElementById("sellModal"); if(_sm) _sm.addEventListener("click",function(e){ if(e.target.id==="sellModal"){ _sm.style.display="none"; pendingSell=null; } });
+  var _os=document.getElementById("offerSend"); if(_os) _os.onclick=submitOffer;
+  var _oc=document.getElementById("offerCancel"); if(_oc) _oc.onclick=function(){ document.getElementById("offerModal").style.display="none"; pendingOffer=null; };
+  var _om=document.getElementById("offerModal"); if(_om) _om.addEventListener("click",function(e){ if(e.target.id==="offerModal"){ _om.style.display="none"; pendingOffer=null; } });
+  Array.prototype.forEach.call(document.querySelectorAll("#mktTabs button"),function(b){ b.onclick=function(){ mktFilter=b.getAttribute("data-mkt"); loadMarket(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.onclick=function(){ lbTab=b.getAttribute("data-lb"); loadLeaderboard(); }; });
 </script>
 </body>
 </html>`;
