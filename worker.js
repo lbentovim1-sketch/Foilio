@@ -1125,37 +1125,32 @@ function renderPage(env = {}) {
     ['rgba(251,191,36,.18)','#fbbf24'],
     ['rgba(167,139,250,.18)','#c4b5fd'],
   ];
-  var CARD_STOP=/^(psa|bgs|sgc|cgc|tag|raw|the|and|for|with|black|white|silver|gold|red|blue|green|orange|purple|pink|prizm|chrome|draft|base|rookie|auto|refractor|holo|all|aces|sp|ssp|rc|numbered|parallel|variation|prospect|autograph|bowman|topps|panini|donruss|fleer|upper|deck|optic|select|chronicles|heritage|tribute|mosaic|contenders|finest|stadium|national|treasures|absolute|leaf|score|insert|short|print)$/i;
-  function cardInitials(raw, fallback){
-    function extract(s){
-      var words=(s||"").replace(/#\S+/g,"").trim().split(/\s+/);
-      // Prefer words that start with a letter AND aren't known card terms
-      var nameWords=words.filter(function(w){ return /^[A-Za-z]{2}/.test(w) && !CARD_STOP.test(w); });
-      if(nameWords.length>=2) return (nameWords[0][0]+nameWords[1][0]).toUpperCase();
-      if(nameWords.length===1) return nameWords[0].slice(0,2).toUpperCase();
-      // Loosen: any word starting with a letter
-      var anyWords=words.filter(function(w){ return /^[A-Za-z]/.test(w) && w.length>1; });
-      if(anyWords.length>=2) return (anyWords[0][0]+anyWords[1][0]).toUpperCase();
-      if(anyWords.length===1) return anyWords[0].slice(0,2).toUpperCase();
-      return "";
+  function cardInitials(title){
+    if(!title) return "";
+    // Strip card numbers and 4-digit years, keep everything else
+    var s=String(title).replace(/#\S*/g,"").replace(/\b\d{4}\b/g,"").replace(/\s+/g," ").trim();
+    var words=s.split(/\s+/);
+    var out="";
+    for(var i=0;i<words.length&&out.length<2;i++){
+      var ch=words[i]&&words[i][0];
+      if(ch&&/[A-Za-z]/.test(ch)) out+=ch.toUpperCase();
     }
-    return extract(raw) || extract(fallback) || "";
+    return out;
   }
   function cardFallbackHtml(name, id, rawTitle){
     var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
     var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
-    var init=cardInitials(name, rawTitle);
-    return '<div class="act-ph" style="background:'+bg+';color:'+col+'">'+escapeHtml(init||"•")+'</div>';
+    var init=cardInitials(shortCardName(rawTitle||name||""))||cardInitials(rawTitle||name||"")||"?";
+    return '<div class="act-ph" style="background:'+bg+';color:'+col+'">'+escapeHtml(init)+'</div>';
   }
   function actImgErr(el){
-    var name=el.getAttribute("data-name")||"";
-    var raw=el.getAttribute("data-raw")||"";
+    var raw=el.getAttribute("data-raw")||el.getAttribute("data-name")||"";
     var id=el.getAttribute("data-card")||"";
     var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
     var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
-    var init=cardInitials(name, raw);
+    var init=cardInitials(shortCardName(raw))||cardInitials(raw)||"?";
     var ph=document.createElement("div");
-    ph.className="act-ph"; ph.style.background=bg; ph.style.color=col; ph.textContent=init||"•";
+    ph.className="act-ph"; ph.style.background=bg; ph.style.color=col; ph.textContent=init;
     if(el.parentNode) el.parentNode.insertBefore(ph,el);
     el.remove();
   }
