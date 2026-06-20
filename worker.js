@@ -72,6 +72,7 @@ function renderPage(env = {}) {
   const publicConfig = JSON.stringify({
     supabaseUrl: envValue(env, "SUPABASE_URL"),
     supabaseAnonKey: envValue(env, "SUPABASE_ANON_KEY") || envValue(env, "SUPABASE_PUBLISHABLE_KEY"),
+    giphyApiKey: envValue(env, "GIPHY_API_KEY"),
   }).replace(/</g, "\\u003c");
 
   return `<!DOCTYPE html>
@@ -225,6 +226,20 @@ function renderPage(env = {}) {
   .offercard .obtns{display:flex;gap:8px;margin-top:10px}
   .composer{display:flex;gap:8px;margin-top:12px}
   .composer input{flex:1}
+  .gifbtn{background:var(--surface2);border:1px solid var(--border);color:var(--gold);border-radius:8px;padding:0 12px;font-size:12px;font-weight:800;cursor:pointer;font-family:'Manrope',sans-serif}
+  .bubble img,.cmt img{max-width:200px;border-radius:8px;display:block;margin-top:4px}
+  .likebtn{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:9px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif}
+  .likebtn.on{background:rgba(255,93,108,.14);border-color:var(--down);color:var(--down)}
+  .cgallery{display:flex;gap:8px;flex-wrap:wrap}
+  .cgallery img{height:230px;border-radius:10px;background:var(--ink);object-fit:contain}
+  .cmt{display:flex;gap:10px;padding:11px 2px;border-bottom:1px solid var(--border)}
+  .cmt .cbody{flex:1;min-width:0}
+  .cmt .cbody .cn{font-size:13px;font-weight:700;cursor:pointer}
+  .cmt .cbody .ct{font-size:14px;margin-top:2px;word-wrap:break-word}
+  .gifres{width:100%;border-radius:8px;cursor:pointer;background:var(--ink)}
+  .notif{display:flex;gap:11px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--border);cursor:pointer}
+  .notif.unread{background:var(--surface2)}
+  .notif .nt{flex:1;min-width:0;font-size:14px} .notif .nt span{display:block;font-size:11px;color:var(--dim);margin-top:2px}
   @media (max-width:720px){.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.topin{flex-wrap:wrap}.nav{order:3;width:100%;justify-content:center}.nav button{flex:1}.mkt{grid-template-columns:1fr 1fr}}
 </style>
 </head>
@@ -331,6 +346,15 @@ function renderPage(env = {}) {
   <div id="msgWrap"></div>
 </div></div>
 
+<div id="cardView" style="display:none"><div class="wrap">
+  <div id="cardBody"></div>
+</div></div>
+
+<div id="notifView" style="display:none"><div class="wrap">
+  <h1 style="font-size:28px">Notifications</h1>
+  <div id="notifWrap"></div>
+</div></div>
+
 <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px">
   <div class="modalbox">
     <div id="modalTitle" style="font-size:15px;font-weight:700;margin-bottom:4px;line-height:1.3"></div>
@@ -392,6 +416,18 @@ function renderPage(env = {}) {
   </div>
 </div>
 
+<div id="gifModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:110;align-items:center;justify-content:center;padding:20px">
+  <div class="modalbox" style="max-width:520px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:10px">Pick a GIF</div>
+    <input id="gifSearch" placeholder="Search GIFs (or paste a GIF/image URL)"/>
+    <div id="gifResults" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;max-height:46vh;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="authbtn primary" id="gifUseUrl" style="flex:1">Use pasted URL</button>
+      <button class="authbtn" id="gifCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <div class="foot">
   <span class="foil" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14px">Foilio</span>
   <span>Prices from real recent sales · a social market for collectors</span>
@@ -403,6 +439,7 @@ function renderPage(env = {}) {
   const FOILIO_CONFIG=${publicConfig};
   const SB_URL=FOILIO_CONFIG.supabaseUrl||"";
   const SB_KEY=FOILIO_CONFIG.supabaseAnonKey||"";
+  const GIPHY_KEY=FOILIO_CONFIG.giphyApiKey||"";
   let sb=null;
   try{ if(window.supabase && SB_URL && SB_KEY){ sb=window.supabase.createClient(SB_URL,SB_KEY); } }catch(e){}
 
@@ -424,6 +461,10 @@ function renderPage(env = {}) {
   let activeConvo=null;
   let unreadCount=0;
   let msgChannel=null;
+  let notifCount=0;
+  let notifChannel=null;
+  let activeCard=null;
+  let gifTarget=null;
 
   // ---------- HELPERS ----------
   const money=function(n){return "$"+Math.round(n||0).toLocaleString();};
@@ -557,6 +598,7 @@ function renderPage(env = {}) {
       items+='<button id="navPortfolio" class="'+(view==="portfolio"?"on":"")+'">Portfolio</button>';
       items+='<button id="navWatch" class="'+(view==="watchlist"?"on":"")+'">Watchlist</button>';
       items+='<button id="navMsgs" class="'+(view==="messages"?"on":"")+'">Messages'+(unreadCount?'<span class="navbadge">'+unreadCount+'</span>':"")+'</button>';
+      items+='<button id="navNotif" class="'+(view==="notifications"?"on":"")+'">\uD83D\uDD14'+(notifCount?'<span class="navbadge">'+notifCount+'</span>':"")+'</button>';
       items+='<button id="navProfile" class="'+(view==="profile"||view==="editProfile"?"on":"")+'">Profile</button>';
     }
     navArea.innerHTML='<div class="nav">'+items+'</div>';
@@ -568,6 +610,7 @@ function renderPage(env = {}) {
       document.getElementById("navPortfolio").onclick=function(){ setView("portfolio"); };
       document.getElementById("navWatch").onclick=function(){ setView("watchlist"); };
       document.getElementById("navMsgs").onclick=function(){ setView("messages"); };
+      document.getElementById("navNotif").onclick=function(){ setView("notifications"); };
       document.getElementById("navProfile").onclick=function(){ if(myProfile&&myProfile.handle){ viewProfile(myProfile.handle); } else { setView("editProfile"); } };
     }
   }
@@ -579,6 +622,8 @@ function renderPage(env = {}) {
     document.getElementById("portfolioView").style.display=(view==="portfolio")?"":"none";
     document.getElementById("watchlistView").style.display=(view==="watchlist")?"":"none";
     document.getElementById("messagesView").style.display=(view==="messages")?"":"none";
+    document.getElementById("cardView").style.display=(view==="card")?"":"none";
+    document.getElementById("notifView").style.display=(view==="notifications")?"":"none";
     document.getElementById("profileView").style.display=(view==="profile")?"":"none";
     document.getElementById("editProfileView").style.display=(view==="editProfile")?"":"none";
   }
@@ -591,6 +636,7 @@ function renderPage(env = {}) {
     if(v==="market") loadMarket();
     if(v==="leaderboard") loadLeaderboard();
     if(v==="messages") loadConversations();
+    if(v==="notifications") loadNotifications();
     if(v==="editProfile") renderEditProfile();
     window.scrollTo(0,0);
   }
@@ -605,22 +651,22 @@ function renderPage(env = {}) {
         currentSession=(res&&res.data)?res.data.session:null;
         await ensureMyProfile();
         renderAuth(); renderNav();
-        if(currentSession){ loadHomeFeed(); initMessaging(); }
+        if(currentSession){ loadHomeFeed(); initMessaging(); initNotif(); }
       }catch(e){}
     }).catch(function(){});
     sb.auth.onAuthStateChange(function(_e,session){
       currentSession=session; panelOpen=false;
       if(!session){
-        unreadCount=0; myProfile=null;
-        try{ if(msgChannel){ sb.removeChannel(msgChannel); msgChannel=null; } }catch(e){}
-        if(view==="portfolio"||view==="watchlist"||view==="editProfile"||view==="messages"){ setView("search"); }
+        unreadCount=0; notifCount=0; myProfile=null;
+        try{ if(msgChannel){ sb.removeChannel(msgChannel); msgChannel=null; } if(notifChannel){ sb.removeChannel(notifChannel); notifChannel=null; } }catch(e){}
+        if(view==="portfolio"||view==="watchlist"||view==="editProfile"||view==="messages"||view==="notifications"){ setView("search"); }
       }
       renderAuth(); renderNav();
       // Defer any Supabase calls out of the auth callback. supabase-js holds an
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(currentSession) initMessaging(); }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
       },0);
     });
   }
@@ -630,6 +676,9 @@ function renderPage(env = {}) {
     var path=location.pathname||"/";
     var m=path.match(/^\\/u\\/([A-Za-z0-9_]{1,30})$/)||path.match(/^\\/@([A-Za-z0-9_]{1,30})$/);
     if(m){ viewProfile(m[1], true); return; }
+    var cm=path.match(/^\\/card\\/([0-9a-fA-F-]{10,})$/);
+    if(cm){ openCard(cm[1], true); return; }
+    if(path==="/notifications" && currentSession){ setView("notifications", true); return; }
     if(path==="/trending"){ setView("trending", true); return; }
     if(path==="/market"){ setView("market", true); return; }
     if(path==="/leaderboard"){ setView("leaderboard", true); return; }
@@ -720,7 +769,7 @@ function renderPage(env = {}) {
       const glHtml=add>0?('<div style="font-size:12px;color:'+(diff>=0?"var(--up)":"var(--down)")+'">'+(diff>=0?"+":"")+money(diff)+' ('+(dpct>=0?"+":"")+dpct.toFixed(0)+'%)</div>'):'<div style="font-size:12px;color:var(--dim)">\u2014</div>';
       rows+='<div class="hrow">'+
         (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
-        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+listTag+'</div>'+
+        '<div style="flex:1;min-width:0"><div class="lk" data-card="'+h.id+'" style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">'+escapeHtml(h.title||h.query)+listTag+'</div>'+
         '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+' · added '+money(add)+' · '+pubTag+'</div></div>'+
         '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+manualTag+'</div>'+glHtml+'</div>'+
         '<button class="ed" data-sell="'+h.id+'">'+((h.for_sale||h.for_trade)?"Listed":"Sell/Trade")+'</button>'+
@@ -729,6 +778,7 @@ function renderPage(env = {}) {
         '<button class="rm" data-id="'+h.id+'">Remove</button></div>';
     });
     list.innerHTML='<div class="card"><label>YOUR CARDS</label>'+rows+'</div>';
+    Array.prototype.forEach.call(list.querySelectorAll(".lk[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
     Array.prototype.forEach.call(list.querySelectorAll(".rm"),function(b){
       b.onclick=async function(){
         const id=b.getAttribute("data-id");
@@ -913,7 +963,7 @@ function renderPage(env = {}) {
       if(fb) fb.onclick=async function(){
         fb.disabled=true;
         if(iFollow){ const d=await sb.from("follows").delete().eq("follower_id",currentSession.user.id).eq("following_id",p.id); if(!d.error){ iFollow=false; fb.textContent="Follow"; fb.classList.remove("following"); followers=Math.max(0,followers-1); document.getElementById("followersN").textContent=followers; } }
-        else { const i=await sb.from("follows").insert({follower_id:currentSession.user.id, following_id:p.id}); if(!i.error){ iFollow=true; fb.textContent="Following"; fb.classList.add("following"); followers=followers+1; document.getElementById("followersN").textContent=followers; } }
+        else { const i=await sb.from("follows").insert({follower_id:currentSession.user.id, following_id:p.id}); if(!i.error){ iFollow=true; fb.textContent="Following"; fb.classList.add("following"); followers=followers+1; document.getElementById("followersN").textContent=followers; notify(p.id,"follow",null,null); } }
         fb.disabled=false;
       };
       var mb=document.getElementById("msgBtn");
@@ -937,8 +987,8 @@ function renderPage(env = {}) {
         else act='<button class="ed" data-poffer="'+idx+'">'+(h.for_trade&&!h.for_sale?"Trade":"Offer")+'</button>';
       }
       rows+='<div class="hrow">'+
-        (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
-        '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+escapeHtml(h.title||h.query)+tags+'</div>'+
+        (img?('<img src="'+escapeAttr(img)+'" data-card="'+h.id+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0;cursor:pointer"/>'):('<div style="width:34px;height:48px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
+        '<div style="flex:1;min-width:0"><div class="lk" data-card="'+h.id+'" style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer">'+escapeHtml(h.title||h.query)+tags+'</div>'+
         '<div style="font-size:11px;color:var(--dim)">'+escapeHtml(h.grade||"")+(h.ask_price!=null?(' · asking '+money(h.ask_price)):"")+'</div></div>'+
         '<div style="text-align:right"><div class="mono" style="font-weight:700">'+money(v.current)+'</div></div>'+act+'</div>';
     });
@@ -946,6 +996,7 @@ function renderPage(env = {}) {
       '<div class="stat hl"><div class="l">Public value</div><div class="v">'+money(total)+'</div></div></div></div>'+
       '<div class="card"><label>PUBLIC CARDS</label>'+rows+'</div>';
     holds.forEach(function(h){ h._profile=p; });
+    Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
     Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-pbuy]"),function(b){ b.onclick=function(){ openOfferModal(holds[Number(b.getAttribute("data-pbuy"))],"buy_now"); }; });
     Array.prototype.forEach.call(cardsEl.querySelectorAll("[data-poffer]"),function(b){ b.onclick=function(){ var h=holds[Number(b.getAttribute("data-poffer"))]; openOfferModal(h, h.for_trade&&!h.for_sale?"trade":"offer"); }; });
   }
@@ -1014,6 +1065,192 @@ function renderPage(env = {}) {
     myProfile=Object.assign({},myProfile,payload);
     msg.style.color="var(--up)"; msg.textContent="Profile saved.";
     renderAuth();
+  }
+
+  // ---------- NOTIFICATIONS ----------
+  async function notify(recipientId,type,holdingId,body){
+    try{
+      if(!currentSession || !recipientId || recipientId===currentSession.user.id) return;
+      await sb.from("notifications").insert({ user_id:recipientId, actor_id:currentSession.user.id, type:type, holding_id:holdingId||null, body:body||null });
+    }catch(e){}
+  }
+  async function refreshNotif(){
+    if(!sb || !currentSession){ notifCount=0; return; }
+    try{ const r=await sb.from("notifications").select("id",{count:"exact",head:true}).eq("user_id",currentSession.user.id).is("read_at",null); notifCount=r.count||0; }catch(e){ notifCount=0; }
+  }
+  function initNotif(){
+    if(!sb || !currentSession) return;
+    setTimeout(async function(){ try{ await refreshNotif(); renderNav(); }catch(e){} },0);
+    try{
+      if(notifChannel){ sb.removeChannel(notifChannel); notifChannel=null; }
+      notifChannel=sb.channel("no_"+currentSession.user.id)
+        .on("postgres_changes",{event:"INSERT",schema:"public",table:"notifications",filter:"user_id=eq."+currentSession.user.id},function(){
+          if(view==="notifications"){ loadNotifications(); } else { notifCount=notifCount+1; renderNav(); }
+        }).subscribe();
+    }catch(e){}
+  }
+  async function loadNotifications(){
+    const wrap=document.getElementById("notifWrap");
+    wrap.innerHTML='<div class="card">Loading notifications…</div>';
+    const r=await sb.from("notifications").select("*").eq("user_id",currentSession.user.id).order("created_at",{ascending:false}).limit(100);
+    if(r.error){ wrap.innerHTML='<div class="err"><b>Could not load notifications.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
+    const rows=r.data||[];
+    if(!rows.length){ wrap.innerHTML='<div class="card">No notifications yet. Follows, likes, comments, and offers will show up here.</div>'; return; }
+    const actors=[]; rows.forEach(function(n){ if(n.actor_id && actors.indexOf(n.actor_id)<0) actors.push(n.actor_id); });
+    let profs={};
+    if(actors.length){ const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",actors); (pr.data||[]).forEach(function(p){ profs[p.id]=p; }); }
+    const verb={follow:"started following you",like:"liked your card",comment:"commented on your card",offer:"sent you an offer",offer_accepted:"accepted your offer",offer_declined:"declined your offer"};
+    let html="";
+    rows.forEach(function(n,idx){
+      const a=profs[n.actor_id]; const name=a?("@"+a.handle):"Someone";
+      html+='<div class="notif'+(n.read_at?"":" unread")+'" data-i="'+idx+'">'+avatarHtml(a)+
+        '<div class="nt"><b>'+escapeHtml(name)+'</b> '+escapeHtml(verb[n.type]||n.type)+(n.body?(' \u2014 '+escapeHtml(n.body)):"")+'<span>'+escapeHtml((n.created_at||"").slice(5,16).replace("T"," "))+'</span></div></div>';
+    });
+    wrap.innerHTML='<div class="card"><div style="display:flex;justify-content:flex-end;margin-bottom:6px"><button class="authbtn" id="markAllRead">Mark all read</button></div>'+html+'</div>';
+    document.getElementById("markAllRead").onclick=async function(){ await sb.from("notifications").update({read_at:new Date().toISOString()}).eq("user_id",currentSession.user.id).is("read_at",null); await refreshNotif(); renderNav(); loadNotifications(); };
+    Array.prototype.forEach.call(wrap.querySelectorAll(".notif"),function(el){
+      el.onclick=function(){ const n=rows[Number(el.getAttribute("data-i"))]; const a=profs[n.actor_id];
+        if(n.holding_id) openCard(n.holding_id); else if(a&&a.handle) viewProfile(a.handle); };
+    });
+    try{ await sb.from("notifications").update({read_at:new Date().toISOString()}).eq("user_id",currentSession.user.id).is("read_at",null); await refreshNotif(); renderNav(); }catch(e){}
+  }
+
+  // ---------- GIF PICKER ----------
+  function openGifPicker(target){
+    gifTarget=target;
+    document.getElementById("gifSearch").value="";
+    document.getElementById("gifResults").innerHTML=GIPHY_KEY?'<div class="insight">Type to search GIFs.</div>':'<div class="insight">Paste a GIF/image URL above, then tap "Use pasted URL". (Add a free GIPHY_API_KEY to enable search.)</div>';
+    document.getElementById("gifModal").style.display="flex";
+    setTimeout(function(){ var gs=document.getElementById("gifSearch"); if(gs) gs.focus(); },30);
+    if(GIPHY_KEY) gifSearch("trending");
+  }
+  let gifTimer=null;
+  async function gifSearch(q){
+    if(!GIPHY_KEY) return;
+    const res=document.getElementById("gifResults");
+    try{
+      const url=(q==="trending")
+        ? ("https://api.giphy.com/v1/gifs/trending?api_key="+encodeURIComponent(GIPHY_KEY)+"&limit=18&rating=pg-13")
+        : ("https://api.giphy.com/v1/gifs/search?api_key="+encodeURIComponent(GIPHY_KEY)+"&q="+encodeURIComponent(q)+"&limit=18&rating=pg-13");
+      const r=await fetch(url); const j=await r.json();
+      const items=(j.data||[]);
+      if(!items.length){ res.innerHTML='<div class="insight">No GIFs found.</div>'; return; }
+      res.innerHTML=items.map(function(g){ var u=(g.images&&g.images.fixed_width&&g.images.fixed_width.url)||""; var full=(g.images&&g.images.downsized&&g.images.downsized.url)||u; return u?('<img class="gifres" src="'+escapeAttr(u)+'" data-gif="'+escapeAttr(full)+'"/>'):""; }).join("");
+      Array.prototype.forEach.call(res.querySelectorAll("[data-gif]"),function(im){ im.onclick=function(){ pickGif(im.getAttribute("data-gif")); }; });
+    }catch(e){ res.innerHTML='<div class="insight">GIF search failed.</div>'; }
+  }
+  function pickGif(url){
+    document.getElementById("gifModal").style.display="none";
+    if(!url) return;
+    if(gifTarget==="dm"){ sendMessage(activeConvo,{gif_url:url}); }
+    else if(gifTarget==="comment" && activeCard){ addComment(activeCard,url); }
+    gifTarget=null;
+  }
+  function isImgUrl(u){ return /^https?:\\/\\/\\S+\\.(gif|png|jpe?g|webp)(\\?\\S*)?$/i.test(u||"") || /giphy\\.com|tenor\\.com|media\\d?\\.giphy/i.test(u||""); }
+
+  // ---------- CARD DETAIL ----------
+  async function openCard(id,skipPush){
+    activeCard=id; view="card"; applyView(); renderNav();
+    if(!skipPush){ try{ history.pushState({view:"card",id:id},"","/card/"+id); }catch(e){} }
+    window.scrollTo(0,0);
+    const body=document.getElementById("cardBody");
+    if(!sb){ body.innerHTML='<div class="err">Accounts need to be configured for card pages.</div>'; return; }
+    body.innerHTML='<div class="card">Loading card…</div>';
+    const hr=await sb.from("holdings").select("*").eq("id",id).maybeSingle();
+    if(hr.error||!hr.data){ body.innerHTML='<div class="card"><h1 style="font-size:24px">Card not found</h1><p class="sub">It may be private or removed.</p></div>'; return; }
+    const h=hr.data;
+    const mine=currentSession && h.user_id===currentSession.user.id;
+    const op=await sb.from("profiles").select("id,handle,display_name,avatar_url").eq("id",h.user_id).maybeSingle();
+    const owner=op.data||{handle:"collector"};
+    const sm=await valueHolding(h);
+    const ph=await sb.from("card_photos").select("*").eq("holding_id",id).order("created_at",{ascending:true});
+    const photos=[]; if(h.image_url) photos.push(h.image_url); (ph.data||[]).forEach(function(x){ if(photos.indexOf(x.url)<0) photos.push(x.url); });
+    let likeCount=0, iLike=false;
+    try{ const lc=await sb.from("card_likes").select("user_id",{count:"exact"}).eq("holding_id",id); likeCount=lc.count||0; if(currentSession){ iLike=(lc.data||[]).some(function(x){return x.user_id===currentSession.user.id;}); } }catch(e){}
+    const tags=(h.sold?'<span class="badge" style="color:var(--dim);border:1px solid var(--dim)">SOLD</span>':((h.for_sale?'<span class="badge sale">FOR SALE</span>':"")+(h.for_trade?'<span class="badge trade">TRADE</span>':"")));
+    let actions="";
+    if(!mine && currentSession && !h.sold){
+      if(h.for_sale && h.ask_price!=null) actions+='<button class="miniadd" id="cBuy">Buy '+money(h.ask_price)+'</button> ';
+      if(h.for_sale && h.accept_offers!==false) actions+='<button class="authbtn primary" id="cOffer">Make offer</button> ';
+      if(h.for_trade) actions+='<button class="authbtn" id="cTrade">Propose trade</button> ';
+      actions+='<button class="authbtn" id="cMsg">Message</button>';
+    } else if(mine){ actions+='<button class="authbtn" id="cAddPhoto">+ Add photo</button> <input type="file" id="cPhotoFile" accept="image/*" style="display:none"/> <button class="authbtn" id="cSell">'+((h.for_sale||h.for_trade)?"Edit listing":"Sell/Trade")+'</button>'; }
+    const gallery=photos.length?('<div class="cgallery">'+photos.map(function(u){return '<img src="'+escapeAttr(u)+'" onerror="this.remove()"/>';}).join("")+'</div>'):'<div class="insight">No image yet.</div>';
+    body.innerHTML='<div class="card">'+gallery+
+      '<h1 style="font-size:23px;margin-top:14px">'+escapeHtml(h.title||h.query)+tags+'</h1>'+
+      '<div class="insight" style="margin-top:4px">'+escapeHtml(h.grade||"")+' · listed by <span id="cOwner" style="color:var(--indigo);cursor:pointer">@'+escapeHtml(owner.handle)+'</span></div>'+
+      '<div class="mono" style="font-size:22px;font-weight:700;margin-top:10px">'+money(sm.current)+'<span style="font-size:12px;color:var(--dim);font-weight:400"> · est. value</span></div>'+
+      (h.ask_price!=null?('<div class="insight">Asking '+money(h.ask_price)+(h.sale_note?(' \u2014 '+escapeHtml(h.sale_note)):"")+'</div>'):"")+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px"><button class="likebtn'+(iLike?" on":"")+'" id="cLike">\u2665 <span id="cLikeN">'+likeCount+'</span></button> '+actions+'</div>'+
+      '</div>'+
+      '<div class="card"><label>COMMENTS</label><div id="cComments">Loading…</div>'+
+      (currentSession?('<div class="composer"><input id="cCommentInput" placeholder="Add a comment…"/><button class="gifbtn" id="cGif">GIF</button><button class="authbtn primary" id="cCommentSend">Post</button></div>'):'<div class="insight" style="margin-top:10px">Sign in to comment.</div>')+
+      '</div>';
+    document.getElementById("cOwner").onclick=function(){ if(owner.handle) viewProfile(owner.handle); };
+    var ownB=document.getElementById("cOwner");
+    var lb=document.getElementById("cLike");
+    if(lb) lb.onclick=async function(){
+      if(!currentSession){ alert("Sign in to like cards."); return; }
+      lb.disabled=true;
+      if(iLike){ const d=await sb.from("card_likes").delete().eq("holding_id",id).eq("user_id",currentSession.user.id); if(!d.error){ iLike=false; likeCount=Math.max(0,likeCount-1); lb.classList.remove("on"); } }
+      else { const i=await sb.from("card_likes").insert({holding_id:id,user_id:currentSession.user.id}); if(!i.error){ iLike=true; likeCount++; lb.classList.add("on"); notify(h.user_id,"like",id,h.title||h.query); } }
+      document.getElementById("cLikeN").textContent=likeCount; lb.disabled=false;
+    };
+    var bBuy=document.getElementById("cBuy"); if(bBuy) bBuy.onclick=function(){ h._profile=owner; openOfferModal(h,"buy_now"); };
+    var bOffer=document.getElementById("cOffer"); if(bOffer) bOffer.onclick=function(){ h._profile=owner; openOfferModal(h,"offer"); };
+    var bTrade=document.getElementById("cTrade"); if(bTrade) bTrade.onclick=function(){ h._profile=owner; openOfferModal(h,"trade"); };
+    var bMsg=document.getElementById("cMsg"); if(bMsg) bMsg.onclick=function(){ startConversation(h.user_id, owner.handle); };
+    var bSell=document.getElementById("cSell"); if(bSell) bSell.onclick=function(){ openSellModal(h); };
+    var bAdd=document.getElementById("cAddPhoto"); var pf=document.getElementById("cPhotoFile");
+    if(bAdd&&pf){ bAdd.onclick=function(){ pf.click(); }; pf.onchange=function(e){ uploadCardPhoto(e,id); }; }
+    var cg=document.getElementById("cGif"); if(cg) cg.onclick=function(){ openGifPicker("comment"); };
+    var cs=document.getElementById("cCommentSend"); if(cs) cs.onclick=function(){ var inp=document.getElementById("cCommentInput"); addComment(id,null,inp?inp.value:""); };
+    var ci=document.getElementById("cCommentInput"); if(ci) ci.addEventListener("keydown",function(e){ if(e.key==="Enter") addComment(id,null,ci.value); });
+    loadComments(id, h);
+  }
+  async function uploadCardPhoto(e,holdingId){
+    const file=e.target.files&&e.target.files[0]; if(!file||!currentSession) return;
+    try{
+      const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+      const path=currentSession.user.id+"/"+holdingId+"_"+Date.now()+"."+ext;
+      const up=await withTimeout(sb.storage.from("cards").upload(path,file,{upsert:true,cacheControl:"3600"}),30000,"Upload");
+      if(up.error){ alert("Upload failed: "+up.error.message); return; }
+      const url=sb.storage.from("cards").getPublicUrl(path).data.publicUrl;
+      const ins=await sb.from("card_photos").insert({holding_id:holdingId,user_id:currentSession.user.id,url:url});
+      if(ins.error){ alert("Could not save photo: "+ins.error.message); return; }
+      openCard(holdingId,true);
+    }catch(err){ alert("Upload failed."); }
+  }
+  async function loadComments(id,h){
+    const el=document.getElementById("cComments"); if(!el) return;
+    const r=await sb.from("card_comments").select("*").eq("holding_id",id).order("created_at",{ascending:true}).limit(200);
+    const rows=r.data||[];
+    if(!rows.length){ el.innerHTML='<div class="insight">No comments yet. Be the first.</div>'; return; }
+    const ids=[]; rows.forEach(function(c){ if(ids.indexOf(c.user_id)<0) ids.push(c.user_id); });
+    let profs={}; const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",ids); (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
+    let html="";
+    rows.forEach(function(c,idx){
+      const p=profs[c.user_id]||{handle:"collector"};
+      const mine=currentSession && c.user_id===currentSession.user.id;
+      html+='<div class="cmt">'+avatarHtml(p)+'<div class="cbody"><div class="cn" data-h="'+escapeAttr(p.handle)+'">'+escapeHtml(p.display_name||("@"+p.handle))+'</div>'+
+        (c.body?('<div class="ct">'+escapeHtml(c.body)+'</div>'):"")+
+        (c.gif_url?('<img src="'+escapeAttr(c.gif_url)+'" onerror="this.remove()"/>'):"")+
+        '</div>'+(mine?('<button class="rm" data-del="'+c.id+'">\u00d7</button>'):"")+'</div>';
+    });
+    el.innerHTML=html;
+    Array.prototype.forEach.call(el.querySelectorAll(".cn[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
+    Array.prototype.forEach.call(el.querySelectorAll("[data-del]"),function(b){ b.onclick=async function(){ await sb.from("card_comments").delete().eq("id",b.getAttribute("data-del")); loadComments(id,h); }; });
+  }
+  async function addComment(id,gifUrl,text){
+    if(!currentSession){ alert("Sign in to comment."); return; }
+    const body=(text||"").trim();
+    if(!body && !gifUrl) return;
+    const payload={holding_id:id,user_id:currentSession.user.id,body:body||null,gif_url:gifUrl||null};
+    const inp=document.getElementById("cCommentInput"); if(inp) inp.value="";
+    const r=await sb.from("card_comments").insert(payload);
+    if(r.error){ alert("Could not post: "+r.error.message); return; }
+    try{ const hr=await sb.from("holdings").select("user_id,title,query").eq("id",id).maybeSingle(); if(hr.data){ notify(hr.data.user_id,"comment",id,hr.data.title||hr.data.query); } }catch(e){}
+    loadComments(id);
   }
 
   // ---------- MESSAGING ----------
@@ -1095,18 +1332,19 @@ function renderPage(env = {}) {
           (canAct?('<div class="obtns"><button class="authbtn primary" data-acc="'+o.id+'">Accept</button><button class="authbtn" data-dec="'+o.id+'">Decline</button></div>'):"")+
           '</div>';
       } else {
-        bubbles+='<div class="bubble '+(mine?"me":"them")+'">'+escapeHtml(m.body||"")+'<div class="bt">'+escapeHtml((m.created_at||"").slice(5,16).replace("T"," "))+'</div></div>';
+        bubbles+='<div class="bubble '+(mine?"me":"them")+'">'+(m.body?escapeHtml(m.body):"")+(m.gif_url?('<img src="'+escapeAttr(m.gif_url)+'" onerror="this.remove()"/>'):"")+'<div class="bt">'+escapeHtml((m.created_at||"").slice(5,16).replace("T"," "))+'</div></div>';
       }
     });
     if(!bubbles) bubbles='<div class="insight">No messages yet — say hello.</div>';
     wrap.innerHTML='<div class="card"><div style="display:flex;align-items:center;gap:10px"><button class="authbtn" id="backConvos">\u2190</button>'+avatarHtml(p)+
       '<div style="flex:1"><div style="font-weight:700;cursor:pointer" id="convoName">'+escapeHtml(p.display_name||("@"+p.handle))+'</div><div style="font-size:11px;color:var(--dim)">@'+escapeHtml(p.handle||"")+'</div></div></div>'+
       '<div class="thread" id="thread">'+bubbles+'</div>'+
-      '<div class="composer"><input id="msgInput" placeholder="Write a message…"/><button class="authbtn primary" id="msgSend">Send</button></div></div>';
+      '<div class="composer"><input id="msgInput" placeholder="Write a message…"/><button class="gifbtn" id="msgGif">GIF</button><button class="authbtn primary" id="msgSend">Send</button></div></div>';
     const th=document.getElementById("thread"); if(th) th.scrollTop=th.scrollHeight;
     document.getElementById("backConvos").onclick=function(){ loadConversations(); };
     document.getElementById("convoName").onclick=function(){ if(p.handle) viewProfile(p.handle); };
     document.getElementById("msgSend").onclick=function(){ sendMessage(userId); };
+    document.getElementById("msgGif").onclick=function(){ openGifPicker("dm"); };
     document.getElementById("msgInput").addEventListener("keydown",function(e){ if(e.key==="Enter") sendMessage(userId); });
     Array.prototype.forEach.call(wrap.querySelectorAll("[data-acc]"),function(b){ b.onclick=function(){ respondOffer(b.getAttribute("data-acc"),"accepted",userId); }; });
     Array.prototype.forEach.call(wrap.querySelectorAll("[data-dec]"),function(b){ b.onclick=function(){ respondOffer(b.getAttribute("data-dec"),"declined",userId); }; });
@@ -1116,7 +1354,7 @@ function renderPage(env = {}) {
   async function sendMessage(userId,extra){
     const inp=document.getElementById("msgInput");
     const body=inp?inp.value.trim():"";
-    if(!body && !(extra&&extra.offer_id)) return;
+    if(!body && !(extra&&(extra.offer_id||extra.gif_url))) return;
     const payload=Object.assign({ sender_id:currentSession.user.id, recipient_id:userId, body:body||null }, extra||{});
     if(inp){ inp.value=""; inp.disabled=true; }
     const r=await sb.from("messages").insert(payload);
@@ -1132,6 +1370,7 @@ function renderPage(env = {}) {
       try{ const o=await sb.from("offers").select("holding_id").eq("id",offerId).maybeSingle(); if(o.data&&o.data.holding_id){ await sb.from("holdings").update({sold:true,for_sale:false,for_trade:false}).eq("id",o.data.holding_id); } }catch(e){}
     }
     await sb.from("messages").insert({ sender_id:currentSession.user.id, recipient_id:userId, body:body, offer_id:offerId });
+    notify(userId, status==="accepted"?"offer_accepted":"offer_declined", null, null);
     openConversation(userId,true);
   }
 
@@ -1199,14 +1438,15 @@ function renderPage(env = {}) {
         acts+='<button data-msg="'+idx+'">Message</button>';
       } else { acts='<button data-signin="1">Sign in to buy</button>'; }
       cards+='<div class="mktcard">'+
-        (img?('<img src="'+escapeAttr(img)+'" onerror="this.style.display=\\'none\\'"/>'):'')+
-        '<div class="nm">'+escapeHtml(h.title||h.query)+tags+'</div>'+
+        (img?('<img src="'+escapeAttr(img)+'" data-card="'+h.id+'" style="cursor:pointer" onerror="this.style.display=\\'none\\'"/>'):'')+
+        '<div class="nm" data-card="'+h.id+'" style="cursor:pointer">'+escapeHtml(h.title||h.query)+tags+'</div>'+
         '<div class="seller" data-h="'+(p?escapeAttr(p.handle):"")+'">'+escapeHtml(seller)+'</div>'+
         (h.ask_price!=null?('<div class="ask">'+money(h.ask_price)+'</div>'):'<div class="ask" style="color:var(--muted);font-size:13px">Open to offers</div>')+
         (h.sale_note?('<div class="insight" style="margin-top:6px">'+escapeHtml(h.sale_note)+'</div>'):"")+
         '<div class="acts">'+acts+'</div></div>';
     });
     wrap.innerHTML='<div class="mkt">'+cards+'</div>';
+    Array.prototype.forEach.call(wrap.querySelectorAll("[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
     Array.prototype.forEach.call(wrap.querySelectorAll(".seller[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
     Array.prototype.forEach.call(wrap.querySelectorAll("[data-edit]"),function(b){ b.onclick=function(){ openSellModal(rows[Number(b.getAttribute("data-edit"))]); }; });
     Array.prototype.forEach.call(wrap.querySelectorAll("[data-buy]"),function(b){ b.onclick=function(){ openOfferModal(rows[Number(b.getAttribute("data-buy"))],"buy_now"); }; });
@@ -1238,6 +1478,7 @@ function renderPage(env = {}) {
     const kindLbl=kind==="buy_now"?"Buy-now request":(kind==="trade"?"Trade proposal":"Offer");
     const body=kindLbl+" for "+(h.title||h.query)+(amount!=null?(" — "+money(amount)):"")+(note?(" — "+note):"");
     await sb.from("messages").insert({ sender_id:currentSession.user.id, recipient_id:h.user_id, body:body, holding_id:h.id, offer_id:off.data.id });
+    notify(h.user_id,"offer",h.id,kindLbl+(amount!=null?(" — "+money(amount)):"")+" for "+(h.title||h.query));
     document.getElementById("offerModal").style.display="none"; pendingOffer=null;
     btn.disabled=false; btn.textContent="Send";
     startConversation(h.user_id, h._profile&&h._profile.handle);
@@ -1458,6 +1699,10 @@ function renderPage(env = {}) {
   var _om=document.getElementById("offerModal"); if(_om) _om.addEventListener("click",function(e){ if(e.target.id==="offerModal"){ _om.style.display="none"; pendingOffer=null; } });
   Array.prototype.forEach.call(document.querySelectorAll("#mktTabs button"),function(b){ b.onclick=function(){ mktFilter=b.getAttribute("data-mkt"); loadMarket(); }; });
   Array.prototype.forEach.call(document.querySelectorAll("#lbTabs button"),function(b){ b.onclick=function(){ lbTab=b.getAttribute("data-lb"); loadLeaderboard(); }; });
+  var _gc=document.getElementById("gifCancel"); if(_gc) _gc.onclick=function(){ document.getElementById("gifModal").style.display="none"; gifTarget=null; };
+  var _gm=document.getElementById("gifModal"); if(_gm) _gm.addEventListener("click",function(e){ if(e.target.id==="gifModal"){ _gm.style.display="none"; gifTarget=null; } });
+  var _gu=document.getElementById("gifUseUrl"); if(_gu) _gu.onclick=function(){ var v=(document.getElementById("gifSearch").value||"").trim(); if(isImgUrl(v)){ pickGif(v); } else { alert("Paste a direct GIF or image URL (ending in .gif/.png/.jpg) or a Giphy/Tenor link."); } };
+  var _gs=document.getElementById("gifSearch"); if(_gs) _gs.addEventListener("input",function(){ if(!GIPHY_KEY) return; clearTimeout(gifTimer); var v=_gs.value.trim(); gifTimer=setTimeout(function(){ gifSearch(v||"trending"); },350); });
 </script>
 </body>
 </html>`;
