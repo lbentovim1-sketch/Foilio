@@ -324,7 +324,7 @@ function renderPage(env = {}) {
   .pstat-btn{background:none;border:none;cursor:pointer;font-family:'Manrope',sans-serif;color:inherit;padding:0;text-align:left}
   .pstat-btn:hover b{color:var(--indigo)}
   .following-style{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important}
-  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}.home-features{grid-template-columns:repeat(2,1fr)!important}.home-hero-title{font-size:32px!important;letter-spacing:-1.5px!important}}
+  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}.home-features{grid-template-columns:repeat(2,1fr)!important}.home-hero-title{font-size:32px!important;letter-spacing:-1.5px!important}.subj-tabs{gap:3px}.subj-tab{padding:3px 7px}}
   /* Market Pulse widget */
   .pulse-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;border-radius:6px;padding-left:4px}
   .pulse-item:last-child{border-bottom:none}
@@ -370,10 +370,31 @@ function renderPage(env = {}) {
   /* Homepage social redesign */
   .home-hero-title{font-size:44px;letter-spacing:-2px;line-height:1.08}
   .home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
-  .home-feat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 14px;cursor:pointer;transition:border-color .15s,background .15s}
-  .home-feat:hover{border-color:var(--indigo);background:rgba(109,92,255,.07)}
-  .hf-label{font-size:13px;font-weight:700;margin-bottom:5px;color:var(--text)}
+  .home-feat{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px 16px;cursor:pointer;transition:border-color .2s,background .2s,transform .15s,box-shadow .2s;display:flex;flex-direction:column;gap:5px}
+  .home-feat:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35)}
+  #hfPortfolio:hover{border-color:var(--indigo);background:rgba(109,92,255,.06)}
+  #hfDiscover:hover{border-color:#22d3ee;background:rgba(34,211,238,.06)}
+  #hfMarket:hover{border-color:var(--up);background:rgba(43,214,115,.06)}
+  #hfLeaders:hover{border-color:var(--gold);background:rgba(245,181,68,.06)}
+  .hf-icon{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;margin-bottom:6px;flex-shrink:0}
+  .hf-label{font-size:14px;font-weight:800;color:var(--text)}
   .hf-desc{font-size:11px;color:var(--muted);line-height:1.4}
+  .hf-action{font-size:11px;font-weight:700;margin-top:6px}
+  /* Subject leaderboard tabs */
+  .subj-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:10px}
+  .subj-tab{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;transition:all .12s;letter-spacing:.3px;text-transform:uppercase}
+  .subj-tab.on{background:var(--indigo);border-color:var(--indigo);color:#fff}
+  .subj-tab:hover:not(.on){border-color:var(--borderB);color:var(--text)}
+  /* Hot cards widget */
+  .hot-item{display:flex;align-items:center;gap:8px;padding:8px 2px;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .12s}
+  .hot-item:last-child{border-bottom:none}
+  .hot-item:hover{opacity:.75}
+  .hot-rank{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--dim);width:20px;flex-shrink:0;text-align:center}
+  .hot-name{flex:1;min-width:0;font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hot-meta{font-size:10px;color:var(--muted);flex-shrink:0;text-align:right;line-height:1.4}
+  /* See all activity button */
+  .see-all-btn{background:none;border:1px solid var(--border);color:var(--indigo);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif;width:100%;transition:border-color .12s,background .12s}
+  .see-all-btn:hover{border-color:var(--indigo);background:rgba(109,92,255,.06)}
 </style>
 </head>
 <body>
@@ -412,20 +433,28 @@ function renderPage(env = {}) {
   </div>
   <div class="home-features">
     <div class="home-feat" id="hfPortfolio">
+      <div class="hf-icon" style="background:rgba(109,92,255,.15);color:var(--indigo)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div>
       <div class="hf-label">Portfolio</div>
-      <div class="hf-desc">Track &amp; show off your collection</div>
+      <div class="hf-desc">Track &amp; show off your card collection</div>
+      <div class="hf-action" style="color:var(--indigo)">View your portfolio →</div>
     </div>
     <div class="home-feat" id="hfDiscover">
+      <div class="hf-icon" style="background:rgba(34,211,238,.15);color:#22d3ee"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
       <div class="hf-label">Discover</div>
       <div class="hf-desc">Find &amp; follow other collectors</div>
+      <div class="hf-action" style="color:#22d3ee">Browse collectors →</div>
     </div>
     <div class="home-feat" id="hfMarket">
+      <div class="hf-icon" style="background:rgba(43,214,115,.15);color:var(--up)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg></div>
       <div class="hf-label">Marketplace</div>
       <div class="hf-desc">Buy, sell &amp; trade cards</div>
+      <div class="hf-action" style="color:var(--up)">Browse listings →</div>
     </div>
     <div class="home-feat" id="hfLeaders">
+      <div class="hf-icon" style="background:rgba(245,181,68,.15);color:var(--gold)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></div>
       <div class="hf-label">Leaderboards</div>
       <div class="hf-desc">Climb the ranks &amp; show your biggest PC</div>
+      <div class="hf-action" style="color:var(--gold)">See who's #1 →</div>
     </div>
   </div>
   <div class="home-dash">
@@ -433,13 +462,29 @@ function renderPage(env = {}) {
       <div class="network-card" style="margin-top:0">
         <label>COLLECTOR ACTIVITY</label>
         <div id="homeFeed"><div class="insight">Loading recent collector activity…</div></div>
+        <div id="homeFeedMore" style="margin-top:10px;display:none"><button class="see-all-btn" id="homeFeedSeeAll">See all activity →</button></div>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <label style="margin-bottom:0">HOT RIGHT NOW</label>
+          <span style="font-size:10px;color:var(--dim)">last 30 days</span>
+        </div>
+        <div id="hotCards"><div class="insight">Loading trending cards…</div></div>
       </div>
     </div>
     <div>
       <div class="card" style="margin-top:0">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <label style="margin-bottom:0">TOP COLLECTORS</label>
           <span id="lbLink" style="font-size:11px;color:var(--indigo);cursor:pointer">See all →</span>
+        </div>
+        <div class="subj-tabs" id="subjTabs">
+          <button class="subj-tab on" data-subj="">All</button>
+          <button class="subj-tab" data-subj="Soto">Soto</button>
+          <button class="subj-tab" data-subj="Ohtani">Ohtani</button>
+          <button class="subj-tab" data-subj="Wembanyama">Wemby</button>
+          <button class="subj-tab" data-subj="Clark">Clark</button>
+          <button class="subj-tab" data-subj="Jordan">Jordan</button>
         </div>
         <div id="homeTopCollectors"><div class="insight">Loading…</div></div>
       </div>
@@ -1011,7 +1056,7 @@ function renderPage(env = {}) {
   // re-renders once it knows who (if anyone) is signed in.
   renderAuth(); renderNav(); routeFromPath(true); loadHomeFeed();
   // Home widgets load after the full script executes (so PULSE_QUERIES / sb are defined)
-  setTimeout(function(){ if(view==="search"){ loadMarketPulse(); loadHomeTopCollectors(); } },0);
+  setTimeout(function(){ if(view==="search"){ loadMarketPulse(); loadHomeTopCollectors(); loadHotRightNow(); } },0);
   if(sb){
     sb.auth.getSession().then(async function(res){
       try{
@@ -1033,7 +1078,7 @@ function renderPage(env = {}) {
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); } if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadHotRightNow(); } if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
       },0);
     });
   }
@@ -1080,7 +1125,7 @@ function renderPage(env = {}) {
     const el=document.getElementById("homeFeed");
     if(!el) return;
     if(!sb){ el.innerHTML='<div class="insight">Sign in to see what collectors are adding to their portfolios.</div>'; return; }
-    const rows=await recentPublicUploads(8);
+    const rows=await recentPublicUploads(4);
     if(!rows.length){ el.innerHTML='<div class="activity"><div class="avatar">F</div><div class="copy"><b>Be the first.</b><span>Add a public card and it shows up here for the community.</span></div></div>'; return; }
     el.innerHTML=rows.map(function(h){
       const p=h._profile; const name=p?("@"+p.handle):"a collector";
@@ -1091,6 +1136,10 @@ function renderPage(env = {}) {
     }).join("");
     Array.prototype.forEach.call(el.querySelectorAll("b[data-h]"),function(b){ var hh=b.getAttribute("data-h"); if(hh) b.onclick=function(){ viewProfile(hh); }; });
     Array.prototype.forEach.call(el.querySelectorAll("[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
+    var moreWrap=document.getElementById("homeFeedMore");
+    var seeAllBtn=document.getElementById("homeFeedSeeAll");
+    if(moreWrap){ moreWrap.style.display="block"; }
+    if(seeAllBtn && !seeAllBtn._wired){ seeAllBtn._wired=true; seeAllBtn.onclick=function(){ setView("trending"); }; }
   }
 
   // ---------- HOME MARKET PULSE ----------
@@ -1121,20 +1170,32 @@ function renderPage(env = {}) {
   }
 
   // ---------- HOME TOP COLLECTORS ----------
-  async function loadHomeTopCollectors(){
+  async function loadHomeTopCollectors(subject){
     const el=document.getElementById("homeTopCollectors");
     const lbL=document.getElementById("lbLink");
-    if(lbL) lbL.onclick=function(){ setView("leaderboard"); };
+    if(lbL && !lbL._wired){ lbL._wired=true; lbL.onclick=function(){ setView("leaderboard"); }; }
+    // Wire subject tabs once
+    var tabEls=document.querySelectorAll(".subj-tab");
+    tabEls.forEach(function(t){
+      if(!t._wired){ t._wired=true; t.onclick=function(){
+        tabEls.forEach(function(tt){tt.classList.remove("on");});
+        t.classList.add("on");
+        loadHomeTopCollectors(t.getAttribute("data-subj")||"");
+      }; }
+    });
     if(!el || !sb) return;
     try{
-      const hr=await sb.from("holdings").select("user_id,added_value,manual_value").eq("is_public",true).limit(3000);
+      el.innerHTML='<div class="insight">Loading…</div>';
+      var q=sb.from("holdings").select("user_id,added_value,manual_value,title,query").eq("is_public",true).limit(3000);
+      if(subject) q=q.or("title.ilike.%"+subject+"%,query.ilike.%"+subject+"%");
+      const hr=await q;
       const agg={};
       (hr.data||[]).forEach(function(h){ if(!h.user_id) return; if(!agg[h.user_id]) agg[h.user_id]=0; const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0; agg[h.user_id]+=(isNaN(v)?0:v); });
-      const arr=Object.keys(agg).map(function(k){return{id:k,v:agg[k]};}).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,5);
-      if(!arr.length){ el.innerHTML='<div class="insight">No collectors yet. Add public cards to appear here.</div>'; return; }
+      const arr=Object.keys(agg).map(function(k){return{id:k,v:agg[k]};}).filter(function(x){return x.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,7);
+      if(!arr.length){ el.innerHTML='<div class="insight">No collectors yet'+(subject?' collecting '+subject:'')+'. Be the first!</div>'; return; }
       const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",arr.map(function(x){return x.id;}));
       const profs={}; (pr.data||[]).forEach(function(p){profs[p.id]=p;});
-      const medals=["🥇","🥈","🥉","",""];
+      const medals=["🥇","🥈","🥉","","","",""];
       el.innerHTML=arr.map(function(x,i){
         const p=profs[x.id]; if(!p) return "";
         return '<div class="tc-row" data-h="'+escapeAttr(p.handle)+'">'+
@@ -1144,6 +1205,39 @@ function renderPage(env = {}) {
           '<span class="tc-val">'+money(x.v)+'</span></div>';
       }).join("");
       Array.prototype.forEach.call(el.querySelectorAll("[data-h]"),function(r){ r.onclick=function(){viewProfile(r.getAttribute("data-h"));}; });
+    }catch(e){ el.innerHTML='<div class="insight">Could not load.</div>'; }
+  }
+
+  // ---------- HOT RIGHT NOW (trending cards in portfolios) ----------
+  async function loadHotRightNow(){
+    const el=document.getElementById("hotCards");
+    if(!el || !sb) return;
+    try{
+      const cutoff=new Date(Date.now()-30*24*60*60*1000).toISOString();
+      const r=await sb.from("holdings").select("query,title,added_value,manual_value").eq("is_public",true).gte("added_at",cutoff).limit(600);
+      const rows=r.data||[];
+      if(!rows.length){ el.innerHTML='<div class="insight">Not enough data yet — check back as more collectors join.</div>'; return; }
+      const agg={};
+      rows.forEach(function(h){
+        const key=(h.query||h.title||"").toLowerCase().trim();
+        if(!key) return;
+        if(!agg[key]) agg[key]={label:h.title||h.query||"",count:0,totalVal:0,hasVal:0};
+        agg[key].count++;
+        const v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0;
+        if(!isNaN(v)&&v>0){ agg[key].totalVal+=v; agg[key].hasVal++; }
+      });
+      const sorted=Object.values(agg).sort(function(a,b){return b.count-a.count;}).slice(0,5);
+      el.innerHTML=sorted.map(function(item,i){
+        const avg=(item.hasVal>0)?money(item.totalVal/item.hasVal):"";
+        return '<div class="hot-item" data-look="'+escapeAttr(item.label)+'">'+
+          '<span class="hot-rank">#'+(i+1)+'</span>'+
+          '<span class="hot-name">'+escapeHtml(item.label)+'</span>'+
+          '<span class="hot-meta">'+item.count+(item.count===1?' collector':' collectors')+(avg?'<br>avg '+avg:'')+'</span>'+
+          '</div>';
+      }).join("");
+      Array.prototype.forEach.call(el.querySelectorAll("[data-look]"),function(c){
+        c.onclick=function(){ setView("search"); document.getElementById("q").value=c.getAttribute("data-look"); run(); };
+      });
     }catch(e){ el.innerHTML='<div class="insight">Could not load.</div>'; }
   }
 
