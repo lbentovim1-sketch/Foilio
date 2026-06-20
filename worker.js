@@ -1125,11 +1125,16 @@ function renderPage(env = {}) {
     ['rgba(251,191,36,.18)','#fbbf24'],
     ['rgba(167,139,250,.18)','#c4b5fd'],
   ];
+  function cardInitials(name){
+    var words=(name||"").trim().split(/\s+/).filter(function(w){ return /^[A-Za-z]/.test(w); });
+    if(words.length>=2) return (words[0][0]+words[1][0]).toUpperCase();
+    if(words.length===1) return words[0].slice(0,2).toUpperCase();
+    return "";
+  }
   function cardFallbackHtml(name, id){
     var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
     var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
-    var parts=(name||"").trim().split(/\s+/).filter(function(w){return /[A-Za-z]/.test(w);});
-    var init=parts.length>=2?(parts[0][0]+parts[1][0]).toUpperCase():(parts[0]?parts[0].slice(0,2).toUpperCase():"");
+    var init=cardInitials(name);
     return '<div class="act-ph" style="background:'+bg+';color:'+col+'">'+escapeHtml(init||"•")+'</div>';
   }
   function actImgErr(el){
@@ -1137,8 +1142,7 @@ function renderPage(env = {}) {
     var id=el.getAttribute("data-card")||"";
     var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
     var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
-    var parts=name.trim().split(/\s+/).filter(function(w){return /[A-Za-z]/.test(w);});
-    var init=parts.length>=2?(parts[0][0]+parts[1][0]).toUpperCase():(parts[0]?parts[0].slice(0,2).toUpperCase():"");
+    var init=cardInitials(name);
     var ph=document.createElement("div");
     ph.className="act-ph"; ph.style.background=bg; ph.style.color=col; ph.textContent=init||"•";
     if(el.parentNode) el.parentNode.insertBefore(ph,el);
@@ -1150,8 +1154,8 @@ function renderPage(env = {}) {
     if(!s) return "";
     s=String(s);
     s=s.replace(/^\d{4}\s*/,"");
-    s=s.replace(/\b(PANINI|TOPPS|BOWMAN|DONRUSS|UPPER\s+DECK|FLEER|SCORE|LEAF|SELECT|OPTIC|CHRONICLES|STADIUM\s+CLUB|NATIONAL\s+TREASURES|FINEST|HERITAGE|TRIBUTE)\b/gi,"");
-    s=s.replace(/\b(CHROME|DRAFT|PROSPECT|AUTOGRAPH|ALL\s+ACES)\b/gi,"");
+    s=s.replace(/\b(PANINI|TOPPS|BOWMAN|DONRUSS|UPPER\s+DECK|FLEER|SCORE|LEAF|SELECT|OPTIC|CHRONICLES|STADIUM\s+CLUB|NATIONAL\s+TREASURES|FINEST|HERITAGE|TRIBUTE|PRIZM|MOSAIC|CONTENDERS|ABSOLUTE)\b/gi,"");
+    s=s.replace(/\b(CHROME|DRAFT|PROSPECT|AUTOGRAPH|ALL\s+ACES|ROOKIE|BASE|REFRACTOR|HOLO|VARIATION)\b/gi,"");
     s=s.replace(/#[A-Z0-9-]+/gi,"");
     s=s.replace(/\s{2,}/g," ").trim();
     s=s.toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();});
