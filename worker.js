@@ -1221,7 +1221,7 @@ async function renderPage(env = {}, pathname = "/") {
       content.innerHTML=
         '<p style="font-size:13px;color:var(--muted);margin-bottom:14px">Add a card to your portfolio to show off your collection and appear in the community feed.</p>'+
         '<button class="btn" id="obAddCard" style="margin-bottom:8px">+ Add my first card</button>'+
-        '<button id="obFinish" style="background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;font-family:\'Manrope\',sans-serif;width:100%;text-align:center">I\'ll do this later</button>';
+        '<button id="obFinish" style="background:none;border:none;color:var(--dim);font-size:12px;cursor:pointer;width:100%;text-align:center">Skip this step</button>';
       document.getElementById("obAddCard").onclick=function(){
         document.getElementById("onboardModal").style.display="none";
         localStorage.setItem("fo_onboarded","1");
