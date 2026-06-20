@@ -451,11 +451,11 @@ function renderPage(env = {}) {
   <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
       <h1 style="font-size:28px">My Portfolio</h1>
-      <p class="sub">Your saved cards, valued from recent sales. Toggle <b>showcase</b> for a visual card grid.</p>
+      <p class="sub">Your collection, valued from recent sales. Toggle <b>≡ List</b> for full details and edit controls.</p>
     </div>
     <div class="view-toggle" id="pfViewToggle">
-      <button id="pfListViewBtn" class="on">≡ List</button>
-      <button id="pfGridViewBtn">⊞ Showcase</button>
+      <button id="pfListViewBtn">≡ List</button>
+      <button id="pfGridViewBtn" class="on">⊞ Showcase</button>
     </div>
   </div>
   <div class="card">
@@ -471,8 +471,9 @@ function renderPage(env = {}) {
     <div class="insight" style="margin-bottom:10px">Ungraded/raw cards, or cards graded by PSA, Beckett (BGS), SGC, CGC, TAG, or others.</div>
     <button class="authbtn primary" id="manualAddBtn">+ Add a card manually</button>
   </div>
+  <div id="pfShowcase"></div>
   <div id="pfSummary"></div>
-  <div id="pfList"></div>
+  <div id="pfList" style="display:none"></div>
 </div></div>
 
 <div id="watchlistView" style="display:none"><div class="wrap">
@@ -1213,46 +1214,50 @@ function renderPage(env = {}) {
     document.getElementById("modal").style.display="none";
     if(u.error){ alert("Could not update: "+u.error.message); } else { loadPortfolio(); }
   }
-  var _pfView="list"; // "list" or "grid"
+  var _pfView="grid"; // "list" or "grid" — showcase is the default
   async function loadPortfolio(){
+    const showcase=document.getElementById("pfShowcase");
     const sum=document.getElementById("pfSummary");
     const list=document.getElementById("pfList");
-    sum.innerHTML=""; list.innerHTML='<div class="card">Loading your portfolio…</div>';
-    if(!currentSession){ list.innerHTML='<div class="card">Sign in to see your portfolio.</div>'; return; }
+    if(showcase) showcase.innerHTML='';
+    sum.innerHTML=''; list.innerHTML=''; list.style.display='none';
+    if(!currentSession){ sum.innerHTML='<div class="card">Sign in to see your portfolio.</div>'; return; }
 
     const r=await sb.from("holdings").select("*").eq("user_id",currentSession.user.id).order("added_at",{ascending:false});
-    if(r.error){ list.innerHTML='<div class="err"><b>Could not load portfolio.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
+    if(r.error){ sum.innerHTML='<div class="err"><b>Could not load portfolio.</b> '+escapeHtml(r.error.message)+'</div>'; return; }
     const holds=r.data||[];
-    if(!holds.length){ list.innerHTML='<div class="card">No cards yet. Go to <b>Search</b>, look up a card, and tap <b>"+ Add"</b> on the one you own.</div>'; return; }
+    if(!holds.length){ sum.innerHTML='<div class="card">No cards yet. Go to <b>Search</b>, look up a card, and tap <b>"+ Add"</b> on the one you own.</div>'; return; }
     await fillThumbs(holds);
 
-    // Show skeleton immediately, load values async
-    list.innerHTML='<div class="card"><label>YOUR CARDS</label><div class="insight">Fetching current market values…</div></div>';
+    // Show loading state in showcase slot
+    if(showcase) showcase.innerHTML='<div class="card"><div class="insight">Loading your collection…</div></div>';
     const valued=await Promise.all(holds.map(async function(h){ const v=await valueHolding(h); return {h:h, current:v.current, manual:v.manual}; }));
 
     // Wire view toggle (after valued is resolved so closures are safe)
     var lBtn=document.getElementById("pfListViewBtn"); var gBtn=document.getElementById("pfGridViewBtn");
-    if(lBtn){ lBtn.onclick=function(){ _pfView="list"; lBtn.classList.add("on"); gBtn.classList.remove("on"); renderPfList(valued,list); }; }
-    if(gBtn){ gBtn.onclick=function(){ _pfView="grid"; gBtn.classList.add("on"); lBtn.classList.remove("on"); renderPfGrid(valued,list); }; }
+    if(lBtn){ lBtn.onclick=function(){ _pfView="list"; lBtn.classList.add("on"); gBtn.classList.remove("on"); if(showcase) showcase.innerHTML=''; list.style.display=''; renderPfList(valued,list); }; }
+    if(gBtn){ gBtn.onclick=function(){ _pfView="grid"; gBtn.classList.add("on"); lBtn.classList.remove("on"); list.style.display='none'; list.innerHTML=''; renderPfGrid(valued,showcase); }; }
 
     let totalCur=0, totalAdd=0;
     valued.forEach(function(v){ totalCur+=v.current; totalAdd+=(Number(v.h.added_value)||0); });
     const gl=totalCur-totalAdd; const glPct=totalAdd?(gl/totalAdd*100):0;
 
-    // Collection breakdown by "subject" — group by first significant word in title
-    var subjects={};
-    valued.forEach(function(v){ var t=(v.h.title||v.h.query||""); var words=t.split(/\s+/); var key=words.slice(0,2).join(" "); if(!subjects[key]) subjects[key]={val:0,n:0}; subjects[key].val+=v.current; subjects[key].n++; });
-    var topSubjects=Object.keys(subjects).map(function(k){return{k:k,val:subjects[k].val,n:subjects[k].n};}).sort(function(a,b){return b.val-a.val;}).slice(0,4);
-
+    // Stats strip — compact, no collection groups
     sum.innerHTML='<div class="card"><div class="stats">'+
       '<div class="stat"><div class="l">Cards</div><div class="v">'+holds.length+'</div></div>'+
       '<div class="stat hl"><div class="l">Current value</div><div class="v">'+money(totalCur)+'</div></div>'+
       '<div class="stat"><div class="l">Added value</div><div class="v">'+money(totalAdd)+'</div></div>'+
       '<div class="stat"><div class="l">Gain / loss</div><div class="v" style="color:'+(gl>=0?"var(--up)":"var(--down)")+'">'+(gl>=0?"+":"")+money(gl)+' ('+(glPct>=0?"+":"")+glPct.toFixed(0)+'%)</div></div>'+
-      '</div>'+
-      (topSubjects.length>1?('<div style="margin-top:12px"><label style="margin-bottom:8px">TOP COLLECTION GROUPS</label><div style="display:flex;gap:8px;flex-wrap:wrap">'+topSubjects.map(function(s){return '<div style="background:var(--ink);border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px"><div style="font-weight:700">'+escapeHtml(s.k)+'…</div><div style="color:var(--gold);font-family:JetBrains Mono,monospace;font-size:11px">'+money(s.val)+' · '+s.n+' card'+(s.n===1?"":"s")+'</div></div>';}).join("")+'</div></div>'):"")+'<div class="insight" style="margin-top:10px">Values from recent confirmed sales (median). Best Offer data can be imperfect.</div></div>';
+      '</div><div class="insight" style="margin-top:8px">Values from recent confirmed sales. Best Offer data can be imperfect.</div></div>';
 
-    if(_pfView==="grid"){ renderPfGrid(valued,list); } else { renderPfList(valued,list); }
+    // Render: showcase goes above stats (in pfShowcase), list goes below (in pfList)
+    if(_pfView==="grid"){
+      list.style.display='none'; list.innerHTML='';
+      renderPfGrid(valued,showcase);
+    } else {
+      if(showcase) showcase.innerHTML='';
+      list.style.display=''; renderPfList(valued,list);
+    }
     if(lBtn){ lBtn.classList.toggle("on",_pfView==="list"); } if(gBtn){ gBtn.classList.toggle("on",_pfView==="grid"); }
   }
 
