@@ -529,6 +529,16 @@ async function renderPage(env = {}, pathname = "/") {
   </div>
 </div>
 
+<div id="addChoiceModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:250;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--surface);border:1px solid var(--borderB);border-radius:16px;padding:26px;max-width:360px;width:100%">
+    <h3 style="font-family:'Space Grotesk',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px">Add a card</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">How do you want to add it?</p>
+    <button class="btn" id="acByCert" style="margin-bottom:10px">Look up by PSA Cert #</button>
+    <button class="authbtn" id="acManual" style="width:100%;padding:13px;font-size:14px;font-weight:700">Add manually</button>
+    <button id="acClose" style="background:none;border:none;color:var(--dim);font-size:12px;margin-top:14px;cursor:pointer;width:100%;text-align:center">Cancel</button>
+  </div>
+</div>
+
 <div id="onboardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:300;align-items:center;justify-content:center;padding:20px">
   <div class="onboard-box">
     <h2 style="font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;margin-bottom:6px">Welcome to Foilio!</h2>
@@ -1058,9 +1068,9 @@ async function renderPage(env = {}, pathname = "/") {
         var cav=document.getElementById("homeComposeAv");
         if(cav) cav.innerHTML=avatarHtml(myProfile||{},"avatar");
         var cbtn=document.getElementById("homeComposeBtn");
-        if(cbtn && !cbtn._wired){ cbtn._wired=true; cbtn.onclick=function(e){ e.stopPropagation(); openManualModal(); }; }
+        if(cbtn && !cbtn._wired){ cbtn._wired=true; cbtn.onclick=function(e){ e.stopPropagation(); openAddChoice(); }; }
         var ci=document.getElementById("homeComposeInner");
-        if(ci && !ci._wired){ ci._wired=true; ci.onclick=function(){ openManualModal(); }; }
+        if(ci && !ci._wired){ ci._wired=true; ci.onclick=function(){ openAddChoice(); }; }
       } else {
         compose.style.display="none";
       }
@@ -1165,6 +1175,23 @@ async function renderPage(env = {}, pathname = "/") {
     if(v==="notifications") loadNotifications();
     if(v==="editProfile") renderEditProfile();
     window.scrollTo(0,0);
+  }
+
+  // ---------- ADD CARD CHOICE ----------
+  function openAddChoice(){
+    var m=document.getElementById("addChoiceModal");
+    if(!m) return;
+    m.style.display="flex";
+    var bc=document.getElementById("acByCert");
+    var bm=document.getElementById("acManual");
+    var cl=document.getElementById("acClose");
+    if(bc && !bc._wired){ bc._wired=true; bc.onclick=function(){
+      m.style.display="none"; setView("portfolio");
+      setTimeout(function(){ var ci=document.getElementById("certNum"); if(ci){ ci.focus(); ci.scrollIntoView({behavior:"smooth",block:"center"}); } },200);
+    }; }
+    if(bm && !bm._wired){ bm._wired=true; bm.onclick=function(){ m.style.display="none"; openManualModal(); }; }
+    if(cl && !cl._wired){ cl._wired=true; cl.onclick=function(){ m.style.display="none"; }; }
+    m.onclick=function(e){ if(e.target===m) m.style.display="none"; };
   }
 
   // ---------- TOAST ----------
