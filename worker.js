@@ -225,13 +225,8 @@ function renderPage(env = {}) {
   .pillar b{display:block;font-size:13px;margin-bottom:4px}
   .pillar span{display:block;font-size:12px;color:var(--muted);line-height:1.45}
   .network-card{background:linear-gradient(145deg,rgba(109,92,255,.22),rgba(245,181,68,.08));border:1px solid var(--borderB);border-radius:14px;padding:18px}
-  .activity{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08)}
-  .activity:last-child{border-bottom:none}
   .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#6d5cff,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;flex-shrink:0;overflow:hidden;color:#fff}
   .avatar img{width:100%;height:100%;object-fit:cover}
-  .activity .copy{font-size:13px;color:var(--text)}
-  .activity .copy span{display:block;font-size:11px;color:var(--muted);margin-top:2px}
-  .activity .copy b{cursor:pointer}
   .handle-preview{font-family:'JetBrains Mono',monospace;color:var(--gold);font-size:12px;margin-top:7px}
   .tape{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-top:14px}
   .tapecard{background:var(--ink);border:1px solid var(--border);border-radius:12px;padding:14px;cursor:pointer}
@@ -324,7 +319,7 @@ function renderPage(env = {}) {
   .pstat-btn{background:none;border:none;cursor:pointer;font-family:'Manrope',sans-serif;color:inherit;padding:0;text-align:left}
   .pstat-btn:hover b{color:var(--indigo)}
   .following-style{background:var(--surface2)!important;border:1px solid var(--border)!important;color:var(--text)!important}
-  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}.home-features{grid-template-columns:repeat(2,1fr)!important}.home-hero-title{font-size:32px!important;letter-spacing:-1.5px!important}.subj-tabs{gap:3px}.subj-tab{padding:3px 7px}}
+  @media (max-width:768px){#sidebar{width:100%;height:58px;min-height:auto;position:fixed;bottom:0;top:auto;left:0;right:0;border-right:none;border-top:1px solid var(--border);flex-direction:row;overflow-x:auto;overflow-y:hidden;align-items:stretch}#sidebar::-webkit-scrollbar{display:none}#mainContent{margin-left:0;padding-bottom:62px}#mobileTopBar{display:flex}.sidebar-logo,.sidebar-divider,.sidebar-footer{display:none}#navArea{display:flex;flex-direction:row;width:100%;overflow-x:auto}.sidebar-nav{display:flex;flex-direction:row;padding:0;overflow-x:auto;scrollbar-width:none}.snav-item{flex-direction:column;padding:6px 8px;gap:2px;font-size:9px;font-weight:700;margin:0;border-radius:0;width:auto;flex:1;min-width:52px;justify-content:center;align-items:center}.snav-icon{width:20px;height:20px}.vision{grid-template-columns:1fr}.pillars{grid-template-columns:1fr}.mkt{grid-template-columns:1fr 1fr}.discgrid{grid-template-columns:1fr}.wrap{padding:20px 16px 28px}.home-dash{grid-template-columns:1fr!important}.showcase-grid{grid-template-columns:repeat(2,1fr)!important}.home-features{grid-template-columns:repeat(2,1fr)!important}.home-hero-title{font-size:32px!important;letter-spacing:-1.5px!important}.subj-tabs{gap:3px}.subj-tab{padding:3px 7px}.community-stats{display:none}.cstat{padding:12px 10px}}
   /* Market Pulse widget */
   .pulse-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;border-radius:6px;padding-left:4px}
   .pulse-item:last-child{border-bottom:none}
@@ -340,7 +335,7 @@ function renderPage(env = {}) {
   .tc-name{font-size:13px;font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .tc-val{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--text)}
   /* Home dashboard 2-col grid */
-  .home-dash{display:grid;grid-template-columns:1.2fr 0.8fr;gap:16px;margin-top:20px;align-items:start}
+  .home-dash{display:grid;grid-template-columns:0.85fr 1.15fr;gap:16px;margin-top:16px;align-items:start}
   /* Portfolio showcase grid */
   .showcase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:14px}
   .showcase-card{background:var(--ink);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
@@ -367,6 +362,21 @@ function renderPage(env = {}) {
   .lbcard-mini img{width:32px;height:45px;object-fit:cover;border-radius:3px;background:var(--surface2);flex-shrink:0}
   /* Wl skeleton */
   .wl-loading .mono{color:var(--dim);font-size:13px}
+  /* Community stats bar */
+  .community-stats{display:flex;margin-top:18px;background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+  .cstat{flex:1;padding:18px 20px;border-right:1px solid var(--border);text-align:center}
+  .cstat:last-child{border-right:none}
+  .cstat-v{font-family:'Space Grotesk',sans-serif;font-size:26px;font-weight:800;color:var(--up);letter-spacing:-1px;line-height:1}
+  .cstat-l{font-size:10px;color:var(--muted);margin-top:5px;font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+  /* Activity feed items */
+  .activity{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.07);align-items:center}
+  .activity:last-child{border-bottom:none}
+  .act-thumb{width:46px;height:64px;object-fit:cover;border-radius:5px;background:var(--surface2);flex-shrink:0;cursor:pointer}
+  .act-info{flex:1;min-width:0}
+  .act-who{font-size:11px;color:var(--indigo);font-weight:700;margin-bottom:3px}
+  .act-card{display:block;font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;cursor:pointer}
+  .act-meta{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+  .act-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
   /* Homepage social redesign */
   .home-hero-title{font-size:44px;letter-spacing:-2px;line-height:1.08}
   .home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
@@ -457,19 +467,19 @@ function renderPage(env = {}) {
       <div class="hf-action" style="color:var(--gold)">See who's #1 →</div>
     </div>
   </div>
+  <div class="community-stats" id="communityStats">
+    <div class="cstat"><div class="cstat-v" id="cstatCollectors">—</div><div class="cstat-l">Collectors</div></div>
+    <div class="cstat"><div class="cstat-v" id="cstatCards">—</div><div class="cstat-l">Cards Tracked</div></div>
+    <div class="cstat"><div class="cstat-v" id="cstatValue">—</div><div class="cstat-l">Portfolio Value</div></div>
+  </div>
   <div class="home-dash">
     <div>
       <div class="network-card" style="margin-top:0">
-        <label>COLLECTOR ACTIVITY</label>
-        <div id="homeFeed"><div class="insight">Loading recent collector activity…</div></div>
-        <div id="homeFeedMore" style="margin-top:10px;display:none"><button class="see-all-btn" id="homeFeedSeeAll">See all activity →</button></div>
-      </div>
-      <div class="card" style="margin-top:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <label style="margin-bottom:0">HOT RIGHT NOW</label>
-          <span style="font-size:10px;color:var(--dim)">last 30 days</span>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <label style="margin-bottom:0">RECENT ACTIVITY</label>
+          <span id="homeFeedSeeAll" style="font-size:11px;color:var(--indigo);cursor:pointer;font-weight:700">See all →</span>
         </div>
-        <div id="hotCards"><div class="insight">Loading trending cards…</div></div>
+        <div id="homeFeed"><div class="insight">Loading…</div></div>
       </div>
     </div>
     <div>
@@ -1056,7 +1066,7 @@ function renderPage(env = {}) {
   // re-renders once it knows who (if anyone) is signed in.
   renderAuth(); renderNav(); routeFromPath(true); loadHomeFeed();
   // Home widgets load after the full script executes (so PULSE_QUERIES / sb are defined)
-  setTimeout(function(){ if(view==="search"){ loadMarketPulse(); loadHomeTopCollectors(); loadHotRightNow(); } },0);
+  setTimeout(function(){ if(view==="search"){ loadMarketPulse(); loadHomeTopCollectors(); loadCommunityStats(); } },0);
   if(sb){
     sb.auth.getSession().then(async function(res){
       try{
@@ -1078,7 +1088,7 @@ function renderPage(env = {}) {
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadHotRightNow(); } if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadCommunityStats(); } if(currentSession){ initMessaging(); initNotif(); } }catch(e){}
       },0);
     });
   }
@@ -1104,6 +1114,20 @@ function renderPage(env = {}) {
   document.getElementById("logo").onclick=function(){ setView("search"); };
   var _ml=document.getElementById("mobileLogo"); if(_ml) _ml.onclick=function(){ setView("search"); };
 
+  // ---------- CARD NAME ABBREVIATION ----------
+  function shortCardName(s){
+    if(!s) return "";
+    s=String(s);
+    s=s.replace(/^\d{4}\s*/,"");
+    s=s.replace(/\b(PANINI|TOPPS|BOWMAN|DONRUSS|UPPER\s+DECK|FLEER|SCORE|LEAF|SELECT|OPTIC|CHRONICLES|STADIUM\s+CLUB|NATIONAL\s+TREASURES|FINEST|HERITAGE|TRIBUTE)\b/gi,"");
+    s=s.replace(/\b(CHROME|DRAFT|PROSPECT|AUTOGRAPH|ALL\s+ACES)\b/gi,"");
+    s=s.replace(/#[A-Z0-9-]+/gi,"");
+    s=s.replace(/\s{2,}/g," ").trim();
+    s=s.toLowerCase().replace(/\b\w/g,function(c){return c.toUpperCase();});
+    if(s.length>28){var cut=s.slice(0,26);var sp=cut.lastIndexOf(" ");s=(sp>8?cut.slice(0,sp):cut).trim()+"\u2026";}
+    return s||String(s);
+  }
+
   // ---------- HOME FEED (recent community uploads) ----------
   async function recentPublicUploads(limit){
     if(!sb) return [];
@@ -1124,22 +1148,46 @@ function renderPage(env = {}) {
   async function loadHomeFeed(){
     const el=document.getElementById("homeFeed");
     if(!el) return;
-    if(!sb){ el.innerHTML='<div class="insight">Sign in to see what collectors are adding to their portfolios.</div>'; return; }
-    const rows=await recentPublicUploads(4);
-    if(!rows.length){ el.innerHTML='<div class="activity"><div class="avatar">F</div><div class="copy"><b>Be the first.</b><span>Add a public card and it shows up here for the community.</span></div></div>'; return; }
+    var seeAll=document.getElementById("homeFeedSeeAll");
+    if(seeAll && !seeAll._wired){ seeAll._wired=true; seeAll.onclick=function(){ setView("trending"); }; }
+    if(!sb){ el.innerHTML='<div class="insight">Sign in to see what collectors are adding.</div>'; return; }
+    const rows=await recentPublicUploads(5);
+    if(!rows.length){ el.innerHTML='<div class="insight" style="padding:12px 0">Be the first — add a public card and appear here.</div>'; return; }
     el.innerHTML=rows.map(function(h){
-      const p=h._profile; const name=p?("@"+p.handle):"a collector";
+      const p=h._profile;
       const img=thumbOf(h);
-      return '<div class="activity">'+
-        (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" style="width:34px;height:48px;object-fit:cover;border-radius:4px;background:var(--surface2);flex-shrink:0;cursor:pointer" data-card="'+h.id+'"/>'):avatarHtml(p))+
-        '<div class="copy"><b data-h="'+(p?escapeAttr(p.handle):"")+'">'+escapeHtml(name)+'</b> added <span style="color:var(--text);font-weight:600;cursor:pointer" data-card="'+h.id+'">'+escapeHtml(h.title||h.query)+'</span><span>'+escapeHtml(h.grade||"")+(h.added_value?(' · '+money(h.added_value)):"")+'</span></div></div>';
+      const cardName=shortCardName(h.title||h.query);
+      const val=h.added_value?money(h.added_value):"";
+      return '<div class="activity" data-card="'+h.id+'">'+
+        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="this.style.display=\'none\'" data-card="'+h.id+'">'):'<div class="act-thumb" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--dim)">?</div>')+
+        '<div class="act-info">'+
+          '<div class="act-who" data-h="'+(p?escapeAttr(p.handle):"")+'">@'+(p?escapeHtml(p.handle):"collector")+'</div>'+
+          '<span class="act-card" data-card="'+h.id+'">'+escapeHtml(cardName)+'</span>'+
+          '<span class="act-meta">'+escapeHtml(h.grade||"")+'</span>'+
+        '</div>'+
+        (val?'<div class="act-val">'+val+'</div>':'')+
+        '</div>';
     }).join("");
-    Array.prototype.forEach.call(el.querySelectorAll("b[data-h]"),function(b){ var hh=b.getAttribute("data-h"); if(hh) b.onclick=function(){ viewProfile(hh); }; });
+    Array.prototype.forEach.call(el.querySelectorAll(".act-who[data-h]"),function(b){ var hh=b.getAttribute("data-h"); if(hh) b.onclick=function(e){ e.stopPropagation(); viewProfile(hh); }; });
     Array.prototype.forEach.call(el.querySelectorAll("[data-card]"),function(s){ s.onclick=function(){ openCard(s.getAttribute("data-card")); }; });
-    var moreWrap=document.getElementById("homeFeedMore");
-    var seeAllBtn=document.getElementById("homeFeedSeeAll");
-    if(moreWrap){ moreWrap.style.display="block"; }
-    if(seeAllBtn && !seeAllBtn._wired){ seeAllBtn._wired=true; seeAllBtn.onclick=function(){ setView("trending"); }; }
+  }
+
+  // ---------- COMMUNITY STATS ----------
+  async function loadCommunityStats(){
+    if(!sb) return;
+    try{
+      const r=await sb.from("holdings").select("user_id,added_value,manual_value").eq("is_public",true).limit(5000);
+      const rows=r.data||[];
+      const collectors=new Set(rows.map(function(h){return h.user_id;}).filter(Boolean));
+      var total=0;
+      rows.forEach(function(h){ var v=(h.manual_value!=null&&h.manual_value!=="")?Number(h.manual_value):Number(h.added_value)||0; if(!isNaN(v)) total+=v; });
+      var ec=document.getElementById("cstatCollectors");
+      var ek=document.getElementById("cstatCards");
+      var ev=document.getElementById("cstatValue");
+      if(ec) ec.textContent=collectors.size;
+      if(ek) ek.textContent=rows.length.toLocaleString();
+      if(ev) ev.textContent=money(total);
+    }catch(e){}
   }
 
   // ---------- HOME MARKET PULSE ----------
