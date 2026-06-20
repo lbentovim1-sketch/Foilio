@@ -377,6 +377,7 @@ function renderPage(env = {}) {
   .act-card{display:block;font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;cursor:pointer}
   .act-meta{display:block;font-size:11px;color:var(--muted);margin-top:3px}
   .act-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
+  .act-ph{width:46px;height:64px;border-radius:5px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.5px;cursor:pointer}
   /* Homepage social redesign */
   .home-hero-title{font-size:44px;letter-spacing:-2px;line-height:1.08}
   .home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
@@ -1114,6 +1115,36 @@ function renderPage(env = {}) {
   document.getElementById("logo").onclick=function(){ setView("search"); };
   var _ml=document.getElementById("mobileLogo"); if(_ml) _ml.onclick=function(){ setView("search"); };
 
+  // ---------- CARD IMAGE FALLBACK ----------
+  var ACT_PALETTES=[
+    ['rgba(109,92,255,.22)','#a78bfa'],
+    ['rgba(34,211,238,.18)','#22d3ee'],
+    ['rgba(43,214,115,.18)','#2bd673'],
+    ['rgba(245,181,68,.18)','#f5b544'],
+    ['rgba(255,93,108,.18)','#ff6b78'],
+    ['rgba(251,191,36,.18)','#fbbf24'],
+    ['rgba(167,139,250,.18)','#c4b5fd'],
+  ];
+  function cardFallbackHtml(name, id){
+    var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
+    var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
+    var parts=(name||"").trim().split(/\s+/).filter(function(w){return /[A-Za-z]/.test(w);});
+    var init=parts.length>=2?(parts[0][0]+parts[1][0]).toUpperCase():(parts[0]?parts[0].slice(0,2).toUpperCase():"");
+    return '<div class="act-ph" style="background:'+bg+';color:'+col+'">'+escapeHtml(init||"•")+'</div>';
+  }
+  function actImgErr(el){
+    var name=el.getAttribute("data-name")||"";
+    var id=el.getAttribute("data-card")||"";
+    var idx=id?((id.charCodeAt(0)||0)+(id.charCodeAt(id.length-1)||0))%ACT_PALETTES.length:0;
+    var bg=ACT_PALETTES[idx][0]; var col=ACT_PALETTES[idx][1];
+    var parts=name.trim().split(/\s+/).filter(function(w){return /[A-Za-z]/.test(w);});
+    var init=parts.length>=2?(parts[0][0]+parts[1][0]).toUpperCase():(parts[0]?parts[0].slice(0,2).toUpperCase():"");
+    var ph=document.createElement("div");
+    ph.className="act-ph"; ph.style.background=bg; ph.style.color=col; ph.textContent=init||"•";
+    if(el.parentNode) el.parentNode.insertBefore(ph,el);
+    el.remove();
+  }
+
   // ---------- CARD NAME ABBREVIATION ----------
   function shortCardName(s){
     if(!s) return "";
@@ -1159,7 +1190,7 @@ function renderPage(env = {}) {
       const cardName=shortCardName(h.title||h.query);
       const val=h.added_value?money(h.added_value):"";
       return '<div class="activity" data-card="'+h.id+'">'+
-        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="this.remove()" data-card="'+h.id+'">'):'<div class="act-thumb" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--dim)">?</div>')+
+        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="actImgErr(this)" data-card="'+h.id+'" data-name="'+escapeAttr(cardName)+'">'):cardFallbackHtml(cardName,h.id))+
         '<div class="act-info">'+
           '<div class="act-who" data-h="'+(p?escapeAttr(p.handle):"")+'">@'+(p?escapeHtml(p.handle):"collector")+'</div>'+
           '<span class="act-card" data-card="'+h.id+'">'+escapeHtml(cardName)+'</span>'+
