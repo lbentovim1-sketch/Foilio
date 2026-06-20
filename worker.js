@@ -1159,7 +1159,7 @@ function renderPage(env = {}) {
       const cardName=shortCardName(h.title||h.query);
       const val=h.added_value?money(h.added_value):"";
       return '<div class="activity" data-card="'+h.id+'">'+
-        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="this.style.display=\'none\'" data-card="'+h.id+'">'):'<div class="act-thumb" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--dim)">?</div>')+
+        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="this.remove()" data-card="'+h.id+'">'):'<div class="act-thumb" style="display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--dim)">?</div>')+
         '<div class="act-info">'+
           '<div class="act-who" data-h="'+(p?escapeAttr(p.handle):"")+'">@'+(p?escapeHtml(p.handle):"collector")+'</div>'+
           '<span class="act-card" data-card="'+h.id+'">'+escapeHtml(cardName)+'</span>'+
