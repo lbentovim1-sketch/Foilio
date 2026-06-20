@@ -377,7 +377,7 @@ function renderPage(env = {}) {
   .act-card{display:block;font-size:13px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;cursor:pointer}
   .act-meta{display:block;font-size:11px;color:var(--muted);margin-top:3px}
   .act-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
-  .act-ph{width:46px;height:64px;border-radius:5px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:800;letter-spacing:-0.5px;cursor:pointer}
+  .act-av-wrap{width:46px;height:64px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
   /* Homepage social redesign */
   .home-hero-title{font-size:44px;letter-spacing:-2px;line-height:1.08}
   .home-features{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
@@ -1200,8 +1200,8 @@ function renderPage(env = {}) {
       const rawTitle=h.title||h.query||"";
       const cardName=shortCardName(rawTitle)||rawTitle;
       const val=h.added_value?money(h.added_value):"";
-      return '<div class="activity" data-card="'+h.id+'">'+
-        (img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="actImgErr(this)" data-card="'+h.id+'" data-name="'+escapeAttr(cardName)+'" data-raw="'+escapeAttr(rawTitle)+'">'): cardFallbackHtml(cardName,h.id,rawTitle))+
+      const thumb=img?('<img class="act-thumb" src="'+escapeAttr(img)+'" onerror="this.remove()" data-card="'+h.id+'">'):'<div class="act-av-wrap" data-card="'+h.id+'">'+avatarHtml(p)+'</div>';
+      return '<div class="activity" data-card="'+h.id+'">'+thumb+
         '<div class="act-info">'+
           '<div class="act-who" data-h="'+(p?escapeAttr(p.handle):"")+'">@'+(p?escapeHtml(p.handle):"collector")+'</div>'+
           '<span class="act-card" data-card="'+h.id+'">'+escapeHtml(cardName)+'</span>'+
