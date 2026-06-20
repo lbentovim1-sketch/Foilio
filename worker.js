@@ -298,6 +298,11 @@ function renderPage(env = {}) {
     </div>
     <div id="certOut"></div>
   </div>
+  <div class="card">
+    <label>ADD ANY CARD MANUALLY</label>
+    <div class="insight" style="margin-bottom:10px">Ungraded/raw cards, or cards graded by PSA, Beckett (BGS), SGC, CGC, TAG, or others.</div>
+    <button class="authbtn primary" id="manualAddBtn">+ Add a card manually</button>
+  </div>
   <div id="pfSummary"></div>
   <div id="pfList"></div>
 </div></div>
@@ -413,6 +418,33 @@ function renderPage(env = {}) {
       <button class="authbtn primary" id="offerSend" style="flex:1">Send</button>
       <button class="authbtn" id="offerCancel">Cancel</button>
     </div>
+  </div>
+</div>
+
+<div id="manualModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center;padding:20px">
+  <div class="modalbox">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">Add a card manually</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px">For raw cards or any grading company. We'll try to estimate a market value, but your own value always wins.</div>
+    <div class="field"><label>CARD</label><input id="mTitle" placeholder="e.g. 2024 Bowman Chrome Caitlin Clark #1"/></div>
+    <div class="field"><label>GRADING</label>
+      <select id="mGrader" style="width:100%;background:var(--ink);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:13px 12px;font-size:15px;font-family:'Manrope',sans-serif">
+        <option value="Raw">Raw / Ungraded</option>
+        <option value="PSA">PSA</option>
+        <option value="BGS">Beckett (BGS)</option>
+        <option value="SGC">SGC</option>
+        <option value="CGC">CGC</option>
+        <option value="TAG">TAG</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="field" id="mGradeWrap"><label>GRADE</label><input id="mGrade" placeholder="e.g. 9.5, 10, GEM MT 10"/></div>
+    <div class="field"><label>YOUR VALUE ($, OPTIONAL)</label><input id="mValue" type="text" inputmode="decimal" placeholder="e.g. 250"/></div>
+    <div class="field"><label>PHOTO (OPTIONAL)</label><input type="file" id="mPhoto" accept="image/*" style="font-size:13px;padding:9px"/></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="authbtn primary" id="manualSave" style="flex:1">Add to portfolio</button>
+      <button class="authbtn" id="manualCancel">Cancel</button>
+    </div>
+    <div class="msg insight" id="manualMsg" style="margin-top:8px"></div>
   </div>
 </div>
 
@@ -1200,19 +1232,62 @@ function renderPage(env = {}) {
       datelbl+
       '</svg>';
   }
-  async function renderCardChart(query){
+  function saleRowMini(s){
+    const g=(s.grader&&s.grade)?(s.grader+" "+s.grade):(s.grade?("Grade "+s.grade):"Raw/Ungraded");
+    const img=s.thumbnail_url||s.image_url||"";
+    const link=s.listing_url||"#";
+    const pend=s.price_confirmed===false;
+    return '<div class="sale"'+(pend?' style="opacity:.7"':'')+'>'+
+      (img?('<img src="'+escapeAttr(img)+'" alt="" loading="lazy"/>'):('<div style="width:38px;height:53px;border-radius:4px;background:var(--surface2);flex-shrink:0"></div>'))+
+      '<div class="t"><a href="'+escapeAttr(link)+'" target="_blank" rel="noopener">'+escapeHtml(s.title||"Listing")+'</a>'+
+      '<div class="meta">'+escapeHtml(s.sale_date||"")+' · '+escapeHtml(g)+' · '+escapeHtml(s.platform||"")+(pend?" · pending":"")+'</div></div>'+
+      '<div class="p">'+money(s.price)+'</div></div>';
+  }
+  async function renderCardMarket(h){
     const el=document.getElementById("cChart"); if(!el) return;
-    el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label><div class="insight">Loading recent sales…</div></div>';
+    el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label><div class="insight">Loading recent sales…</div></div>';
+    let sales=[];
+    try{ const res=await fetch("/api?q="+encodeURIComponent(h.query)+"&limit=50&sort=date_desc"); const j=await res.json(); sales=j.data||[]; }catch(e){}
+    const withPrice=sales.filter(function(s){return typeof s.price==="number";});
+    const confirmed=withPrice.filter(function(s){return s.price_confirmed!==false;});
+    const basis=confirmed.length?confirmed:withPrice;
+    const prices=basis.map(function(s){return s.price;});
+    const sm=summarize(sales);
+    const last=basis[0];
+    const hi=prices.length?Math.max.apply(null,prices):0;
+    const lo=prices.length?Math.min.apply(null,prices):0;
+    const avg=prices.length?(prices.reduce(function(a,b){return a+b;},0)/prices.length):0;
+    const svg=buildSalesChart(sales);
+    const stats='<div class="stats">'+
+      '<div class="stat hl"><div class="l">Last sold</div><div class="v">'+(last?money(last.price):"\u2014")+'</div></div>'+
+      '<div class="stat"><div class="l">Last sale date</div><div class="v" style="font-size:13px">'+escapeHtml(last&&last.sale_date?last.sale_date:"\u2014")+'</div></div>'+
+      '<div class="stat"><div class="l">Median</div><div class="v">'+(sm.median?money(sm.median):"\u2014")+'</div></div>'+
+      '<div class="stat"><div class="l">Average</div><div class="v">'+(avg?money(avg):"\u2014")+'</div></div>'+
+      '<div class="stat"><div class="l">Confirmed sales</div><div class="v">'+(confirmed.length||0)+'</div></div>'+
+      '<div class="stat"><div class="l">Range</div><div class="v" style="font-size:13px">'+(prices.length?(money(lo)+"–"+money(hi)):"\u2014")+'</div></div>'+
+      '</div>';
+    const chartHtml=svg?('<div style="margin-top:12px">'+svg+'</div>')
+      :('<div class="insight" style="margin-top:10px">'+(basis.length===1?("Only one confirmed sale so far ("+money(basis[0].price)+(basis[0].sale_date?(" on "+escapeHtml(basis[0].sale_date)):"")+") — need at least two to draw a trend line."):"No recent confirmed sales found.")+'</div>');
+    const list=basis.slice(0,12).map(saleRowMini).join("");
+    el.innerHTML='<div class="card"><label>MARKET &amp; RECENT SALES</label>'+stats+chartHtml+
+      (list?('<div style="margin-top:10px"><div class="insight" style="margin-bottom:4px">Recent sold listings</div>'+list+'</div>'):"")+'</div>';
+    if(h.cert) loadPopulation(h.cert);
+  }
+  async function loadPopulation(cert){
+    const el=document.getElementById("cPop"); if(!el) return;
+    el.innerHTML='<div class="card"><label>PSA POPULATION</label><div class="insight">Loading population report…</div></div>';
     try{
-      const res=await fetch("/api?q="+encodeURIComponent(query)+"&limit=50&sort=date_desc");
-      const j=await res.json();
-      const sales=j.data||[];
-      const svg=buildSalesChart(sales);
-      if(!svg){ el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label><div class="insight">Not enough recent confirmed sales to chart yet.</div></div>'; return; }
-      const sm=summarize(sales);
-      el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label>'+svg+
-        '<div class="insight" style="margin-top:6px">Median '+money(sm.median)+' across '+(sm.n||sales.length)+' recent sales. Long-term history is coming with scheduled tracking.</div></div>';
-    }catch(e){ el.innerHTML='<div class="card"><label>PRICE TREND (RECENT SALES)</label><div class="insight">Could not load the price trend.</div></div>'; }
+      const r=await fetch("/cert?n="+encodeURIComponent((""+cert).replace(/[^0-9]/g,"")));
+      if(!r.ok){ el.innerHTML=""; return; }
+      const data=await r.json();
+      const c=(data&&(data.PSACert||data.cert))||data||{};
+      const total=c.TotalPopulation, higher=c.PopulationHigher;
+      if(total==null && higher==null){ el.innerHTML=""; return; }
+      el.innerHTML='<div class="card"><label>PSA POPULATION · CERT '+escapeHtml(""+cert)+'</label><div class="stats">'+
+        '<div class="stat hl"><div class="l">At this grade</div><div class="v">'+escapeHtml(total!=null?String(total):"\u2014")+'</div></div>'+
+        '<div class="stat"><div class="l">Graded higher</div><div class="v">'+escapeHtml(higher!=null?String(higher):"\u2014")+'</div></div>'+
+        '</div><div class="insight" style="margin-top:8px">Population data from PSA. Other graders (BGS, SGC, CGC, TAG) aren\\'t available via API yet.</div></div>';
+    }catch(e){ el.innerHTML=""; }
   }
 
   // ---------- CARD DETAIL ----------
@@ -1251,6 +1326,7 @@ function renderPage(env = {}) {
       '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px"><button class="likebtn'+(iLike?" on":"")+'" id="cLike">\u2665 <span id="cLikeN">'+likeCount+'</span></button> '+actions+'</div>'+
       '</div>'+
       '<div id="cChart"></div>'+
+      '<div id="cPop"></div>'+
       '<div class="card"><label>COMMENTS</label><div id="cComments">Loading…</div>'+
       (currentSession?('<div class="composer"><input id="cCommentInput" placeholder="Add a comment…"/><button class="gifbtn" id="cGif">GIF</button><button class="authbtn primary" id="cCommentSend">Post</button></div>'):'<div class="insight" style="margin-top:10px">Sign in to comment.</div>')+
       '</div>';
@@ -1274,7 +1350,7 @@ function renderPage(env = {}) {
     var cg=document.getElementById("cGif"); if(cg) cg.onclick=function(){ openGifPicker("comment"); };
     var cs=document.getElementById("cCommentSend"); if(cs) cs.onclick=function(){ var inp=document.getElementById("cCommentInput"); addComment(id,null,inp?inp.value:""); };
     var ci=document.getElementById("cCommentInput"); if(ci) ci.addEventListener("keydown",function(e){ if(e.key==="Enter") addComment(id,null,ci.value); });
-    renderCardChart(h.query);
+    renderCardMarket(h);
     loadComments(id, h);
   }
   async function uploadCardPhoto(e,holdingId){
@@ -1589,6 +1665,52 @@ function renderPage(env = {}) {
     Array.prototype.forEach.call(wrap.querySelectorAll(".nm[data-h]"),function(s){ var hh=s.getAttribute("data-h"); if(hh) s.onclick=function(){ viewProfile(hh); }; });
   }
 
+  // ---------- MANUAL ADD ----------
+  function openManualModal(){
+    if(!currentSession){ alert("Sign in to add cards."); return; }
+    document.getElementById("mTitle").value="";
+    document.getElementById("mGrader").value="Raw";
+    document.getElementById("mGrade").value="";
+    document.getElementById("mValue").value="";
+    var pf=document.getElementById("mPhoto"); if(pf) pf.value="";
+    document.getElementById("manualMsg").textContent="";
+    document.getElementById("mGradeWrap").style.display="none";
+    document.getElementById("manualModal").style.display="flex";
+    setTimeout(function(){ var t=document.getElementById("mTitle"); if(t) t.focus(); },30);
+  }
+  async function saveManual(){
+    const msg=document.getElementById("manualMsg");
+    const title=(document.getElementById("mTitle").value||"").trim();
+    if(!title){ msg.style.color="var(--down)"; msg.textContent="Enter the card name."; return; }
+    const grader=document.getElementById("mGrader").value;
+    const grade=(document.getElementById("mGrade").value||"").trim();
+    const raw=(document.getElementById("mValue").value||"").replace(/[^0-9.]/g,"");
+    const value=raw!==""?Number(raw):null;
+    const gradeLabel=(grader==="Raw")?"Raw/Ungraded":(grader+(grade?(" "+grade):""));
+    const query=((grader!=="Raw"&&grade)?(grader+" "+grade+" "):"")+title;
+    const btn=document.getElementById("manualSave"); btn.disabled=true; btn.textContent="Adding…";
+    const payload={ user_id:currentSession.user.id, title:title, grade:gradeLabel, query:query,
+      added_value:(value!=null&&!isNaN(value))?value:0,
+      manual_value:(value!=null&&!isNaN(value))?value:null };
+    let ins;
+    try{ ins=await withTimeout(sb.from("holdings").insert(payload).select("id").maybeSingle(),25000,"Add"); }
+    catch(err){ btn.disabled=false; btn.textContent="Add to portfolio"; msg.style.color="var(--down)"; msg.textContent=err.message||"Could not add."; return; }
+    if(ins.error||!ins.data){ btn.disabled=false; btn.textContent="Add to portfolio"; msg.style.color="var(--down)"; msg.textContent="Could not add: "+((ins.error&&ins.error.message)||"try again"); return; }
+    const newId=ins.data.id;
+    const file=document.getElementById("mPhoto").files&&document.getElementById("mPhoto").files[0];
+    if(file){
+      try{
+        const ext=(file.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"")||"jpg";
+        const path=currentSession.user.id+"/"+newId+"_"+Date.now()+"."+ext;
+        const up=await withTimeout(sb.storage.from("cards").upload(path,file,{upsert:true,cacheControl:"3600"}),30000,"Upload");
+        if(!up.error){ const url=sb.storage.from("cards").getPublicUrl(path).data.publicUrl; await sb.from("holdings").update({image_url:url}).eq("id",newId); await sb.from("card_photos").insert({holding_id:newId,user_id:currentSession.user.id,url:url}); }
+      }catch(e){}
+    }
+    document.getElementById("manualModal").style.display="none";
+    btn.disabled=false; btn.textContent="Add to portfolio";
+    if(view==="portfolio") loadPortfolio(); else setView("portfolio");
+  }
+
   // ---------- CERT LOOKUP ----------
   async function certLookup(){
     const co=document.getElementById("certOut");
@@ -1775,6 +1897,11 @@ function renderPage(env = {}) {
   var _gc=document.getElementById("gifCancel"); if(_gc) _gc.onclick=function(){ document.getElementById("gifModal").style.display="none"; gifTarget=null; };
   var _gm=document.getElementById("gifModal"); if(_gm) _gm.addEventListener("click",function(e){ if(e.target.id==="gifModal"){ _gm.style.display="none"; gifTarget=null; } });
   var _gu=document.getElementById("gifUseUrl"); if(_gu) _gu.onclick=function(){ var v=(document.getElementById("gifSearch").value||"").trim(); if(isImgUrl(v)){ pickGif(v); } else { alert("Paste a direct GIF or image URL (ending in .gif/.png/.jpg) or a Giphy/Tenor link."); } };
+  var _mab=document.getElementById("manualAddBtn"); if(_mab) _mab.onclick=openManualModal;
+  var _msv=document.getElementById("manualSave"); if(_msv) _msv.onclick=saveManual;
+  var _mcl2=document.getElementById("manualCancel"); if(_mcl2) _mcl2.onclick=function(){ document.getElementById("manualModal").style.display="none"; };
+  var _mmo=document.getElementById("manualModal"); if(_mmo) _mmo.addEventListener("click",function(e){ if(e.target.id==="manualModal") _mmo.style.display="none"; });
+  var _mgr=document.getElementById("mGrader"); if(_mgr) _mgr.onchange=function(){ document.getElementById("mGradeWrap").style.display=(_mgr.value==="Raw")?"none":""; };
   var _gs=document.getElementById("gifSearch"); if(_gs) _gs.addEventListener("input",function(){ if(!GIPHY_KEY) return; clearTimeout(gifTimer); var v=_gs.value.trim(); gifTimer=setTimeout(function(){ gifSearch(v||"trending"); },350); });
 </script>
 </body>
