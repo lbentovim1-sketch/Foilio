@@ -461,6 +461,16 @@ async function renderPage(env = {}, pathname = "/") {
   .act-meta{display:block;font-size:11px;color:var(--muted);margin-top:3px}
   .act-val{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:var(--gold);flex-shrink:0}
   .act-av-wrap{width:46px;height:64px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+  /* Collector Showcase */
+  .home-showcase{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hs-card{background:var(--ink);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .15s,transform .15s}
+  .hs-card:hover{border-color:var(--borderB);transform:translateY(-2px)}
+  .hs-card img{width:100%;aspect-ratio:3/4;object-fit:contain;background:var(--surface2);display:block}
+  .hs-img-ph{aspect-ratio:3/4;background:var(--surface2);display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:18px}
+  .hs-footer{padding:7px 8px;display:flex;align-items:center;gap:6px}
+  .hs-meta{flex:1;min-width:0}
+  .hs-name{font-size:10px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+  .hs-val{font-size:10px;font-weight:700;color:var(--gold)}
   /* Homepage compose prompt */
   .home-compose{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:border-color .15s}
   .home-compose:hover{border-color:var(--borderB)}
@@ -627,10 +637,10 @@ async function renderPage(env = {}, pathname = "/") {
       </div>
       <div class="card" style="margin-top:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <label style="margin-bottom:0">MARKET PULSE</label>
-          <span style="font-size:10px;color:var(--dim)">live medians</span>
+          <label style="margin-bottom:0">COLLECTOR SHOWCASE</label>
+          <span id="showcaseLink" style="font-size:11px;color:var(--indigo);cursor:pointer">See all →</span>
         </div>
-        <div id="marketPulse"><div class="insight">Loading live prices…</div></div>
+        <div id="collectorShowcase"><div class="insight">Loading…</div></div>
       </div>
     </div>
   </div>
@@ -1292,7 +1302,7 @@ async function renderPage(env = {}, pathname = "/") {
   // re-renders once it knows who (if anyone) is signed in.
   renderAuth(); renderNav(); routeFromPath(true); loadHomeFeed();
   // Home widgets load after the full script executes (so PULSE_QUERIES / sb are defined)
-  setTimeout(function(){ if(view==="search"){ loadMarketPulse(); loadHomeTopCollectors(); loadCommunityStats(); } },0);
+  setTimeout(function(){ if(view==="search"){ loadHomeTopCollectors(); loadCommunityStats(); loadCollectorShowcase(); } },0);
   if(sb){
     sb.auth.getSession().then(async function(res){
       try{
@@ -1314,7 +1324,7 @@ async function renderPage(env = {}, pathname = "/") {
       // internal lock while this fires; awaiting DB/storage calls here deadlocks
       // the client and freezes later writes (profile save, avatar upload).
       setTimeout(async function(){
-        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadCommunityStats(); } if(currentSession){ initMessaging(); initNotif(); checkOnboarding(); } }catch(e){}
+        try{ await ensureMyProfile(); renderAuth(); renderNav(); loadHomeFeed(); if(view==="search"){ loadHomeTopCollectors(); loadCommunityStats(); loadCollectorShowcase(); } if(currentSession){ initMessaging(); initNotif(); checkOnboarding(); } }catch(e){}
       },0);
     });
   }
@@ -1489,6 +1499,62 @@ async function renderPage(env = {}, pathname = "/") {
     const PULSE_QUERIES=["PSA 10 Victor Wembanyama Prizm","PSA 10 Jalen Brunson Prizm","PSA 10 Caitlin Clark Prizm","Charizard Base Set Holo PSA"];
     const results=await Promise.all(PULSE_QUERIES.map(async function(q){ const sm=await liveMedian(q); return {q:q,sm:sm}; }));
     renderPulseRows(el, results);
+  }
+
+  // ---------- COLLECTOR SHOWCASE ----------
+  async function loadCollectorShowcase(){
+    const el=document.getElementById("collectorShowcase");
+    var sl=document.getElementById("showcaseLink");
+    if(sl && !sl._wired){ sl._wired=true; sl.onclick=function(){ setView("discover"); }; }
+    if(!el||!sb){ if(el) el.innerHTML='<div class="insight">Sign in to see the showcase.</div>'; return; }
+    try{
+      const r=await sb.from("holdings")
+        .select("id,title,query,grade,image_url,added_value,manual_value,user_id,added_at")
+        .eq("is_public",true)
+        .order("added_at",{ascending:false})
+        .limit(100);
+      const rows=r.data||[];
+      if(!rows.length){ el.innerHTML='<div class="insight">No cards yet. Be the first!</div>'; return; }
+      // Pick best card per collector (prefer image + highest value)
+      const byUser={};
+      rows.forEach(function(h){
+        if(!h.user_id) return;
+        const existing=byUser[h.user_id];
+        if(!existing){ byUser[h.user_id]=h; return; }
+        const hasImg=!!(h.image_url); const exHasImg=!!(existing.image_url);
+        const v=Number(h.manual_value||h.added_value||0);
+        const ev=Number(existing.manual_value||existing.added_value||0);
+        if(hasImg && !exHasImg){ byUser[h.user_id]=h; }
+        else if(hasImg===exHasImg && v>ev){ byUser[h.user_id]=h; }
+      });
+      const picks=Object.values(byUser).slice(0,4);
+      const ids=picks.map(function(h){return h.user_id;}).filter(Boolean);
+      if(!ids.length){ el.innerHTML='<div class="insight">No collectors yet.</div>'; return; }
+      const pr=await sb.from("profiles").select("id,handle,display_name,avatar_url").in("id",ids);
+      const profs={}; (pr.data||[]).forEach(function(p){ profs[p.id]=p; });
+      await fillThumbs(picks);
+      el.innerHTML='<div class="home-showcase">'+picks.map(function(h){
+        const p=profs[h.user_id];
+        const img=thumbOf(h);
+        const name=shortCardName(h.title||h.query)||h.title||h.query||"Card";
+        const val=Number(h.manual_value||h.added_value||0);
+        return '<div class="hs-card" data-card="'+h.id+'">'+
+          (img?('<img src="'+escapeAttr(img)+'" onerror="this.remove()" loading="lazy">'):'<div class="hs-img-ph">?</div>')+
+          '<div class="hs-footer">'+
+            (p?('<span class="hs-av" data-h="'+escapeAttr(p.handle)+'">'+avatarHtml(p)+'</span>'):'')+ 
+            '<div class="hs-meta">'+
+              '<div class="hs-name">'+escapeHtml(name)+'</div>'+
+              (val?('<div class="hs-val">'+money(val)+'</div>'):'')+
+            '</div>'+
+          '</div></div>';
+      }).join("")+'</div>';
+      Array.prototype.forEach.call(el.querySelectorAll(".hs-card[data-card]"),function(c){
+        c.onclick=function(){ openCard(c.getAttribute("data-card")); };
+      });
+      Array.prototype.forEach.call(el.querySelectorAll(".hs-av[data-h]"),function(c){
+        c.onclick=function(e){ e.stopPropagation(); viewProfile(c.getAttribute("data-h")); };
+      });
+    }catch(e){ el.innerHTML='<div class="insight">Could not load.</div>'; }
   }
 
   // ---------- HOME TOP COLLECTORS ----------
