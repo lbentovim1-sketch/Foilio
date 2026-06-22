@@ -2,6 +2,7 @@ name = "snipecard-worker"
 main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
+account_id = "ce0cb2a77a90f3c4bbe24ff897c153c4"
 
 [vars]
 ENVIRONMENT = "production"
