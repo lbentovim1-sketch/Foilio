@@ -173,7 +173,8 @@ export default function DigestPage({ watchlist }: Props) {
         scannedAt: data.scannedAt,
       })
     } catch (e: any) {
-      updateScan(item.id, { status: 'error', error: e.message, results: [] })
+      console.error('Scan error:', e)
+      updateScan(item.id, { status: 'error', error: e.message || 'Unknown error — check console (F12)', results: [] })
     }
   }
 
@@ -284,17 +285,14 @@ export default function DigestPage({ watchlist }: Props) {
           </div>
         </div>
 
-        {selectedPlayer && scanStates[selectedPlayer]?.status === 'error' && (
-          <div className="error-banner">
-            ⚠️ {scanStates[selectedPlayer]?.error}
-          </div>
-        )}
-
-        {!selectedPlayer && Object.values(scanStates).some(s => s.status === 'error') && (
-          <div className="error-banner">
-            ⚠️ Some scans failed. Check individual players for details.
-          </div>
-        )}
+        {Object.entries(scanStates).filter(([, s]) => s.status === 'error').map(([id, s]) => {
+          const item = activeItems.find(i => i.id === id)
+          return (
+            <div key={id} className="error-banner">
+              ⚠️ <strong>{item?.player_name ?? id}:</strong> {s.error}
+            </div>
+          )
+        })}
 
         {displayResults.length > 0 ? (
           <div className="results-grid">
