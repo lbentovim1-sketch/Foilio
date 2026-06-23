@@ -43,15 +43,26 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
     playerName: string;
     sport?: string;
     cardTypes?: string[];
+    years?: string[];
+    sets?: string[];
+    grades?: string[];
     maxPriceUsd?: number;
+    minPriceUsd?: number;
     limit?: number;
   };
   if (!body.playerName) return json({ error: 'playerName is required' }, 400);
 
   try {
     const token = await getEbayToken(env.EBAY_CLIENT_ID, env.EBAY_CLIENT_SECRET);
-    const listings = await searchListings(token, body.playerName, body.cardTypes || ['serialized'], body.maxPriceUsd);
-    const comps = await getSoldComps(env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized']);
+    const listings = await searchListings(
+      token, body.playerName, body.cardTypes || ['serialized'],
+      body.maxPriceUsd, body.minPriceUsd,
+      body.years, body.sets, body.grades
+    );
+    const comps = await getSoldComps(
+      env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized'],
+      body.years, body.sets, body.grades
+    );
     const limit = Math.min(body.limit || 5, 10);
 
     // Score all listings in parallel instead of sequentially

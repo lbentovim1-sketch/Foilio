@@ -153,13 +153,17 @@ export default function DigestPage({ watchlist }: Props) {
       const res = await fetch(`${WORKER_URL}/api/scan`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerName: item.player_name,
-          sport: item.sport,
-          cardTypes: item.card_types,
-          maxPriceUsd: item.max_price_usd ?? undefined,
-          limit: 10,
-        }),
+      body: JSON.stringify({
+        playerName: item.player_name,
+        sport: item.sport,
+        cardTypes: item.card_types,
+        years: item.years ?? [],
+        sets: item.sets ?? [],
+        grades: item.grades ?? [],
+        maxPriceUsd: item.max_price_usd ?? undefined,
+        minPriceUsd: item.min_price_usd ?? undefined,
+        limit: 5,
+      }),
       })
       if (!res.ok) throw new Error(`Worker error ${res.status}`)
       const data = await res.json() as {

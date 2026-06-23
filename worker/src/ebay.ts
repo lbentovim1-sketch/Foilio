@@ -37,22 +37,50 @@ export async function getEbayToken(clientId: string, clientSecret: string): Prom
   return cachedToken.token;
 }
 
-function buildSearchQuery(player: string, cardTypes: string[]): string {
-  const base = `${player} card`;
-  // Use a single most-specific term — eBay Browse API doesn't support OR operators
-  if (cardTypes.includes('psa10')) return `${base} PSA 10`;
-  if (cardTypes.includes('serialized')) return `${base} /`;
-  if (cardTypes.includes('case_hit')) return `${base} auto`;
-  return base;
+function buildSearchQuery(
+  player: string,
+  cardTypes: string[],
+  years?: string[],
+  sets?: string[],
+  grades?: string[]
+): string {
+  const terms: string[] = [player];
+
+  // Year — use most recent selected year
+  if (years && years.length > 0) terms.push(years[0]);
+
+  // Set/brand — use first selected set
+  if (sets && sets.length > 0) terms.push(sets[0]);
+
+  // Grade overrides card type for the search term
+  if (grades && grades.length > 0) {
+    terms.push(grades[0]);
+  } else if (cardTypes.includes('psa10')) {
+    terms.push('PSA 10');
+  } else if (cardTypes.includes('serialized')) {
+    terms.push('/');
+  } else if (cardTypes.includes('case_hit')) {
+    terms.push('auto');
+  }
+
+  terms.push('card');
+  return terms.join(' ');
 }
 
 export async function searchListings(
   token: string,
   player: string,
   cardTypes: string[],
-  maxPrice?: number
+  maxPrice?: number,
+  minPrice?: number,
+  years?: string[],
+  sets?: string[],
+  grades?: string[]
 ): Promise<EbayListing[]> {
-  const query = buildSearchQuery(player, cardTypes);
+  const query = buildSearchQuery(player, cardTypes, years, sets, grades);
+  const priceFilter = (minPrice || maxPrice)
+    ? `price:[${minPrice ?? ''}..${maxPrice ?? ''}],priceCurrency:USD`
+    : '';
   const params = new URLSearchParams({
     q: query,
     category_ids: '261328',
@@ -60,7 +88,7 @@ export async function searchListings(
     limit: '50',
     filter: [
       'conditionIds:{1000|1500|2000|2500|3000}',
-      maxPrice ? `price:[..${maxPrice}],priceCurrency:USD` : '',
+      priceFilter,
       'buyingOptions:{AUCTION|FIXED_PRICE}',
     ].filter(Boolean).join(','),
   });
@@ -82,9 +110,12 @@ export async function searchListings(
 export async function getSoldComps(
   clientId: string,
   player: string,
-  cardTypes: string[]
+  cardTypes: string[],
+  years?: string[],
+  sets?: string[],
+  grades?: string[]
 ): Promise<CompListing[]> {
-  const query = buildSearchQuery(player, cardTypes);
+  const query = buildSearchQuery(player, cardTypes, years, sets, grades);
   const params = new URLSearchParams({
     'OPERATION-NAME': 'findCompletedItems',
     'SERVICE-VERSION': '1.0.0',
