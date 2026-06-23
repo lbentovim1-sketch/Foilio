@@ -101,12 +101,32 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
   }
 }
 
+// Handles eBay's marketplace account deletion challenge verification
+async function handleEbayNotification(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  const challengeCode = url.searchParams.get('challenge_code');
+  if (challengeCode) {
+    const verificationToken = (env as any).EBAY_VERIFICATION_TOKEN || 'snipecard-ebay-marketplace-deletion-verification-token-2026';
+    const endpoint = `${url.origin}/api/ebay-notifications`;
+    const hash = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(challengeCode + verificationToken + endpoint)
+    );
+    const hashHex = Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+    return new Response(JSON.stringify({ challengeResponse: hashHex }), {
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+  return new Response(null, { status: 200 });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
     const url = new URL(request.url);
     if (url.pathname === '/api/scan' && request.method === 'POST') return handleScan(request, env);
     if (url.pathname === '/api/health') return json({ status: 'ok', version: '1.0.0' });
+    if (url.pathname === '/api/ebay-notifications') return handleEbayNotification(request, env);
     return json({ error: 'Not found' }, 404);
   },
 };
