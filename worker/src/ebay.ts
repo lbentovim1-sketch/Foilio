@@ -52,16 +52,20 @@ function buildSearchQuery(
   // Set/brand — use first selected set
   if (sets && sets.length > 0) terms.push(sets[0]);
 
-  // Grade overrides card type for the search term
+  // Grade overrides card type — don't append "card" for graded queries
+  // since PSA/BGS listings often omit the word "card" in their titles
   if (grades && grades.length > 0) {
     terms.push(grades[0]);
-  } else if (cardTypes.includes('psa10')) {
-    terms.push('PSA 10');
-  } else if (cardTypes.includes('serialized')) {
-    terms.push('/');
-  } else if (cardTypes.includes('case_hit')) {
-    terms.push('auto');
+    return terms.join(' ');
   }
+
+  // Card type hints for ungraded searches
+  if (cardTypes.includes('psa10')) {
+    terms.push('PSA 10');
+    return terms.join(' ');
+  }
+  if (cardTypes.includes('serialized')) terms.push('/');
+  else if (cardTypes.includes('case_hit')) terms.push('auto');
 
   terms.push('card');
   return terms.join(' ');
@@ -78,20 +82,23 @@ export async function searchListings(
   grades?: string[]
 ): Promise<EbayListing[]> {
   const query = buildSearchQuery(player, cardTypes, years, sets, grades);
-  const priceFilter = (minPrice || maxPrice)
-    ? `price:[${minPrice ?? ''}..${maxPrice ?? ''}],priceCurrency:USD`
-    : '';
+  // Only send maxPrice to eBay — minPrice is applied post-fetch to avoid eBay API quirks
+  const priceFilter = maxPrice ? `price:[..${maxPrice}],priceCurrency:USD` : '';
+  // Use category 261328 (Sports Trading Cards) for ungraded,
+  // but drop the category restriction for graded queries so PSA/BGS slabs are found
+  const hasGrade = grades && grades.length > 0;
   const params = new URLSearchParams({
     q: query,
-    category_ids: '261328',
     sort: 'endingSoonest',
     limit: '50',
-    filter: [
-      'conditionIds:{1000|1500|2000|2500|3000}',
-      priceFilter,
-      'buyingOptions:{AUCTION|FIXED_PRICE}',
-    ].filter(Boolean).join(','),
   });
+  if (!hasGrade) params.set('category_ids', '261328');
+  // 2750 = Certified (PSA/BGS graded slabs); include all common conditions
+  params.set('filter', [
+    'conditionIds:{1000|1500|2000|2500|2750|3000|4000|5000|6000}',
+    priceFilter,
+    'buyingOptions:{AUCTION|FIXED_PRICE}',
+  ].filter(Boolean).join(','));
   const response = await fetch(
     `https://api.ebay.com/buy/browse/v1/item_summary/search?${params}`,
     {
@@ -104,7 +111,12 @@ export async function searchListings(
   );
   if (!response.ok) throw new Error(`eBay Browse API error: ${await response.text()}`);
   const data = await response.json() as { itemSummaries?: EbayListing[] };
-  return data.itemSummaries || [];
+  const items = data.itemSummaries || [];
+  // Apply min price filter post-fetch
+  if (minPrice) {
+    return items.filter(item => parseFloat(item.price?.value || '0') >= minPrice);
+  }
+  return items;
 }
 
 export async function getSoldComps(
