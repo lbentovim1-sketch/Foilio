@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import type { WatchlistItem, ScanResult } from '../types'
 
 interface Props {
@@ -54,29 +54,54 @@ interface DealCardProps {
 
 function DealCard({ result }: DealCardProps) {
   const { listing, score } = result
+  const [showAnalysis, setShowAnalysis] = useState(false)
+  const analysisRef = useRef<HTMLDivElement>(null)
+  const price = parseFloat(listing.price?.value || '0')
   const discountPositive = score.discountPercent > 0
+  const hasComp = !!(score.lastCompPrice || score.estimatedValue)
+
+  useEffect(() => {
+    if (analysisRef.current) {
+      analysisRef.current.style.maxHeight = showAnalysis
+        ? `${analysisRef.current.scrollHeight}px`
+        : '0px'
+    }
+  }, [showAnalysis])
 
   return (
     <div className={`deal-card grade-${score.grade}`}>
-      {listing.imageUrl
-        ? <img className="deal-card-image" src={listing.imageUrl} alt={listing.title} loading="lazy" />
-        : <div className="deal-card-image-placeholder">🃏</div>
-      }
-      <div className="deal-card-body">
-        <div className="deal-card-header">
-          <div className="deal-card-title">{listing.title}</div>
-          <div className={`grade-badge grade-${score.grade}`}>{score.grade}</div>
-        </div>
+      {/* Image */}
+      <div className="deal-card-img-wrap">
+        {listing.imageUrl
+          ? <img className="deal-card-image" src={listing.imageUrl} alt={listing.title} loading="lazy" />
+          : <div className="deal-card-image-placeholder">🃏</div>
+        }
+        <div className={`grade-pill grade-${score.grade}`}>{score.grade}</div>
+        {listing.itemEndDate && isUrgent(listing.itemEndDate) && (
+          <div className="ending-pill urgent">⏱ {timeUntil(listing.itemEndDate)}</div>
+        )}
+      </div>
 
+      <div className="deal-card-body">
+        {/* Title */}
+        <div className="deal-card-title">{listing.title}</div>
+
+        {/* Price + score row */}
         <div className="deal-price-row">
-          <span className="deal-price">{formatPrice(listing.price.value)}</span>
-          {score.discountPercent !== 0 && (
+          <span className="deal-price">{price > 0 ? `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}</span>
+          {score.discountPercent !== 0 && hasComp && (
             <span className={`deal-discount ${discountPositive ? 'positive' : 'negative'}`}>
               {formatDiscount(score.discountPercent)}
             </span>
           )}
+          {listing.itemEndDate && !isUrgent(listing.itemEndDate) && (
+            <span className="auction-timer" style={{ marginLeft: 'auto', fontSize: 11 }}>
+              ⏱ {timeUntil(listing.itemEndDate)}
+            </span>
+          )}
         </div>
 
+        {/* Score bar */}
         <div className="score-bar-wrap">
           <div className="score-bar">
             <div className="score-bar-fill" style={{ width: `${score.score}%` }} />
@@ -84,69 +109,68 @@ function DealCard({ result }: DealCardProps) {
           <span className="score-num">{score.score}</span>
         </div>
 
-        {/* Comp snapshot row */}
-        <div className="comp-row">
-          {score.lastCompPrice && score.lastCompDate ? (
-            <div className="comp-item">
-              <span className="comp-label">Last Sold</span>
-              <span className="comp-value">
-                {formatPrice(score.lastCompPrice)} · {new Date(score.lastCompDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
-            </div>
-          ) : (
-            <div className="comp-item">
-              <span className="comp-label">Last Sold</span>
-              <span className="comp-value" style={{ color: 'var(--text4)' }}>No data</span>
-            </div>
-          )}
-          {score.estimatedValue ? (
-            <div className="comp-item">
-              <span className="comp-label">Est. Value</span>
-              <span className="comp-value">{formatPrice(score.estimatedValue)}</span>
-            </div>
-          ) : null}
-          {score.trend7dPercent !== null ? (
-            <div className="comp-item">
-              <span className="comp-label">7d Trend</span>
-              <span className="comp-value" style={{ color: score.trend7dPercent >= 0 ? 'var(--accent)' : 'var(--danger)' }}>
-                {score.trend7dPercent >= 0 ? '↑' : '↓'} {Math.abs(score.trend7dPercent).toFixed(1)}%
-              </span>
-            </div>
-          ) : score.compCount > 0 ? (
-            <div className="comp-item">
-              <span className="comp-label">Comps</span>
-              <span className="comp-value">{score.compCount} sold</span>
-            </div>
-          ) : null}
+        {/* Comp snapshot */}
+        <div className="comp-snapshot">
+          <div className="comp-cell">
+            <span className="comp-label">Last Sold</span>
+            <span className="comp-value">
+              {score.lastCompPrice && score.lastCompDate
+                ? <>{formatPrice(score.lastCompPrice)} <span className="comp-date">· {new Date(score.lastCompDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span></>
+                : <span style={{ color: 'var(--text4)' }}>—</span>
+              }
+            </span>
+          </div>
+          <div className="comp-cell">
+            <span className="comp-label">Est. Value</span>
+            <span className="comp-value">
+              {score.estimatedValue ? formatPrice(score.estimatedValue) : <span style={{ color: 'var(--text4)' }}>—</span>}
+            </span>
+          </div>
+          <div className="comp-cell">
+            <span className="comp-label">{score.trend7dPercent !== null ? '7d Trend' : 'Comps'}</span>
+            <span className="comp-value">
+              {score.trend7dPercent !== null
+                ? <span style={{ color: score.trend7dPercent >= 0 ? 'var(--accent)' : 'var(--danger)', fontWeight: 600 }}>
+                    {score.trend7dPercent >= 0 ? '↑' : '↓'} {Math.abs(score.trend7dPercent).toFixed(1)}%
+                  </span>
+                : score.compCount > 0
+                  ? `${score.compCount} sales`
+                  : <span style={{ color: 'var(--text4)' }}>—</span>
+              }
+            </span>
+          </div>
         </div>
 
-        {score.aiSummary && (
-          <div className="ai-summary">{score.aiSummary}</div>
-        )}
-
-        {listing.itemEndDate && (
-          <div className={`auction-timer ${isUrgent(listing.itemEndDate) ? 'urgent' : ''}`}>
-            ⏱ {listing.buyingOptions.includes('AUCTION') ? 'Ends' : 'Available'}: {timeUntil(listing.itemEndDate)}
-          </div>
-        )}
+        {/* AI Analysis toggle */}
+        <button
+          className="ai-toggle-btn"
+          onClick={() => setShowAnalysis(p => !p)}
+        >
+          <span className="ai-toggle-icon">✦</span>
+          <span>AI Analysis</span>
+          <span className={`conf-dot conf-${score.confidence}`} />
+          <span className="ai-toggle-chevron">{showAnalysis ? '▲' : '▼'}</span>
+        </button>
+        <div ref={analysisRef} className="ai-analysis-panel">
+          <div className="ai-analysis-inner">{score.aiSummary}</div>
+        </div>
       </div>
 
+      {/* Footer */}
       <div className="deal-card-footer">
         <div className="seller-info">
           <span className="seller-name">{listing.seller.username}</span>
-          {' '}·{' '}{listing.seller.feedbackPercentage}%
+          <span className="seller-sep">·</span>
+          <span>{listing.seller.feedbackPercentage}%</span>
         </div>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span className={`confidence-badge conf-${score.confidence}`}>{score.confidence}</span>
-          <a
-            href={listing.itemWebUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary btn-sm"
-          >
-            View ↗
-          </a>
-        </div>
+        <a
+          href={listing.itemWebUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-primary btn-sm"
+        >
+          View ↗
+        </a>
       </div>
     </div>
   )

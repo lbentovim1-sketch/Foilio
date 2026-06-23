@@ -72,7 +72,7 @@ export function buildCompQuery(player: string, listingTitle: string): string {
   if (year) parts.push(year);
   if (foundSet) parts.push(foundSet);
   if (foundSubset && foundSubset !== foundSet) parts.push(foundSubset);
-  if (serial) parts.push(serial);
+  // Omit serial number — too restrictive for comp searches, rarely matches sold titles exactly
 
   return parts.join(' ');
 }
