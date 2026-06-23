@@ -52,47 +52,49 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
     const token = await getEbayToken(env.EBAY_CLIENT_ID, env.EBAY_CLIENT_SECRET);
     const listings = await searchListings(token, body.playerName, body.cardTypes || ['serialized'], body.maxPriceUsd);
     const comps = await getSoldComps(env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized']);
-    const limit = Math.min(body.limit || 10, 25);
-    const results = [];
+    const limit = Math.min(body.limit || 5, 10);
 
-    for (const listing of listings.slice(0, limit)) {
-      const score = await scoreDeal(listing, comps, env.ANTHROPIC_API_KEY);
-      if (body.watchlistItemId && env.SUPABASE_URL) {
-        try {
-          const [savedListing] = await supabaseRequest(env, '/listings', 'POST', {
-            ebay_item_id: listing.itemId,
-            title: listing.title,
-            current_price: parseFloat(listing.price?.value || '0'),
-            auction_end_time: listing.itemEndDate || null,
-            condition: listing.condition,
-            image_url: listing.image?.imageUrl,
-            ebay_url: listing.itemWebUrl,
-            seller_username: listing.seller?.username,
-            seller_feedback_score: listing.seller?.feedbackScore,
-            seller_feedback_percent: parseFloat(listing.seller?.feedbackPercentage || '0'),
-            watchlist_item_id: body.watchlistItemId,
-          }) as any[];
-          if (savedListing?.id) {
-            await supabaseRequest(env, '/deal_scores', 'POST', {
-              listing_id: savedListing.id,
-              score: score.score, grade: score.grade,
-              comp_low: score.compLow, comp_median: score.compMedian, comp_high: score.compHigh,
-              comp_count: score.compCount, discount_percent: score.discountPercent,
-              ai_summary: score.aiSummary, confidence: score.confidence,
-            });
-          }
-        } catch (dbErr) { console.error('DB persist error:', dbErr); }
-      }
-      results.push({
-        listing: {
-          itemId: listing.itemId, title: listing.title, price: listing.price,
-          buyingOptions: listing.buyingOptions, itemEndDate: listing.itemEndDate,
-          condition: listing.condition, imageUrl: listing.image?.imageUrl,
-          itemWebUrl: listing.itemWebUrl, seller: listing.seller,
-        },
-        score,
-      });
-    }
+    // Score all listings in parallel instead of sequentially
+    const results = await Promise.all(
+      listings.slice(0, limit).map(async (listing) => {
+        const score = await scoreDeal(listing, comps, env.ANTHROPIC_API_KEY);
+        if (body.watchlistItemId && env.SUPABASE_URL) {
+          try {
+            const [savedListing] = await supabaseRequest(env, '/listings', 'POST', {
+              ebay_item_id: listing.itemId,
+              title: listing.title,
+              current_price: parseFloat(listing.price?.value || '0'),
+              auction_end_time: listing.itemEndDate || null,
+              condition: listing.condition,
+              image_url: listing.image?.imageUrl,
+              ebay_url: listing.itemWebUrl,
+              seller_username: listing.seller?.username,
+              seller_feedback_score: listing.seller?.feedbackScore,
+              seller_feedback_percent: parseFloat(listing.seller?.feedbackPercentage || '0'),
+              watchlist_item_id: body.watchlistItemId,
+            }) as any[];
+            if (savedListing?.id) {
+              await supabaseRequest(env, '/deal_scores', 'POST', {
+                listing_id: savedListing.id,
+                score: score.score, grade: score.grade,
+                comp_low: score.compLow, comp_median: score.compMedian, comp_high: score.compHigh,
+                comp_count: score.compCount, discount_percent: score.discountPercent,
+                ai_summary: score.aiSummary, confidence: score.confidence,
+              });
+            }
+          } catch (dbErr) { console.error('DB persist error:', dbErr); }
+        }
+        return {
+          listing: {
+            itemId: listing.itemId, title: listing.title, price: listing.price,
+            buyingOptions: listing.buyingOptions, itemEndDate: listing.itemEndDate,
+            condition: listing.condition, imageUrl: listing.image?.imageUrl,
+            itemWebUrl: listing.itemWebUrl, seller: listing.seller,
+          },
+          score,
+        };
+      })
+    );
 
     results.sort((a, b) => b.score.score - a.score.score);
     return json({ success: true, player: body.playerName, scannedAt: new Date().toISOString(), totalFound: listings.length, results });
