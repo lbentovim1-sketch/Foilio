@@ -50,17 +50,25 @@ export async function scoreDeal(
   cardHedge?: CardHedgeResult | null
 ): Promise<DealScore> {
   const listingPrice = parseFloat(listing.price?.value || '0');
-  const compPrices = comps.map(c => c.price).filter(p => p > 0);
+  const rawCompPrices = comps.map(c => c.price).filter(p => p > 0);
+
+  // Sanity check: if comp median is more than 15x below the listing price, it's a wrong card match
+  // (e.g. CardSight returns a $3 base card when the listing is a $500 PSA 10)
+  const rawMedian = median(rawCompPrices);
+  const compIsValid = rawMedian === 0 || (listingPrice > 0 && (listingPrice / rawMedian) <= 15);
+
+  const compPrices = compIsValid ? rawCompPrices : [];
   const compLow = compPrices.length > 0 ? Math.min(...compPrices) : 0;
   const compHigh = compPrices.length > 0 ? Math.max(...compPrices) : 0;
-  const compMedian = median(compPrices);
+  const compMedian = compIsValid ? rawMedian : 0;
 
   // Prefer Card Hedge FMV as the benchmark — it's grade-specific and professionally calculated
   const fairValue = cardHedge?.fmvPrice ?? cardHedge?.compPrice ?? (compMedian > 0 ? compMedian : 0);
   const discountPercent = fairValue > 0 ? ((fairValue - listingPrice) / fairValue) * 100 : 0;
 
   // Use Card Hedge last sale if available and more recent
-  const ebayLastComp = mostRecentComp(comps);
+  // Only use eBay comps if sanity check passed
+  const ebayLastComp = compIsValid ? mostRecentComp(comps) : null;
   const chLastDate = cardHedge?.lastSaleDate ?? null;
   const useChLast = chLastDate && (!ebayLastComp || new Date(chLastDate) >= new Date(ebayLastComp.soldDate));
   const lastComp = useChLast

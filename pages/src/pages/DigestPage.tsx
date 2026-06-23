@@ -89,7 +89,7 @@ function DealCard({ result }: DealCardProps) {
         {/* Price + score row */}
         <div className="deal-price-row">
           <span className="deal-price">{price > 0 ? `$${price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '—'}</span>
-          {score.discountPercent !== 0 && hasComp && (
+          {score.discountPercent !== 0 && hasComp && Math.abs(score.discountPercent) <= 95 && (
             <span className={`deal-discount ${discountPositive ? 'positive' : 'negative'}`}>
               {formatDiscount(score.discountPercent)}
             </span>
