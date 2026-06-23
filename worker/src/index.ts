@@ -1,5 +1,7 @@
 import { getEbayToken, searchListings, getSoldComps, type EbayListing } from './ebay';
 import { scoreDeal } from './scorer';
+import { getCardSightComps } from './cardsight';
+import type { CompListing } from './ebay';
 
 export interface Env {
   EBAY_CLIENT_ID: string;
@@ -7,6 +9,7 @@ export interface Env {
   ANTHROPIC_API_KEY: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  CARDSIGHT_API_KEY?: string;
 }
 
 const CORS_HEADERS = {
@@ -64,11 +67,19 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
     // Score all listings in parallel instead of sequentially
     const results = await Promise.all(
       listings.slice(0, limit).map(async (listing) => {
-        // Pull comps specific to this listing's title for tighter matching
-        const listingComps = await getSoldComps(
-          env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized'],
-          body.years, body.sets, body.grades, listing.title
-        );
+        // Prefer CardSight comps (real cross-platform sales) over eBay Finding API
+        let listingComps: CompListing[] = [];
+        if (env.CARDSIGHT_API_KEY) {
+          const csSales = await getCardSightComps(body.playerName, listing.title, env.CARDSIGHT_API_KEY);
+          listingComps = csSales.map(s => ({ title: s.title, price: s.price, soldDate: s.date }));
+        }
+        // Fall back to eBay Finding API if CardSight returned nothing
+        if (listingComps.length === 0) {
+          listingComps = await getSoldComps(
+            env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized'],
+            body.years, body.sets, body.grades, listing.title
+          );
+        }
         const score = await scoreDeal(listing, listingComps, env.ANTHROPIC_API_KEY);
         if (body.watchlistItemId && env.SUPABASE_URL) {
           try {
