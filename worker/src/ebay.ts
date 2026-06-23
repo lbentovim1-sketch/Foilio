@@ -38,12 +38,12 @@ export async function getEbayToken(clientId: string, clientSecret: string): Prom
 }
 
 function buildSearchQuery(player: string, cardTypes: string[]): string {
-  const typeTerms: string[] = [];
-  if (cardTypes.includes('serialized')) typeTerms.push('/');
-  if (cardTypes.includes('psa10')) typeTerms.push('PSA 10');
-  if (cardTypes.includes('case_hit')) typeTerms.push('auto OR autograph OR patch');
   const base = `${player} card`;
-  return typeTerms.length > 0 ? `${base} (${typeTerms.join(' ')})` : base;
+  // Use a single most-specific term — eBay Browse API doesn't support OR operators
+  if (cardTypes.includes('psa10')) return `${base} PSA 10`;
+  if (cardTypes.includes('serialized')) return `${base} /`;
+  if (cardTypes.includes('case_hit')) return `${base} auto`;
+  return base;
 }
 
 export async function searchListings(
