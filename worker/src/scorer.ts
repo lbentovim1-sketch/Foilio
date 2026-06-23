@@ -1,4 +1,5 @@
 import type { EbayListing, CompListing } from './ebay';
+import type { CardHedgeResult } from './cardhedge';
 
 export interface DealScore {
   score: number;
@@ -45,17 +46,32 @@ function mostRecentComp(comps: CompListing[]): CompListing | null {
 export async function scoreDeal(
   listing: EbayListing,
   comps: CompListing[],
-  anthropicKey: string
+  anthropicKey: string,
+  cardHedge?: CardHedgeResult | null
 ): Promise<DealScore> {
   const listingPrice = parseFloat(listing.price?.value || '0');
   const compPrices = comps.map(c => c.price).filter(p => p > 0);
   const compLow = compPrices.length > 0 ? Math.min(...compPrices) : 0;
   const compHigh = compPrices.length > 0 ? Math.max(...compPrices) : 0;
   const compMedian = median(compPrices);
-  const discountPercent = compMedian > 0 ? ((compMedian - listingPrice) / compMedian) * 100 : 0;
 
-  const lastComp = mostRecentComp(comps);
+  // Prefer Card Hedge FMV as the benchmark — it's grade-specific and professionally calculated
+  const fairValue = cardHedge?.fmvPrice ?? cardHedge?.compPrice ?? (compMedian > 0 ? compMedian : 0);
+  const discountPercent = fairValue > 0 ? ((fairValue - listingPrice) / fairValue) * 100 : 0;
+
+  // Use Card Hedge last sale if available and more recent
+  const ebayLastComp = mostRecentComp(comps);
+  const chLastDate = cardHedge?.lastSaleDate ?? null;
+  const useChLast = chLastDate && (!ebayLastComp || new Date(chLastDate) >= new Date(ebayLastComp.soldDate));
+  const lastComp = useChLast
+    ? { price: cardHedge!.lastSalePrice!, soldDate: chLastDate }
+    : ebayLastComp;
   const trend7dPercent = calcTrend(comps);
+
+  // Build card hedge context line for AI if available
+  const chContext = cardHedge?.fmvPrice
+    ? `\nCard Hedge FMV: $${cardHedge.fmvPrice.toFixed(2)} (${cardHedge.fmvConfidenceGrade ?? '?'} confidence${cardHedge.fmvLow && cardHedge.fmvHigh ? `, range $${cardHedge.fmvLow.toFixed(0)}–$${cardHedge.fmvHigh.toFixed(0)}` : ''})`
+    : '';
 
   // Sort comps newest-first for AI context
   const sortedComps = [...comps].sort(
@@ -71,7 +87,7 @@ export async function scoreDeal(
     ? `7-day price trend: ${trend7dPercent > 0 ? '+' : ''}${trend7dPercent}%`
     : '7-day trend: insufficient data';
 
-  const prompt = `You are an expert sports card and TCG deal analyst with deep knowledge of PSA/BGS grading and collector markets. Score this eBay listing as a buying opportunity.
+  const prompt = `You are an expert sports card and TCG deal analyst. Score this eBay listing as a buying opportunity.
 
 LISTING:
 Title: ${listing.title}
@@ -89,7 +105,7 @@ MARKET CONTEXT:
 - Comp range: ${compLow > 0 ? `$${compLow.toFixed(2)} – $${compHigh.toFixed(2)}` : 'N/A'}
 - Total comps found: ${comps.length}
 - ${trendLine}
-${lastComp ? `- Most recent sale: $${lastComp.price.toFixed(2)} on ${new Date(lastComp.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
+${lastComp ? `- Most recent sale: $${lastComp.price.toFixed(2)} on ${new Date(lastComp.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}${chContext}
 
 INSTRUCTIONS:
 - If comps are for a lower grade (PSA 9, raw), factor in typical grade multipliers: PSA 10 is ~1.5–2.5x PSA 9; PSA 9 is ~1.5–2x raw
@@ -134,12 +150,12 @@ Scoring: 90-100=S (>40% below fair value), 75-89=A (20-40% below), 60-74=B (10-2
       confidence: ['high', 'medium', 'low'].includes(parsed.confidence) ? parsed.confidence : 'low',
       lastCompPrice: lastComp?.price ?? null,
       lastCompDate: lastComp?.soldDate ?? null,
-      estimatedValue: compMedian > 0 ? Math.round(compMedian * 100) / 100 : null,
+      estimatedValue: cardHedge?.fmvPrice ?? cardHedge?.compPrice ?? (compMedian > 0 ? Math.round(compMedian * 100) / 100 : null),
       trend7dPercent,
     };
   } catch {
     let score = 50;
-    if (compMedian > 0) {
+    if (fairValue > 0) {
       if (discountPercent > 40) score = 90;
       else if (discountPercent > 25) score = 80;
       else if (discountPercent > 10) score = 65;
@@ -151,13 +167,13 @@ Scoring: 90-100=S (>40% below fair value), 75-89=A (20-40% below), 60-74=B (10-2
       grade: score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 60 ? 'B' : score >= 40 ? 'C' : 'D',
       compLow, compMedian, compHigh, compCount: comps.length,
       discountPercent: Math.round(discountPercent * 10) / 10,
-      aiSummary: compMedian > 0
-        ? `Listed at $${listingPrice} vs median comp $${compMedian.toFixed(2)} (${discountPercent > 0 ? discountPercent.toFixed(0) + '% below' : 'at or above'} market).`
+      aiSummary: fairValue > 0
+        ? `Listed at $${listingPrice} vs fair value $${fairValue.toFixed(2)} (${discountPercent > 0 ? discountPercent.toFixed(0) + '% below' : 'at or above'} market).`
         : 'No comp data available — unable to assess deal quality.',
-      confidence: comps.length >= 5 ? 'medium' : 'low',
+      confidence: comps.length >= 5 ? 'medium' : (cardHedge?.fmvPrice ? 'medium' : 'low'),
       lastCompPrice: lastComp?.price ?? null,
       lastCompDate: lastComp?.soldDate ?? null,
-      estimatedValue: compMedian > 0 ? Math.round(compMedian * 100) / 100 : null,
+      estimatedValue: cardHedge?.fmvPrice ?? cardHedge?.compPrice ?? (compMedian > 0 ? Math.round(compMedian * 100) / 100 : null),
       trend7dPercent,
     };
   }

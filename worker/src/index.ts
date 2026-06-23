@@ -1,6 +1,7 @@
 import { getEbayToken, searchListings, getSoldComps, type EbayListing } from './ebay';
 import { scoreDeal } from './scorer';
 import { getCardSightComps } from './cardsight';
+import { getCardHedgeComps } from './cardhedge';
 import type { CompListing } from './ebay';
 
 export interface Env {
@@ -10,6 +11,7 @@ export interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   CARDSIGHT_API_KEY?: string;
+  CARDHEDGE_API_KEY?: string;
 }
 
 const CORS_HEADERS = {
@@ -67,20 +69,33 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
     // Score all listings in parallel instead of sequentially
     const results = await Promise.all(
       listings.slice(0, limit).map(async (listing) => {
-        // Prefer CardSight comps (real cross-platform sales) over eBay Finding API
+        // Comp data waterfall: Card Hedge → CardSight → eBay Finding API
         let listingComps: CompListing[] = [];
-        if (env.CARDSIGHT_API_KEY) {
+        let chResult = null;
+
+        // Tier 1: Card Hedge — AI card matching + grade-specific comps + FMV
+        if (env.CARDHEDGE_API_KEY) {
+          chResult = await getCardHedgeComps(listing.title, body.sport, env.CARDHEDGE_API_KEY);
+          if (chResult && chResult.sales.length > 0) {
+            listingComps = chResult.sales.map(s => ({ title: listing.title, price: s.price, soldDate: s.date }));
+          }
+        }
+
+        // Tier 2: CardSight — catalog search + 90d pricing
+        if (listingComps.length === 0 && env.CARDSIGHT_API_KEY) {
           const csSales = await getCardSightComps(body.playerName, listing.title, env.CARDSIGHT_API_KEY);
           listingComps = csSales.map(s => ({ title: s.title, price: s.price, soldDate: s.date }));
         }
-        // Fall back to eBay Finding API if CardSight returned nothing
+
+        // Tier 3: eBay Finding API fallback
         if (listingComps.length === 0) {
           listingComps = await getSoldComps(
             env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized'],
             body.years, body.sets, body.grades, listing.title
           );
         }
-        const score = await scoreDeal(listing, listingComps, env.ANTHROPIC_API_KEY);
+
+        const score = await scoreDeal(listing, listingComps, env.ANTHROPIC_API_KEY, chResult);
         if (body.watchlistItemId && env.SUPABASE_URL) {
           try {
             const [savedListing] = await supabaseRequest(env, '/listings', 'POST', {
