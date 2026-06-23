@@ -37,6 +37,10 @@ export interface ScanResult {
     discountPercent: number
     aiSummary: string
     confidence: string
+    lastCompPrice: number | null
+    lastCompDate: string | null
+    estimatedValue: number | null
+    trend7dPercent: number | null
   }
 }
 

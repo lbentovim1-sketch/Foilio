@@ -37,6 +37,46 @@ export async function getEbayToken(clientId: string, clientSecret: string): Prom
   return cachedToken.token;
 }
 
+const KNOWN_SETS = [
+  'Prizm', 'Optic', 'Select', 'Mosaic', 'Hoops', 'Topps Chrome', 'Chrome',
+  'Bowman', 'Donruss', 'Flawless', 'Immaculate', 'National Treasures',
+  'Contenders', 'Chronicles', 'Finest', 'Stadium Club', 'SP Authentic',
+  'Panini One', 'Court Kings', 'Recon',
+];
+
+// Extract the most specific searchable terms from an eBay listing title
+export function buildCompQuery(player: string, listingTitle: string): string {
+  const title = listingTitle;
+
+  // Extract year
+  const yearMatch = title.match(/\b(20\d{2})\b/);
+  const year = yearMatch ? yearMatch[1] : '';
+
+  // Extract player last name for shorter queries
+  const lastName = player.split(' ').slice(-1)[0];
+
+  // Extract serial number (e.g. /275, /99, /10)
+  const serialMatch = title.match(/\/(\d{1,4})\b/);
+  const serial = serialMatch ? `/${serialMatch[1]}` : '';
+
+  // Extract known set name
+  const foundSet = KNOWN_SETS.find(s => title.toLowerCase().includes(s.toLowerCase()));
+
+  // Extract subset name — words after the set name that are likely the parallel/subset
+  // e.g. "Color Blast", "White Lazer", "Kaboom", "Holo", "Silver"
+  const subsetKeywords = ['Color Blast', 'White Lazer', 'Gold Lazer', 'Kaboom', 'Silver',
+    'Gold', 'Black', 'Holo', 'Neon', 'Mojo', 'Disco', 'Cracked Ice', 'Fast Break'];
+  const foundSubset = subsetKeywords.find(s => title.toLowerCase().includes(s.toLowerCase()));
+
+  const parts: string[] = [lastName];
+  if (year) parts.push(year);
+  if (foundSet) parts.push(foundSet);
+  if (foundSubset && foundSubset !== foundSet) parts.push(foundSubset);
+  if (serial) parts.push(serial);
+
+  return parts.join(' ');
+}
+
 function buildSearchQuery(
   player: string,
   cardTypes: string[],
@@ -46,20 +86,13 @@ function buildSearchQuery(
 ): string {
   const terms: string[] = [player];
 
-  // Year — use most recent selected year
   if (years && years.length > 0) terms.push(years[0]);
-
-  // Set/brand — use first selected set
   if (sets && sets.length > 0) terms.push(sets[0]);
 
-  // Grade overrides card type — don't append "card" for graded queries
-  // since PSA/BGS listings often omit the word "card" in their titles
   if (grades && grades.length > 0) {
     terms.push(grades[0]);
     return terms.join(' ');
   }
-
-  // Card type hints for ungraded searches
   if (cardTypes.includes('psa10')) {
     terms.push('PSA 10');
     return terms.join(' ');
@@ -82,10 +115,7 @@ export async function searchListings(
   grades?: string[]
 ): Promise<EbayListing[]> {
   const query = buildSearchQuery(player, cardTypes, years, sets, grades);
-  // Only send maxPrice to eBay — minPrice is applied post-fetch to avoid eBay API quirks
   const priceFilter = maxPrice ? `price:[..${maxPrice}],priceCurrency:USD` : '';
-  // Use category 261328 (Sports Trading Cards) for ungraded,
-  // but drop the category restriction for graded queries so PSA/BGS slabs are found
   const hasGrade = grades && grades.length > 0;
   const params = new URLSearchParams({
     q: query,
@@ -93,7 +123,6 @@ export async function searchListings(
     limit: '50',
   });
   if (!hasGrade) params.set('category_ids', '261328');
-  // 2750 = Certified (PSA/BGS graded slabs); include all common conditions
   params.set('filter', [
     'conditionIds:{1000|1500|2000|2500|2750|3000|4000|5000|6000}',
     priceFilter,
@@ -112,35 +141,25 @@ export async function searchListings(
   if (!response.ok) throw new Error(`eBay Browse API error: ${await response.text()}`);
   const data = await response.json() as { itemSummaries?: EbayListing[] };
   const items = data.itemSummaries || [];
-  // Apply min price filter post-fetch
   if (minPrice) {
     return items.filter(item => parseFloat(item.price?.value || '0') >= minPrice);
   }
   return items;
 }
 
-export async function getSoldComps(
-  clientId: string,
-  player: string,
-  cardTypes: string[],
-  years?: string[],
-  sets?: string[],
-  grades?: string[]
-): Promise<CompListing[]> {
-  const query = buildSearchQuery(player, cardTypes, years, sets, grades);
+async function fetchComps(clientId: string, query: string, entriesPerPage = 20): Promise<CompListing[]> {
   const params = new URLSearchParams({
     'OPERATION-NAME': 'findCompletedItems',
     'SERVICE-VERSION': '1.0.0',
     'SECURITY-APPNAME': clientId,
     'RESPONSE-DATA-FORMAT': 'JSON',
     'keywords': query,
-    'categoryId': '261328',
     'itemFilter(0).name': 'SoldItemsOnly',
     'itemFilter(0).value': 'true',
     'itemFilter(1).name': 'Currency',
     'itemFilter(1).value': 'USD',
     'sortOrder': 'EndTimeSoonest',
-    'paginationInput.entriesPerPage': '20',
+    'paginationInput.entriesPerPage': String(entriesPerPage),
   });
   const response = await fetch(`https://svcs.ebay.com/services/search/FindingService/v1?${params}`);
   if (!response.ok) return [];
@@ -155,4 +174,44 @@ export async function getSoldComps(
   } catch {
     return [];
   }
+}
+
+// Fetch comps tight to the specific listing, then fall back to broader player-level comps
+export async function getSoldComps(
+  clientId: string,
+  player: string,
+  cardTypes: string[],
+  years?: string[],
+  sets?: string[],
+  grades?: string[],
+  listingTitle?: string
+): Promise<CompListing[]> {
+  const queries: string[] = [];
+
+  // Tight query: specific card terms extracted from the listing title
+  if (listingTitle) {
+    queries.push(buildCompQuery(player, listingTitle));
+  }
+
+  // Medium query: player + first grade or card-type term
+  const broadQuery = buildSearchQuery(player, cardTypes, years, sets, grades);
+  queries.push(broadQuery);
+
+  // Run queries in parallel, tightest first
+  const results = await Promise.all(queries.map(q => fetchComps(clientId, q, 20)));
+
+  // Merge: use tight comps if we got at least 3, otherwise fall back to broad
+  const tightComps = results[0] ?? [];
+  const broadComps = results[1] ?? [];
+
+  if (tightComps.length >= 3) return tightComps;
+
+  // Deduplicate by title+price and combine
+  const seen = new Set(tightComps.map(c => `${c.title}|${c.price}`));
+  const merged = [...tightComps];
+  for (const c of broadComps) {
+    const key = `${c.title}|${c.price}`;
+    if (!seen.has(key)) { seen.add(key); merged.push(c); }
+  }
+  return merged;
 }

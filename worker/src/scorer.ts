@@ -10,6 +10,11 @@ export interface DealScore {
   discountPercent: number;
   aiSummary: string;
   confidence: string;
+  // Enhanced comp snapshot
+  lastCompPrice: number | null;
+  lastCompDate: string | null;
+  estimatedValue: number | null;
+  trend7dPercent: number | null;
 }
 
 function median(arr: number[]): number {
@@ -17,6 +22,24 @@ function median(arr: number[]): number {
   const sorted = [...arr].sort((a, b) => a - b);
   const mid = Math.floor(sorted.length / 2);
   return sorted.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+
+function calcTrend(comps: CompListing[]): number | null {
+  const now = Date.now();
+  const d7 = now - 7 * 864e5;
+  const d30 = now - 30 * 864e5;
+  const recent = comps.filter(c => new Date(c.soldDate).getTime() > d7);
+  const older = comps.filter(c => { const t = new Date(c.soldDate).getTime(); return t <= d7 && t > d30; });
+  if (recent.length === 0 || older.length === 0) return null;
+  const avg = (arr: CompListing[]) => arr.reduce((s, c) => s + c.price, 0) / arr.length;
+  return Math.round(((avg(recent) - avg(older)) / avg(older)) * 1000) / 10;
+}
+
+function mostRecentComp(comps: CompListing[]): CompListing | null {
+  if (comps.length === 0) return null;
+  return comps.reduce((best, c) =>
+    new Date(c.soldDate).getTime() > new Date(best.soldDate).getTime() ? c : best
+  );
 }
 
 export async function scoreDeal(
@@ -31,35 +54,58 @@ export async function scoreDeal(
   const compMedian = median(compPrices);
   const discountPercent = compMedian > 0 ? ((compMedian - listingPrice) / compMedian) * 100 : 0;
 
-  const prompt = `You are a sports card deal analyst. Score this eBay listing as a buying opportunity.
+  const lastComp = mostRecentComp(comps);
+  const trend7dPercent = calcTrend(comps);
+
+  // Sort comps newest-first for AI context
+  const sortedComps = [...comps].sort(
+    (a, b) => new Date(b.soldDate).getTime() - new Date(a.soldDate).getTime()
+  );
+
+  const compLines = sortedComps.slice(0, 15).map(c => {
+    const date = c.soldDate ? new Date(c.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '?';
+    return `- ${date} · $${c.price.toFixed(2)}: ${c.title.slice(0, 70)}`;
+  }).join('\n');
+
+  const trendLine = trend7dPercent !== null
+    ? `7-day price trend: ${trend7dPercent > 0 ? '+' : ''}${trend7dPercent}%`
+    : '7-day trend: insufficient data';
+
+  const prompt = `You are an expert sports card and TCG deal analyst with deep knowledge of PSA/BGS grading and collector markets. Score this eBay listing as a buying opportunity.
 
 LISTING:
 Title: ${listing.title}
 Current Price: $${listingPrice}
-Buying Options: ${listing.buyingOptions?.join(', ')}
+Type: ${listing.buyingOptions?.join(', ')}
 ${listing.itemEndDate ? `Ends: ${listing.itemEndDate}` : ''}
 Condition: ${listing.condition || 'Not specified'}
-Seller Feedback: ${listing.seller?.feedbackPercentage}% (${listing.seller?.feedbackScore} score)
+Seller: ${listing.seller?.feedbackPercentage}% positive (${listing.seller?.feedbackScore} ratings)
 
-RECENT SOLD COMPS (last 30 days):
-${comps.length > 0
-  ? comps.slice(0, 10).map(c => `- $${c.price.toFixed(2)}: ${c.title.slice(0, 60)}`).join('\n')
-  : 'No recent comps found.'}
+SOLD COMPS (newest first — includes same card at various grades if exact match unavailable):
+${compLines || 'No recent sold comps found.'}
 
-Comp statistics:
-- Median sold price: ${compMedian > 0 ? `$${compMedian.toFixed(2)}` : 'N/A'}
-- Price range: ${compLow > 0 ? `$${compLow.toFixed(2)} - $${compHigh.toFixed(2)}` : 'N/A'}
-- Comp count: ${comps.length}
+MARKET CONTEXT:
+- Comp median: ${compMedian > 0 ? `$${compMedian.toFixed(2)}` : 'N/A'}
+- Comp range: ${compLow > 0 ? `$${compLow.toFixed(2)} – $${compHigh.toFixed(2)}` : 'N/A'}
+- Total comps found: ${comps.length}
+- ${trendLine}
+${lastComp ? `- Most recent sale: $${lastComp.price.toFixed(2)} on ${new Date(lastComp.soldDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : ''}
 
-Respond ONLY with a JSON object, no markdown:
+INSTRUCTIONS:
+- If comps are for a lower grade (PSA 9, raw), factor in typical grade multipliers: PSA 10 is ~1.5–2.5x PSA 9; PSA 9 is ~1.5–2x raw
+- If the card is serialized, factor in rarity (lower print run = more premium)
+- A low seller feedback count (<100) is a risk factor
+- Be specific and actionable — mention the actual comp prices and dates in your summary
+
+Respond ONLY with JSON, no markdown:
 {
-  "score": <0-100 integer>,
+  "score": <0-100>,
   "grade": "<S|A|B|C|D>",
   "confidence": "<high|medium|low>",
-  "summary": "<1-2 sentence rationale for a collector>"
+  "summary": "<2-3 sentences: cite specific comp prices and dates, state whether this is a deal or fair price, give one actionable recommendation>"
 }
 
-Scoring: 90-100=S (>40% below comp), 75-89=A (20-40% below), 60-74=B (10-20% below), 40-59=C (near comp), 0-39=D (overpriced or no data)`;
+Scoring: 90-100=S (>40% below fair value), 75-89=A (20-40% below), 60-74=B (10-20% below), 40-59=C (near fair value), 0-39=D (overpriced or insufficient data)`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -71,7 +117,7 @@ Scoring: 90-100=S (>40% below comp), 75-89=A (20-40% below), 60-74=B (10-20% bel
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 300,
+        max_tokens: 400,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -86,6 +132,10 @@ Scoring: 90-100=S (>40% below comp), 75-89=A (20-40% below), 60-74=B (10-20% bel
       discountPercent: Math.round(discountPercent * 10) / 10,
       aiSummary: parsed.summary || 'No analysis available.',
       confidence: ['high', 'medium', 'low'].includes(parsed.confidence) ? parsed.confidence : 'low',
+      lastCompPrice: lastComp?.price ?? null,
+      lastCompDate: lastComp?.soldDate ?? null,
+      estimatedValue: compMedian > 0 ? Math.round(compMedian * 100) / 100 : null,
+      trend7dPercent,
     };
   } catch {
     let score = 50;
@@ -101,8 +151,14 @@ Scoring: 90-100=S (>40% below comp), 75-89=A (20-40% below), 60-74=B (10-20% bel
       grade: score >= 90 ? 'S' : score >= 75 ? 'A' : score >= 60 ? 'B' : score >= 40 ? 'C' : 'D',
       compLow, compMedian, compHigh, compCount: comps.length,
       discountPercent: Math.round(discountPercent * 10) / 10,
-      aiSummary: `Price $${listingPrice} vs median comp $${compMedian.toFixed(2)}.`,
-      confidence: 'low',
+      aiSummary: compMedian > 0
+        ? `Listed at $${listingPrice} vs median comp $${compMedian.toFixed(2)} (${discountPercent > 0 ? discountPercent.toFixed(0) + '% below' : 'at or above'} market).`
+        : 'No comp data available — unable to assess deal quality.',
+      confidence: comps.length >= 5 ? 'medium' : 'low',
+      lastCompPrice: lastComp?.price ?? null,
+      lastCompDate: lastComp?.soldDate ?? null,
+      estimatedValue: compMedian > 0 ? Math.round(compMedian * 100) / 100 : null,
+      trend7dPercent,
     };
   }
 }

@@ -84,22 +84,41 @@ function DealCard({ result }: DealCardProps) {
           <span className="score-num">{score.score}</span>
         </div>
 
-        {score.compCount > 0 && (
-          <div className="comp-row">
+        {/* Comp snapshot row */}
+        <div className="comp-row">
+          {score.lastCompPrice && score.lastCompDate ? (
             <div className="comp-item">
-              <span className="comp-label">Comp Median</span>
-              <span className="comp-value">{formatPrice(score.compMedian)}</span>
+              <span className="comp-label">Last Sold</span>
+              <span className="comp-value">
+                {formatPrice(score.lastCompPrice)} · {new Date(score.lastCompDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
             </div>
+          ) : (
             <div className="comp-item">
-              <span className="comp-label">Range</span>
-              <span className="comp-value">{formatPrice(score.compLow)}–{formatPrice(score.compHigh)}</span>
+              <span className="comp-label">Last Sold</span>
+              <span className="comp-value" style={{ color: 'var(--text4)' }}>No data</span>
             </div>
+          )}
+          {score.estimatedValue ? (
+            <div className="comp-item">
+              <span className="comp-label">Est. Value</span>
+              <span className="comp-value">{formatPrice(score.estimatedValue)}</span>
+            </div>
+          ) : null}
+          {score.trend7dPercent !== null ? (
+            <div className="comp-item">
+              <span className="comp-label">7d Trend</span>
+              <span className="comp-value" style={{ color: score.trend7dPercent >= 0 ? 'var(--accent)' : 'var(--danger)' }}>
+                {score.trend7dPercent >= 0 ? '↑' : '↓'} {Math.abs(score.trend7dPercent).toFixed(1)}%
+              </span>
+            </div>
+          ) : score.compCount > 0 ? (
             <div className="comp-item">
               <span className="comp-label">Comps</span>
-              <span className="comp-value">{score.compCount}</span>
+              <span className="comp-value">{score.compCount} sold</span>
             </div>
-          </div>
-        )}
+          ) : null}
+        </div>
 
         {score.aiSummary && (
           <div className="ai-summary">{score.aiSummary}</div>

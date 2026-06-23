@@ -59,16 +59,17 @@ async function handleScan(request: Request, env: Env): Promise<Response> {
       body.maxPriceUsd, body.minPriceUsd,
       body.years, body.sets, body.grades
     );
-    const comps = await getSoldComps(
-      env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized'],
-      body.years, body.sets, body.grades
-    );
     const limit = Math.min(body.limit || 5, 10);
 
     // Score all listings in parallel instead of sequentially
     const results = await Promise.all(
       listings.slice(0, limit).map(async (listing) => {
-        const score = await scoreDeal(listing, comps, env.ANTHROPIC_API_KEY);
+        // Pull comps specific to this listing's title for tighter matching
+        const listingComps = await getSoldComps(
+          env.EBAY_CLIENT_ID, body.playerName, body.cardTypes || ['serialized'],
+          body.years, body.sets, body.grades, listing.title
+        );
+        const score = await scoreDeal(listing, listingComps, env.ANTHROPIC_API_KEY);
         if (body.watchlistItemId && env.SUPABASE_URL) {
           try {
             const [savedListing] = await supabaseRequest(env, '/listings', 'POST', {
