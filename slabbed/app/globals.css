@@ -1,0 +1,158 @@
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0e1116;
+  --surface: #161b23;
+  --surface-2: #1d242e;
+  --line: #28303c;
+  --text: #e9ecf1;
+  --dim: #8b94a3;
+  --gold: #e6b93f;
+  --green: #3fbe7e;
+  --red: #e35a52;
+  --blue: #5b9cf5;
+  --psa-red: #c8102e;
+  --font-barlow: 'Barlow Condensed', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-inter);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dim);
+}
+
+/* Tabular nums utility */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-barlow);
+}
+
+/* Slab chip */
+.slab-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f0e8;
+  border-left: 3px solid var(--psa-red);
+  border-radius: 3px;
+  padding: 1px 6px 1px 4px;
+  font-family: var(--font-barlow);
+  font-weight: 700;
+  font-size: 11px;
+  color: #1a1a1a;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* P/L coloring */
+.pl-positive { color: var(--green); }
+.pl-negative { color: var(--red); }
+.pl-zero { color: var(--dim); }
+
+/* Input base */
+.input-base {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: var(--font-inter);
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.input-base:focus {
+  border-color: var(--blue);
+}
+.input-base::placeholder {
+  color: var(--dim);
+}
+
+/* Select base */
+select.input-base option {
+  background: var(--surface-2);
+}
+
+/* Table styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  text-align: left;
+  padding: 10px 12px;
+  color: var(--dim);
+  font-family: var(--font-barlow);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 12px 12px;
+  border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.data-table tbody tr:hover {
+  background: var(--surface-2);
+}
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Modal overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
