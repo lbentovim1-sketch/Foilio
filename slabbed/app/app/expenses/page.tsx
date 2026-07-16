@@ -138,7 +138,8 @@ export default function ExpensesPage() {
       setExpenses(prev => prev.map(e => e.id === editExpense.id ? updated as Expense : e));
       setEditExpense(null);
     } else {
-      const { data: newExp, error } = await supabase.from('expenses').insert(data).select().single();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: newExp, error } = await supabase.from('expenses').insert({ ...data, user_id: user!.id }).select().single();
       if (error) { showToast('Failed to add', 'error'); return; }
       setExpenses(prev => [newExp as Expense, ...prev]);
       setShowAdd(false);

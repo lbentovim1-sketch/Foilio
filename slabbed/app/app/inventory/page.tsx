@@ -43,7 +43,8 @@ export default function InventoryPage() {
   }, [cards, filter, search]);
 
   async function handleAdd(data: Partial<Card>) {
-    const { data: newCard, error } = await supabase.from('cards').insert({ ...data, status: data.status ?? 'inventory' }).select().single();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: newCard, error } = await supabase.from('cards').insert({ ...data, user_id: user!.id, status: data.status ?? 'inventory' }).select().single();
     if (error) { showToast('Failed to add card', 'error'); return; }
     setCards(prev => [newCard as Card, ...prev]);
     setShowAdd(false);

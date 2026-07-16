@@ -127,7 +127,8 @@ export default function BuyingPage() {
       setItems(prev => prev.map(i => i.id === editItem.id ? updated as WatchlistItem : i));
       setEditItem(null);
     } else {
-      const { data: newItem, error } = await supabase.from('watchlist').insert(data).select().single();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: newItem, error } = await supabase.from('watchlist').insert({ ...data, user_id: user!.id }).select().single();
       if (error) { showToast('Failed to add', 'error'); return; }
       setItems(prev => [newItem as WatchlistItem, ...prev]);
       setShowAdd(false);
@@ -143,12 +144,13 @@ export default function BuyingPage() {
   }
 
   async function handleWon(item: WatchlistItem) {
-    // Move to incoming
+    const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.from('cards').insert({
       name: item.name,
       cost: item.max_bid ?? 0,
       status: 'incoming',
       category: 'Other',
+      user_id: user!.id,
     });
     if (error) { showToast('Failed to move to Incoming', 'error'); return; }
     await supabase.from('watchlist').delete().eq('id', item.id);
