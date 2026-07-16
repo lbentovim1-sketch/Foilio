@@ -207,8 +207,10 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
               </div>
             )}
             {certError && (
-              <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--red)' }}>
-                {certError}
+              <div style={{ marginTop: '8px', fontSize: '13px', color: certError.includes('PSA_API_KEY') ? 'var(--gold)' : 'var(--red)' }}>
+                {certError.includes('PSA_API_KEY')
+                  ? '⚠ PSA API key not set — add PSA_API_KEY in Vercel settings, then redeploy'
+                  : certError}
               </div>
             )}
           </div>
