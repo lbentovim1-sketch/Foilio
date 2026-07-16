@@ -22,7 +22,8 @@ export default function IncomingPage() {
   }, []);
 
   async function handleAdd(data: Partial<Card>) {
-    const { data: newCard, error } = await supabase.from('cards').insert({ ...data, status: 'incoming' }).select().single();
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: newCard, error } = await supabase.from('cards').insert({ ...data, user_id: user!.id, status: 'incoming' }).select().single();
     if (error) { showToast('Failed to add', 'error'); return; }
     setCards(prev => [newCard as Card, ...prev]);
     setShowAdd(false);
