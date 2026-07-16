@@ -146,9 +146,28 @@ export default function CardTable({ cards, columns, actions, onEdit, emptyMessag
 export function CardNameCell({ card }: { card: Card }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-      <span style={{ fontWeight: 500, color: 'var(--text)', fontSize: '13px' }}>{card.name}</span>
-      <SlabChip gradeCo={card.grade_co} grade={card.grade} />
-      {card.serial && <span style={{ fontSize: '11px', color: 'var(--dim)', background: 'var(--surface-2)', padding: '1px 5px', borderRadius: '3px', border: '1px solid var(--line)' }}>{card.serial}</span>}
+      {/* Card image thumbnail if available */}
+      {card.front_image_url && (
+        <img
+          src={card.front_image_url}
+          alt={card.name}
+          style={{ width: '28px', height: '40px', objectFit: 'cover', borderRadius: '3px', border: '1px solid var(--line)', flexShrink: 0 }}
+          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      )}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 500, color: 'var(--text)', fontSize: '13px' }}>{card.name}</span>
+          <SlabChip gradeCo={card.grade_co} grade={card.grade} />
+          {card.serial && <span style={{ fontSize: '11px', color: 'var(--dim)', background: 'var(--surface-2)', padding: '1px 5px', borderRadius: '3px', border: '1px solid var(--line)' }}>{card.serial}</span>}
+        </div>
+        {(card.cert_number || card.population !== null) && (
+          <div style={{ display: 'flex', gap: '8px', marginTop: '2px', fontSize: '11px', color: 'var(--dim)' }}>
+            {card.cert_number && <span>Cert #{card.cert_number}</span>}
+            {card.population !== null && <span>Pop {card.population}{card.population_higher !== null ? ` / ${card.population_higher} higher` : ''}</span>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

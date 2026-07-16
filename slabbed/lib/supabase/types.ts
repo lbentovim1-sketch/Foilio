@@ -26,21 +26,45 @@ export interface Card {
   grade: string | null;
   serial: string | null;
   status: CardStatus;
+
+  // Acquisition
   cost: number;
   date_bought: string | null;
   source: string | null;
+
+  // Valuation
   true_value: number | null;
+
+  // Listing
   platform: string | null;
   list_price: number | null;
+
+  // Incoming
   tracking: string | null;
+
+  // Grading
   grading_co: string | null;
   grading_fee: number | null;
   submitted_date: string | null;
   expected_grade: string | null;
+
+  // Sale
   sale_price: number | null;
   fees: number | null;
   shipping_out: number | null;
   date_sold: string | null;
+
+  // PSA / cert fields
+  cert_number: string | null;
+  cert_verified_at: string | null;
+  cert_lookup_source: string | null;
+  cert_source_data: Record<string, unknown> | null;
+  psa_spec_id: string | null;
+  population: number | null;
+  population_higher: number | null;
+  front_image_url: string | null;
+  back_image_url: string | null;
+
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -90,4 +114,28 @@ export interface PublicCard {
   list_price: number | null;
   true_value: number | null;
   status: CardStatus;
+}
+
+export interface PSALookupResult {
+  gradingCompany: string;
+  certNumber: string;
+  psaSpecId: string | null;
+  title: string;
+  year: string;
+  brand: string;
+  category: string;
+  cardNumber: string;
+  subject: string;
+  variety: string;
+  grade: string;
+  gradeDescription: string;
+  autographGrade: string;
+  population: number | null;
+  populationHigher: number | null;
+  itemStatus: string;
+  frontImageUrl: string | null;
+  backImageUrl: string | null;
+  images: string[];
+  rawPsaCard: Record<string, unknown>;
+  imagesRaw: unknown;
 }
