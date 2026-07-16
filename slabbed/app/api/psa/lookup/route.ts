@@ -74,6 +74,8 @@ export async function GET(request: NextRequest) {
   const parseKey = process.env.PARSE_API_KEY;
   if (parseKey) {
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 12000); // 12s timeout
       const res = await fetch(`${PARSE_SCRAPER_URL}/get_cert_details?cert_number=${encodeURIComponent(certNumber)}`, {
         headers: {
           'X-API-Key': parseKey,
@@ -81,7 +83,9 @@ export async function GET(request: NextRequest) {
           Accept: 'application/json',
         },
         cache: 'no-store',
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
 
       console.log('Parse.bot response status:', res.status);
 
@@ -89,10 +93,15 @@ export async function GET(request: NextRequest) {
         const json = await res.json();
         console.log('Parse.bot response:', JSON.stringify(json).slice(0, 400));
         const data = json?.data ?? json;
+        console.log('Parse.bot full response keys:', Object.keys(data ?? {}));
+        console.log('Parse.bot images field:', JSON.stringify(data?.images));
+        console.log('Parse.bot grade field:', data?.grade);
 
         if (data) {
           // Parse.bot returns: card_title, grade, images (array), subject, year, brand, population, cert_number
-          const images: string[] = Array.isArray(data.images) ? data.images : [];
+          // images may be empty array — fall back to collecting URLs from entire response
+          const rawImages: string[] = Array.isArray(data.images) ? data.images.filter((u: unknown) => typeof u === 'string' && /^https?:\/\//i.test(u as string)) : [];
+          const images: string[] = rawImages.length > 0 ? rawImages : collectImageUrls(data);
           const gradeRaw: string = data.grade ?? '';
           // grade comes as "GEM MT 10" — extract the number
           const gradeNum = gradeRaw.match(/\d+(?:\.\d+)?$/)?.[0] ?? gradeRaw;
@@ -138,8 +147,12 @@ export async function GET(request: NextRequest) {
       // Parse.bot failed — log why and fall through to PSA
       const errText = await res.text().catch(() => '');
       console.error(`Parse.bot ${res.status}:`, errText.slice(0, 300));
-    } catch (e) {
-      console.error('Parse.bot error:', e);
+    } catch (e: unknown) {
+      if (e instanceof Error && e.name === 'AbortError') {
+        console.error('Parse.bot timed out after 12s');
+      } else {
+        console.error('Parse.bot error:', e);
+      }
     }
   } else {
     console.log('PARSE_API_KEY not set — skipping Parse.bot');
