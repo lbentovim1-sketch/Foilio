@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
 const PSA_API_BASE = 'https://api.psacard.com/publicapi';
+const PSA_API_BASE_ALT = 'https://api.psacard.com/publicapi/cert';
 
 // Simple in-process rate limiter — resets on cold start, good enough for edge rate abuse
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -81,27 +82,32 @@ export async function GET(request: NextRequest) {
   };
 
   try {
+    const detailsUrl = `${PSA_API_BASE}/cert/GetByCertNumber/${encodeURIComponent(certNumber)}`;
+    const imagesUrl = `${PSA_API_BASE}/cert/GetImagesByCertNumber/${encodeURIComponent(certNumber)}`;
+    console.log('PSA lookup URL:', detailsUrl);
+
     const [detailsRes, imagesRes] = await Promise.all([
-      fetch(`${PSA_API_BASE}/cert/GetByCertNumber/${encodeURIComponent(certNumber)}`, {
-        headers,
-        cache: 'no-store',
-      }),
-      fetch(`${PSA_API_BASE}/cert/GetImagesByCertNumber/${encodeURIComponent(certNumber)}`, {
-        headers,
-        cache: 'no-store',
-      }),
+      fetch(detailsUrl, { headers, cache: 'no-store' }),
+      fetch(imagesUrl, { headers, cache: 'no-store' }),
     ]);
 
     if (detailsRes.status === 401 || detailsRes.status === 403) {
-      return NextResponse.json({ error: 'PSA authentication failed — check your PSA_API_TOKEN.' }, { status: 502 });
+      return NextResponse.json({ error: 'PSA authentication failed — check your PSA_API_TOKEN in Vercel and redeploy.' }, { status: 502 });
     }
 
     if (!detailsRes.ok) {
-      return NextResponse.json({ error: 'PSA could not complete the lookup — try again.' }, { status: 502 });
+      let psaError = '';
+      try { psaError = await detailsRes.text(); } catch { /* ignore */ }
+      console.error(`PSA details API ${detailsRes.status}:`, psaError);
+      return NextResponse.json({
+        error: `PSA returned status ${detailsRes.status}. ${psaError ? `Detail: ${psaError.slice(0, 200)}` : 'Try again or check the cert number.'}`,
+      }, { status: 502 });
     }
 
     const details = await detailsRes.json();
     const imagesRaw = imagesRes.ok ? await imagesRes.json() : null;
+    console.log('PSA details response:', JSON.stringify(details).slice(0, 500));
+    console.log('PSA images status:', imagesRes.status);
 
     const psaCard = details?.PSACert;
     if (!psaCard || details?.IsValidRequest === false || details?.ServerMessage === 'No data found') {
