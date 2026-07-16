@@ -45,7 +45,7 @@ export default function SignupPage() {
               SLABB<span style={{ color: 'var(--gold)' }}>ED</span>
             </span>
           </Link>
-          <p style={{ color: 'var(--dim)', fontSize: '14px', marginTop: '4px' }}>14-day free trial • No card required</p>
+          <p style={{ color: 'var(--dim)', fontSize: '14px', marginTop: '4px' }}>Free beta • No credit card required</p>
         </div>
 
         <div style={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: '12px', padding: '32px' }}>
@@ -53,7 +53,7 @@ export default function SignupPage() {
             Create your account
           </h1>
           <p style={{ fontSize: '14px', color: 'var(--dim)', marginBottom: '24px' }}>
-            Start tracking your card business — free for 14 days.
+            Start tracking your card business — free during beta.
           </p>
 
           <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -126,7 +126,7 @@ export default function SignupPage() {
             </Link>
           </p>
           <p style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: 'var(--dim)' }}>
-            $10/month after trial. Cancel anytime.
+            Free during beta. No credit card, ever.
           </p>
         </div>
       </div>

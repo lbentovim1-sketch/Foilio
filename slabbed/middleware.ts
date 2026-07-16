@@ -38,8 +38,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/app', request.url));
     }
   } catch {
-    // If middleware fails for any reason, allow the request through
-    // so the page itself can handle auth errors gracefully
+    // Allow request through if middleware fails
   }
 
   return supabaseResponse;
