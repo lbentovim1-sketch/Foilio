@@ -187,6 +187,14 @@ function PSACertLookup({ onUse }: PSAPreviewProps) {
             </div>
           </div>
 
+          {/* Cache indicator */}
+          {result.fromCache && (
+            <div style={{ fontSize: '11px', color: 'var(--dim)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span style={{ color: 'var(--green)' }}>⚡</span>
+              Loaded from cache — no PSA API call used
+            </div>
+          )}
+
           {/* Action buttons */}
           <div style={{ display: 'flex', gap: '8px' }}>
             <button

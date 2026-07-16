@@ -117,6 +117,8 @@ export interface PublicCard {
 }
 
 export interface PSALookupResult {
+  fromCache?: boolean;
+  cachedAt?: string;
   gradingCompany: string;
   certNumber: string;
   psaSpecId: string | null;
