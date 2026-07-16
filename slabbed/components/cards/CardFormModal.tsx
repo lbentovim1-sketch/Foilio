@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Modal from '@/components/ui/Modal';
 import type { Card, CardStatus } from '@/lib/supabase/types';
 
@@ -39,6 +39,14 @@ type FormData = {
 export default function CardFormModal({ initialData, defaultStatus = 'inventory', onSave, onClose }: CardFormModalProps) {
   const isEdit = !!initialData?.id;
   const [saving, setSaving] = useState(false);
+
+  // PSA cert lookup state
+  const [certInput, setCertInput] = useState('');
+  const [certLooking, setCertLooking] = useState(false);
+  const [certError, setCertError] = useState('');
+  const [certSuccess, setCertSuccess] = useState('');
+  const certRef = useRef<HTMLInputElement>(null);
+
   const [form, setForm] = useState<FormData>({
     name: initialData?.name ?? '',
     category: initialData?.category ?? 'Other',
@@ -62,6 +70,40 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
 
   function set(field: keyof FormData, value: string) {
     setForm(f => ({ ...f, [field]: value }));
+  }
+
+  async function lookupCert() {
+    const cert = certInput.trim().replace(/\D/g, '');
+    if (!cert) { setCertError('Enter a PSA cert number first'); return; }
+    setCertLooking(true);
+    setCertError('');
+    setCertSuccess('');
+    try {
+      const res = await fetch(`/api/psa?cert=${cert}`);
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setCertError(data.error ?? 'Cert not found — try entering details manually');
+      } else {
+        setForm(f => ({
+          ...f,
+          name: data.name || f.name,
+          grade_co: data.grade_co || f.grade_co,
+          grade: data.grade || f.grade,
+        }));
+        setCertSuccess(`Found: ${data.name}`);
+      }
+    } catch {
+      setCertError('Could not reach PSA — enter details manually');
+    }
+    setCertLooking(false);
+  }
+
+  // Allow barcode scanner: scanners typically send Enter after the cert number
+  function handleCertKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      lookupCert();
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -119,8 +161,61 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
   return (
     <Modal title={isEdit ? 'Edit Card' : 'Add Card'} onClose={onClose} maxWidth={600}>
       <form onSubmit={handleSubmit}>
+
+        {/* ── PSA Cert Lookup (new cards only) ── */}
+        {!isEdit && (
+          <div style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: '8px', padding: '14px 16px', marginBottom: '20px' }}>
+            <div style={{ fontSize: '12px', color: 'var(--dim)', fontFamily: 'var(--font-barlow)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
+              PSA Cert Lookup — type or scan to auto-fill
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                ref={certRef}
+                style={{ ...inputStyle, flex: 1, fontFamily: 'monospace', letterSpacing: '0.05em' }}
+                value={certInput}
+                onChange={e => { setCertInput(e.target.value); setCertError(''); setCertSuccess(''); }}
+                onKeyDown={handleCertKey}
+                placeholder="e.g. 12345678  (scan or type)"
+                inputMode="numeric"
+                autoComplete="off"
+              />
+              <button
+                type="button"
+                onClick={lookupCert}
+                disabled={certLooking}
+                style={{
+                  background: 'var(--psa-red)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  padding: '8px 14px',
+                  fontSize: '13px',
+                  fontFamily: 'var(--font-barlow)',
+                  fontWeight: 700,
+                  cursor: certLooking ? 'wait' : 'pointer',
+                  opacity: certLooking ? 0.7 : 1,
+                  whiteSpace: 'nowrap',
+                  letterSpacing: '0.04em',
+                }}
+              >
+                {certLooking ? 'Looking…' : 'LOOK UP'}
+              </button>
+            </div>
+            {certSuccess && (
+              <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--green)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span>✓</span> {certSuccess} — review fields below and add cost
+              </div>
+            )}
+            {certError && (
+              <div style={{ marginTop: '8px', fontSize: '13px', color: 'var(--red)' }}>
+                {certError}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Card fields ── */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-          {/* Name - full width */}
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={labelStyle}>Card Name *</label>
             <input
@@ -160,83 +255,41 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
 
           <div>
             <label style={labelStyle}>Grade</label>
-            <input
-              style={inputStyle}
-              value={form.grade}
-              onChange={e => set('grade', e.target.value)}
-              placeholder="10, 9.5, 8, etc."
-            />
+            <input style={inputStyle} value={form.grade} onChange={e => set('grade', e.target.value)} placeholder="10, 9.5, 8, etc." />
           </div>
 
           <div>
             <label style={labelStyle}>Serial #</label>
-            <input
-              style={inputStyle}
-              value={form.serial}
-              onChange={e => set('serial', e.target.value)}
-              placeholder="29/50"
-            />
+            <input style={inputStyle} value={form.serial} onChange={e => set('serial', e.target.value)} placeholder="29/50" />
           </div>
 
           <div>
             <label style={labelStyle}>Cost Basis ($) *</label>
-            <input
-              type="number"
-              step="0.01"
-              style={inputStyle}
-              value={form.cost}
-              onChange={e => set('cost', e.target.value)}
-              placeholder="0.00"
-              required
-            />
+            <input type="number" step="0.01" style={inputStyle} value={form.cost} onChange={e => set('cost', e.target.value)} placeholder="0.00" required />
           </div>
 
           <div>
             <label style={labelStyle}>Date Bought</label>
-            <input
-              type="date"
-              style={inputStyle}
-              value={form.date_bought}
-              onChange={e => set('date_bought', e.target.value)}
-            />
+            <input type="date" style={inputStyle} value={form.date_bought} onChange={e => set('date_bought', e.target.value)} />
           </div>
 
           <div>
             <label style={labelStyle}>Source / Bought From</label>
-            <input
-              style={inputStyle}
-              value={form.source}
-              onChange={e => set('source', e.target.value)}
-              placeholder="eBay, Card show, etc."
-            />
+            <input style={inputStyle} value={form.source} onChange={e => set('source', e.target.value)} placeholder="eBay, Card show, etc." />
           </div>
 
           <div>
             <label style={labelStyle}>True Value / Comp ($)</label>
-            <input
-              type="number"
-              step="0.01"
-              style={inputStyle}
-              value={form.true_value}
-              onChange={e => set('true_value', e.target.value)}
-              placeholder="Market comp"
-            />
+            <input type="number" step="0.01" style={inputStyle} value={form.true_value} onChange={e => set('true_value', e.target.value)} placeholder="Market comp" />
           </div>
 
-          {/* Incoming */}
           {showTracking && (
             <div style={{ gridColumn: '1 / -1' }}>
               <label style={labelStyle}>Tracking Number</label>
-              <input
-                style={inputStyle}
-                value={form.tracking}
-                onChange={e => set('tracking', e.target.value)}
-                placeholder="1Z999AA10123456784"
-              />
+              <input style={inputStyle} value={form.tracking} onChange={e => set('tracking', e.target.value)} placeholder="1Z999AA10123456784" />
             </div>
           )}
 
-          {/* Grading */}
           {showGrading && <>
             <div>
               <label style={labelStyle}>Grading Company</label>
@@ -247,36 +300,18 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
             </div>
             <div>
               <label style={labelStyle}>Grading Fee ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                style={inputStyle}
-                value={form.grading_fee}
-                onChange={e => set('grading_fee', e.target.value)}
-                placeholder="0.00"
-              />
+              <input type="number" step="0.01" style={inputStyle} value={form.grading_fee} onChange={e => set('grading_fee', e.target.value)} placeholder="0.00" />
             </div>
             <div>
               <label style={labelStyle}>Submitted Date</label>
-              <input
-                type="date"
-                style={inputStyle}
-                value={form.submitted_date}
-                onChange={e => set('submitted_date', e.target.value)}
-              />
+              <input type="date" style={inputStyle} value={form.submitted_date} onChange={e => set('submitted_date', e.target.value)} />
             </div>
             <div>
               <label style={labelStyle}>Expected Grade</label>
-              <input
-                style={inputStyle}
-                value={form.expected_grade}
-                onChange={e => set('expected_grade', e.target.value)}
-                placeholder="PSA 10?"
-              />
+              <input style={inputStyle} value={form.expected_grade} onChange={e => set('expected_grade', e.target.value)} placeholder="PSA 10?" />
             </div>
           </>}
 
-          {/* Listed */}
           {showListing && <>
             <div>
               <label style={labelStyle}>Platform</label>
@@ -287,18 +322,10 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
             </div>
             <div>
               <label style={labelStyle}>List Price ($)</label>
-              <input
-                type="number"
-                step="0.01"
-                style={inputStyle}
-                value={form.list_price}
-                onChange={e => set('list_price', e.target.value)}
-                placeholder="0.00"
-              />
+              <input type="number" step="0.01" style={inputStyle} value={form.list_price} onChange={e => set('list_price', e.target.value)} placeholder="0.00" />
             </div>
           </>}
 
-          {/* Notes - full width */}
           <div style={{ gridColumn: '1 / -1' }}>
             <label style={labelStyle}>Notes</label>
             <textarea
@@ -311,38 +338,10 @@ export default function CardFormModal({ initialData, defaultStatus = 'inventory'
         </div>
 
         <div style={{ display: 'flex', gap: '12px', marginTop: '20px', justifyContent: 'flex-end' }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: '1px solid var(--line)',
-              borderRadius: '7px',
-              color: 'var(--dim)',
-              padding: '9px 20px',
-              fontSize: '14px',
-              cursor: 'pointer',
-            }}
-          >
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: '1px solid var(--line)', borderRadius: '7px', color: 'var(--dim)', padding: '9px 20px', fontSize: '14px', cursor: 'pointer' }}>
             Cancel
           </button>
-          <button
-            type="submit"
-            disabled={saving}
-            style={{
-              background: 'var(--gold)',
-              border: 'none',
-              borderRadius: '7px',
-              color: '#0e1116',
-              padding: '9px 24px',
-              fontSize: '14px',
-              fontFamily: 'var(--font-barlow)',
-              fontWeight: 700,
-              cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.7 : 1,
-              letterSpacing: '0.04em',
-            }}
-          >
+          <button type="submit" disabled={saving} style={{ background: 'var(--gold)', border: 'none', borderRadius: '7px', color: '#0e1116', padding: '9px 24px', fontSize: '14px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, letterSpacing: '0.04em' }}>
             {saving ? 'Saving…' : isEdit ? 'SAVE CHANGES' : 'ADD CARD'}
           </button>
         </div>
