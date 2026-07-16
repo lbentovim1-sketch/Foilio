@@ -36,8 +36,8 @@ const FAQ = [
     a: 'Completely. Cost, P/L, and financial data are always private. The optional public share link only shows card names, grades, and asking prices — nothing sensitive.',
   },
   {
-    q: 'What happens after the 14-day trial?',
-    a: '$10/month. No card required to start the trial. Cancel anytime from Settings.',
+    q: 'How much does it cost?',
+    a: 'Free during beta, no credit card required. We\'ll give you plenty of notice before anything ever changes.',
   },
 ];
 
@@ -67,7 +67,7 @@ export default function LandingPage() {
             Know your actual profit<br />on every flip.
           </h1>
           <p style={{ fontSize: '18px', color: 'var(--dim)', maxWidth: '560px', margin: '0 auto 32px', lineHeight: 1.6 }}>
-            Fee-aware P/L on every sale. Buy-to-sold pipeline tracking. Tax-ready exports. $10/month — cancel anytime.
+            Fee-aware P/L on every sale. Buy-to-sold pipeline tracking. Tax-ready exports. Free during beta.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link href="/signup" style={{ background: 'var(--gold)', color: '#0e1116', textDecoration: 'none', padding: '13px 28px', borderRadius: '8px', fontSize: '16px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}>
@@ -158,8 +158,8 @@ export default function LandingPage() {
           <h2 style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '32px', marginBottom: '8px' }}>Simple pricing</h2>
           <p style={{ color: 'var(--dim)', fontSize: '15px', marginBottom: '32px' }}>One plan, everything included.</p>
           <div style={{ background: 'var(--surface)', border: '1px solid var(--gold)', borderRadius: '14px', padding: '36px 40px', display: 'inline-block', maxWidth: '360px', width: '100%' }}>
-            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '48px', color: 'var(--gold)', marginBottom: '4px' }}>$10</div>
-            <div style={{ color: 'var(--dim)', fontSize: '14px', marginBottom: '24px' }}>per month</div>
+            <div style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, fontSize: '48px', color: 'var(--gold)', marginBottom: '4px' }}>Free</div>
+            <div style={{ color: 'var(--dim)', fontSize: '14px', marginBottom: '24px' }}>during beta · no credit card</div>
             <ul style={{ listStyle: 'none', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '28px' }}>
               {[
                 'Unlimited cards & sales',
@@ -178,7 +178,7 @@ export default function LandingPage() {
             <Link href="/signup" style={{ display: 'block', background: 'var(--gold)', color: '#0e1116', textDecoration: 'none', padding: '12px', borderRadius: '8px', fontSize: '15px', fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 700, letterSpacing: '0.04em', textAlign: 'center' }}>
               START 14-DAY FREE TRIAL
             </Link>
-            <p style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '10px' }}>No credit card required. Cancel anytime.</p>
+            <p style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '10px' }}>Free during beta. No credit card, ever.</p>
           </div>
         </div>
 

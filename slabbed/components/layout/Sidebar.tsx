@@ -137,21 +137,15 @@ export default function Sidebar({ profile, mobile, onClose }: SidebarProps) {
           Sign out
         </button>
 
-        {/* Subscription badge */}
-        {profile && (
-          <div style={{ marginTop: '10px', padding: '8px 10px', background: 'var(--surface-2)', borderRadius: '6px', border: '1px solid var(--line)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {profile.subscription_status === 'trialing' ? 'Free Trial' :
-               profile.subscription_status === 'active' ? 'Pro' :
-               profile.subscription_status}
-            </div>
-            {profile.subscription_status === 'trialing' && profile.trial_ends_at && (
-              <div style={{ fontSize: '12px', color: 'var(--gold)', marginTop: '2px' }}>
-                Ends {new Date(profile.trial_ends_at).toLocaleDateString()}
-              </div>
-            )}
+        {/* Beta badge */}
+        <div style={{ marginTop: '10px', padding: '8px 10px', background: 'rgba(230,185,63,0.08)', borderRadius: '6px', border: '1px solid rgba(230,185,63,0.25)' }}>
+          <div style={{ fontSize: '11px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 700 }}>
+            Beta — Free
           </div>
-        )}
+          <div style={{ fontSize: '11px', color: 'var(--dim)', marginTop: '2px' }}>
+            No limits during beta
+          </div>
+        </div>
       </div>
     </aside>
   );

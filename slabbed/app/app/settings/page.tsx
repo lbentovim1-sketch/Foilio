@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { useSearchParams } from 'next/navigation';
 import { useToast } from '@/components/ui/Toast';
 import type { Profile } from '@/lib/supabase/types';
 
@@ -12,7 +11,6 @@ function generateSlug(displayName: string): string {
 
 export default function SettingsPage() {
   const supabase = createClient();
-  const searchParams = useSearchParams();
   const { showToast, ToastComponent } = useToast();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,8 +23,6 @@ export default function SettingsPage() {
     share_slug: '',
   });
   const [copySuccess, setCopySuccess] = useState(false);
-
-  const billingAlert = searchParams.get('billing') === '1';
 
   useEffect(() => {
     supabase.from('profiles').select('*').single().then(({ data }) => {
@@ -69,18 +65,6 @@ export default function SettingsPage() {
     showToast('Slug generated — save your settings to activate', 'info');
   }
 
-  async function handleManageBilling() {
-    const response = await fetch('/api/stripe/portal', { method: 'POST' });
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-  }
-
-  async function handleSubscribe() {
-    const response = await fetch('/api/stripe/checkout', { method: 'POST' });
-    const data = await response.json();
-    if (data.url) window.location.href = data.url;
-  }
-
   function copyShareLink() {
     const url = `${window.location.origin}/p/${form.share_slug}`;
     navigator.clipboard.writeText(url).then(() => {
@@ -101,20 +85,6 @@ export default function SettingsPage() {
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontFamily: 'var(--font-barlow)', fontWeight: 700, fontSize: '28px', color: 'var(--text)' }}>Settings</h1>
       </div>
-
-      {/* Billing alert */}
-      {billingAlert && (
-        <div style={{ background: 'rgba(227,90,82,0.1)', border: '1px solid var(--red)', borderRadius: '8px', padding: '14px 16px', marginBottom: '20px' }}>
-          <div style={{ fontWeight: 600, color: 'var(--red)', marginBottom: '4px' }}>Your trial has ended</div>
-          <div style={{ fontSize: '13px', color: 'var(--dim)' }}>Subscribe for $10/month to continue tracking your card business.</div>
-          <button
-            onClick={handleSubscribe}
-            style={{ marginTop: '10px', background: 'var(--gold)', border: 'none', borderRadius: '6px', color: '#0e1116', padding: '8px 16px', fontSize: '13px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: 'pointer' }}
-          >
-            SUBSCRIBE NOW →
-          </button>
-        </div>
-      )}
 
       <form onSubmit={handleSave}>
         {/* Profile */}
@@ -142,14 +112,7 @@ export default function SettingsPage() {
             <div>
               <label style={labelStyle}>Platform Fee %</label>
               <div style={{ position: 'relative' }}>
-                <input
-                  type="number"
-                  step="0.01"
-                  style={inputStyle}
-                  value={form.default_fee_pct}
-                  onChange={e => setForm(f => ({ ...f, default_fee_pct: e.target.value }))}
-                  placeholder="13.25"
-                />
+                <input type="number" step="0.01" style={inputStyle} value={form.default_fee_pct} onChange={e => setForm(f => ({ ...f, default_fee_pct: e.target.value }))} placeholder="13.25" />
                 <span style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--dim)', fontSize: '14px' }}>%</span>
               </div>
               <div style={{ fontSize: '11px', color: 'var(--dim)', marginTop: '4px' }}>eBay ~13.25%, Whatnot ~8%, Fanatics ~8%</div>
@@ -158,14 +121,7 @@ export default function SettingsPage() {
               <label style={labelStyle}>Default Shipping Out ($)</label>
               <div style={{ position: 'relative' }}>
                 <span style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--dim)' }}>$</span>
-                <input
-                  type="number"
-                  step="0.01"
-                  style={{ ...inputStyle, paddingLeft: '22px' }}
-                  value={form.default_shipping}
-                  onChange={e => setForm(f => ({ ...f, default_shipping: e.target.value }))}
-                  placeholder="5.00"
-                />
+                <input type="number" step="0.01" style={{ ...inputStyle, paddingLeft: '22px' }} value={form.default_shipping} onChange={e => setForm(f => ({ ...f, default_shipping: e.target.value }))} placeholder="5.00" />
               </div>
             </div>
           </div>
@@ -179,7 +135,7 @@ export default function SettingsPage() {
             Only cards in <strong style={{ color: 'var(--text)' }}>Inventory</strong> or <strong style={{ color: 'var(--text)' }}>Listed</strong> status are shown. Cost, P/L, and financial data are always private.
           </p>
           <div style={{ marginBottom: '14px' }}>
-            <label style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', textTransform: 'none', letterSpacing: 0, fontSize: '14px', fontFamily: 'var(--font-inter)', fontWeight: 'normal' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px' }}>
               <input
                 type="checkbox"
                 checked={form.inventory_public}
@@ -200,11 +156,7 @@ export default function SettingsPage() {
                     onChange={e => setForm(f => ({ ...f, share_slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') }))}
                     placeholder="your-name-abc12"
                   />
-                  <button
-                    type="button"
-                    onClick={handleGenerateSlug}
-                    style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: '6px', color: 'var(--text)', padding: '8px 12px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                  >
+                  <button type="button" onClick={handleGenerateSlug} style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: '6px', color: 'var(--text)', padding: '8px 12px', fontSize: '13px', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                     Generate
                   </button>
                 </div>
@@ -212,13 +164,9 @@ export default function SettingsPage() {
               {form.share_slug && (
                 <div style={{ background: 'var(--surface-2)', border: '1px solid var(--line)', borderRadius: '8px', padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
                   <span style={{ fontSize: '13px', color: 'var(--blue)', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                    {typeof window !== 'undefined' ? window.location.origin : 'https://slabbed.app'}/p/{form.share_slug}
+                    {typeof window !== 'undefined' ? window.location.origin : ''}/p/{form.share_slug}
                   </span>
-                  <button
-                    type="button"
-                    onClick={copyShareLink}
-                    style={{ background: copySuccess ? 'var(--green)' : 'var(--blue)', border: 'none', borderRadius: '6px', color: '#0e1116', padding: '6px 12px', fontSize: '12px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'background 0.2s' }}
-                  >
+                  <button type="button" onClick={copyShareLink} style={{ background: copySuccess ? 'var(--green)' : 'var(--blue)', border: 'none', borderRadius: '6px', color: '#0e1116', padding: '6px 12px', fontSize: '12px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', transition: 'background 0.2s' }}>
                     {copySuccess ? '✓ COPIED!' : 'COPY LINK'}
                   </button>
                 </div>
@@ -227,56 +175,19 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Save button */}
-        <button
-          type="submit"
-          disabled={saving}
-          style={{ background: 'var(--gold)', border: 'none', borderRadius: '8px', color: '#0e1116', padding: '11px 24px', fontSize: '15px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, letterSpacing: '0.04em', width: '100%' }}
-        >
+        <button type="submit" disabled={saving} style={{ background: 'var(--gold)', border: 'none', borderRadius: '8px', color: '#0e1116', padding: '11px 24px', fontSize: '15px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1, letterSpacing: '0.04em', width: '100%' }}>
           {saving ? 'SAVING…' : 'SAVE SETTINGS'}
         </button>
       </form>
 
-      {/* Subscription */}
-      <div style={{ ...sectionStyle, marginTop: '20px' }}>
-        <h2 style={headingStyle}>Subscription</h2>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <div style={{ fontSize: '14px', color: 'var(--text)', fontWeight: 500 }}>
-              Status: <span style={{
-                color: profile?.subscription_status === 'active' ? 'var(--green)'
-                  : profile?.subscription_status === 'trialing' ? 'var(--gold)'
-                  : 'var(--red)'
-              }}>
-                {profile?.subscription_status === 'trialing' ? 'Free Trial' : profile?.subscription_status}
-              </span>
-            </div>
-            {profile?.subscription_status === 'trialing' && profile?.trial_ends_at && (
-              <div style={{ fontSize: '13px', color: 'var(--dim)', marginTop: '4px' }}>
-                Trial ends {new Date(profile.trial_ends_at).toLocaleDateString()}
-              </div>
-            )}
-            {profile?.subscription_status === 'active' && (
-              <div style={{ fontSize: '13px', color: 'var(--dim)', marginTop: '4px' }}>$10/month · cancel anytime</div>
-            )}
-          </div>
-          {profile?.subscription_status === 'active' ? (
-            <button
-              type="button"
-              onClick={handleManageBilling}
-              style={{ background: 'transparent', border: '1px solid var(--line)', borderRadius: '7px', color: 'var(--text)', padding: '8px 16px', fontSize: '13px', cursor: 'pointer' }}
-            >
-              Manage Billing →
-            </button>
-          ) : profile?.subscription_status !== 'trialing' ? (
-            <button
-              type="button"
-              onClick={handleSubscribe}
-              style={{ background: 'var(--gold)', border: 'none', borderRadius: '7px', color: '#0e1116', padding: '8px 16px', fontSize: '14px', fontFamily: 'var(--font-barlow)', fontWeight: 700, cursor: 'pointer' }}
-            >
-              SUBSCRIBE — $10/mo →
-            </button>
-          ) : null}
+      {/* Beta banner */}
+      <div style={{ marginTop: '20px', background: 'rgba(230,185,63,0.08)', border: '1px solid rgba(230,185,63,0.3)', borderRadius: '10px', padding: '16px 20px' }}>
+        <div style={{ fontFamily: 'var(--font-barlow)', fontWeight: 700, fontSize: '15px', color: 'var(--gold)', marginBottom: '4px' }}>
+          Beta — Free for Everyone
+        </div>
+        <div style={{ fontSize: '13px', color: 'var(--dim)', lineHeight: 1.5 }}>
+          Slabbed is free while we're in beta. No credit card, no trial timer, no limits. 
+          We'll give you plenty of notice before anything changes.
         </div>
       </div>
 
