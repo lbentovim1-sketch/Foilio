@@ -537,10 +537,6 @@ function galleryHTML(e) {
   // Convert Supabase storage URLs to serve compressed/resized images via the render API
   function imgUrl(url, w) {
     if (!url) return "";
-    if (url.includes(".supabase.co/storage/v1/object/public/")) {
-      return url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")
-               + "?width=" + (w||400) + "&quality=78&format=webp";
-    }
     return url;
   }
 
