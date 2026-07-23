@@ -20,6 +20,13 @@ function env(e, k) {
   return e && typeof e[k] === "string" ? e[k].trim() : "";
 }
 
+// Returns a clean Supabase base URL with no trailing slash or /rest/v1 suffix
+function sbBase(e) {
+  return env(e, "SUPABASE_URL")
+    .replace(/\/rest\/v1\/?$/, "")
+    .replace(/\/+$/, "");
+}
+
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -73,7 +80,7 @@ export default {
 
     // ── API: list cards (public) ────────────────────────────
     if (path === "/api/cards" && method === "GET") {
-      const sbUrl = env(e, "SUPABASE_URL");
+      const sbUrl = sbBase(e);
       const sbKey = sbReadKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
       try {
@@ -94,7 +101,7 @@ export default {
     // ── API: add card ───────────────────────────────────────
     if (path === "/api/cards" && method === "POST") {
       if (!checkAuth(request, e)) return json({ error: "Unauthorized." }, 401);
-      const sbUrl = env(e, "SUPABASE_URL");
+      const sbUrl = sbBase(e);
       const sbKey = sbWriteKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
       try {
@@ -121,7 +128,7 @@ export default {
     if (path.startsWith("/api/cards/") && (method === "PUT" || method === "PATCH")) {
       if (!checkAuth(request, e)) return json({ error: "Unauthorized." }, 401);
       const id = path.replace("/api/cards/", "");
-      const sbUrl = env(e, "SUPABASE_URL");
+      const sbUrl = sbBase(e);
       const sbKey = sbWriteKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
       try {
@@ -151,7 +158,7 @@ export default {
     if (path.startsWith("/api/cards/") && method === "DELETE") {
       if (!checkAuth(request, e)) return json({ error: "Unauthorized." }, 401);
       const id = path.replace("/api/cards/", "");
-      const sbUrl = env(e, "SUPABASE_URL");
+      const sbUrl = sbBase(e);
       const sbKey = sbWriteKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
       try {
@@ -168,7 +175,7 @@ export default {
     // ── API: upload image ───────────────────────────────────
     if (path === "/api/upload" && method === "POST") {
       if (!checkAuth(request, e)) return json({ error: "Unauthorized." }, 401);
-      const sbUrl = env(e, "SUPABASE_URL");
+      const sbUrl = sbBase(e);
       const sbKey = sbWriteKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
       try {
