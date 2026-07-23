@@ -1072,6 +1072,8 @@ function adminHTML(e) {
         if(newSold && !confirm("Mark this card as sold? It will move to the Sold Archive on the public gallery.")) return;
         fetch("/api/cards/"+encodeURIComponent(id),{method:"PUT",headers:{"Content-Type":"application/json","x-vault-pass":adminPass},body:JSON.stringify({is_sold:newSold})}).then(function(r){ if(r.ok) loadCards(); else alert("Update failed."); });
       });
+
+      row.querySelector(".del").addEventListener("click",function(){
         if(!confirm("Delete this card?")) return;
         fetch("/api/cards/"+encodeURIComponent(id),{method:"DELETE",headers:{"x-vault-pass":adminPass}}).then(function(r){ if(r.ok) loadCards(); else alert("Delete failed."); });
       });
