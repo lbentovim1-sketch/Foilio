@@ -30,8 +30,7 @@ tables and security rules in Supabase. This is a one-time, copy-paste step:
 2. Open [`supabase/schema.sql`](supabase/schema.sql) in this repo, copy its entire contents, paste into the editor, and click **Run**.
 3. Then open [`supabase/02_marketplace_messaging.sql`](supabase/02_marketplace_messaging.sql), and run it the same way (it adds the marketplace, offers, and messaging tables).
 4. Then open [`supabase/03_engagement.sql`](supabase/03_engagement.sql) and run it (likes, comments, card photos, notifications, and a `cards` storage bucket).
-5. Then open [`supabase/04_lfgmvault.sql`](supabase/04_lfgmvault.sql) and run it (creates the `vault_cards` table and `vault-images` storage bucket used by the LFGMVault gallery).
-6. You should see "Success. No rows returned." after each. The scripts are safe to run again any time.
+5. You should see "Success. No rows returned." after each. The scripts are safe to run again any time.
 
 ### Optional: richer market data (Phase A)
 
@@ -140,30 +139,13 @@ The next durable social layer should add first-class tables for profiles, public
 
 ## LFGMVault — Group Collection Gallery
 
-The Worker also serves a standalone public gallery at `/vault` for the LFGM group's shared card collection. It is completely separate from the main Foilio app.
+A completely separate, standalone website for the LFGM group's shared card collection. It lives in the [`lfgmvault/`](lfgmvault/) folder and deploys as its own independent Cloudflare Worker — no connection to Foilio at all.
 
-### URLs
+### URLs (after deploying)
 
 | URL | Description |
 | --- | --- |
-| `/vault` | Public gallery — browse all visible cards |
-| `/vault/admin` | Password-protected admin panel — upload and manage cards |
+| `lfgmvault.workers.dev` | Public gallery — browse all visible cards |
+| `lfgmvault.workers.dev/admin` | Password-protected admin panel |
 
-### Setup steps
-
-1. Run [`supabase/04_lfgmvault.sql`](supabase/04_lfgmvault.sql) in the Supabase SQL Editor (creates `vault_cards` table and `vault-images` storage bucket).
-2. In your Cloudflare Worker settings, add a new **Secret** named `VAULT_ADMIN_PASS` and set it to any password you and your group will use to access the admin panel.
-   - The `SUPABASE_SERVICE_KEY` secret (service-role key from Supabase → Project Settings → API) must also be set so the worker can write cards and upload images bypassing Row Level Security.
-3. Deploy as normal (`npm run deploy` or merge to main if you use automatic deploys).
-4. Visit `https://your-worker.workers.dev/vault` to see the public gallery.
-5. Visit `https://your-worker.workers.dev/vault/admin`, enter your `VAULT_ADMIN_PASS`, and start uploading cards.
-
-### Customising the vault
-
-- **Instagram handle** — edit the `igHandle` constant at the top of `renderVaultGallery()` in `worker.js` (default: `lfgmvault`).
-- **Contact email** — set the `contactEmail` constant in `renderVaultGallery()` to your shared Gmail address.
-- **Admin password** — change the `VAULT_ADMIN_PASS` Worker secret any time in the Cloudflare dashboard.
-
-### How card uploads work
-
-The admin panel uploads images directly through the Worker so the Supabase service key never leaves the server. Images are stored in the `vault-images` Supabase Storage bucket (public) and card metadata goes into the `vault_cards` table. Deleting a card from the admin panel removes it from the database; the image file in storage is kept (manual cleanup via the Supabase dashboard if needed).
+See [`lfgmvault/wrangler.toml`](lfgmvault/wrangler.toml) for deployment instructions.

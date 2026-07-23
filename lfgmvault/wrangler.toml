@@ -1,0 +1,13 @@
+# LFGMVault — standalone Cloudflare Worker
+# Deploy with: npx wrangler deploy (run from inside the lfgmvault/ folder)
+#
+# Secrets to set in the Cloudflare dashboard after first deploy:
+#   SUPABASE_URL          - your Supabase project URL (from Slabbed project → Settings → API)
+#   SUPABASE_ANON_KEY     - your Supabase anon key (public, from same page)
+#   SUPABASE_SERVICE_KEY  - your Supabase service-role key (secret, from same page)
+#   VAULT_ADMIN_PASS      - any password you choose for the /admin panel
+
+name = "lfgmvault"
+main = "worker.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
