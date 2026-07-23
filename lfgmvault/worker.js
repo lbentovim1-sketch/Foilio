@@ -559,7 +559,7 @@ function galleryHTML(e) {
 
   function tile(card){
     var img=card.image_url
-      ?'<img src="'+esc(imgUrl(card.image_url,400))+'" alt="'+esc(card.player||"Card")+'" loading="lazy" decoding="async" onerror="this.src=\''+esc(card.image_url)+'\'"/>'
+      ?'<img src="'+esc(imgUrl(card.image_url,400))+'" alt="'+esc(card.player||"Card")+'" loading="lazy" decoding="async"/>'
       :'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--dim)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
     var meta=[card.year,card.card_set].filter(Boolean).join(" · ");
     return '<div class="card-tile" data-id="'+esc(card.id)+'" tabindex="0" role="button">'
@@ -664,7 +664,7 @@ function galleryHTML(e) {
     if(empty) empty.style.display="none";
     grid.innerHTML=sold.map(function(c){
       var img=c.image_url
-        ?'<img src="'+esc(imgUrl(c.image_url,300))+'" alt="'+esc(c.player||"Card")+'" loading="lazy" decoding="async" onerror="this.src=\''+esc(c.image_url)+'\'"/>'
+        ?'<img src="'+esc(imgUrl(c.image_url,300))+'" alt="'+esc(c.player||"Card")+'" loading="lazy" decoding="async"/>'
         :'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--dim)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
       var meta=[c.year,c.card_set,c.grading_company&&c.grade?c.grading_company+" "+c.grade:(c.grade||"")].filter(Boolean).join(" · ");
       return '<div class="sold-tile">'
