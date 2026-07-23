@@ -62,6 +62,15 @@ export default {
       });
     }
 
+    // ── Auth check (password only, no Supabase needed) ──────
+    if (path === "/api/auth" && method === "POST") {
+      const correct = checkAuth(request, e);
+      if (!env(e, "VAULT_ADMIN_PASS")) {
+        return json({ error: "VAULT_ADMIN_PASS secret is not set in Cloudflare." }, 500);
+      }
+      return correct ? json({ ok: true }, 200) : json({ error: "Wrong password." }, 401);
+    }
+
     // ── API: list cards (public) ────────────────────────────
     if (path === "/api/cards" && method === "GET") {
       const sbUrl = env(e, "SUPABASE_URL");
@@ -757,14 +766,19 @@ function adminHTML(e) {
   function tryAuth(){
     var p=document.getElementById("authInput").value.trim();
     if(!p){ document.getElementById("authErr").textContent="Enter a password."; return; }
-    fetch("/api/cards",{headers:{"x-vault-pass":p}}).then(function(r){
+    document.getElementById("authBtn").disabled=true;
+    document.getElementById("authErr").textContent="";
+    fetch("/api/auth",{method:"POST",headers:{"x-vault-pass":p}}).then(function(r){
+      document.getElementById("authBtn").disabled=false;
       if(r.ok){
         adminPass=p;
         document.getElementById("authScreen").style.display="none";
         document.getElementById("app").classList.add("visible");
         loadCards();
-      } else { document.getElementById("authErr").textContent="Wrong password."; }
-    }).catch(function(){ document.getElementById("authErr").textContent="Could not connect."; });
+      } else {
+        r.json().then(function(j){ document.getElementById("authErr").textContent=j.error||"Wrong password."; }).catch(function(){ document.getElementById("authErr").textContent="Wrong password."; });
+      }
+    }).catch(function(){ document.getElementById("authBtn").disabled=false; document.getElementById("authErr").textContent="Could not connect."; });
   }
   document.getElementById("authBtn").addEventListener("click",tryAuth);
   document.getElementById("authInput").addEventListener("keydown",function(e){ if(e.key==="Enter") tryAuth(); });
