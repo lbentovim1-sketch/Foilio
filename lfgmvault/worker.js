@@ -87,7 +87,7 @@ export default {
       const isAdmin = checkAuth(request, e);
       const query = isAdmin
         ? "?order=created_at.desc"
-        : "?is_visible=eq.true&order=created_at.desc";
+        : "?is_visible=eq.true&is_sold=eq.false&order=created_at.desc";
       try {
         const r = await fetch(
           sbUrl + "/rest/v1/vault_cards" + query,
@@ -100,6 +100,26 @@ export default {
         });
       } catch (_) {
         return json({ error: "Could not load cards." }, 502);
+      }
+    }
+
+    // ── API: sold archive (public) ───────────────────────────
+    if (path === "/api/sold-cards" && method === "GET") {
+      const sbUrl = sbBase(e);
+      const sbKey = sbReadKey(e);
+      if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
+      try {
+        const r = await fetch(
+          sbUrl + "/rest/v1/vault_cards?is_visible=eq.true&is_sold=eq.true&order=created_at.desc",
+          { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } }
+        );
+        const data = await r.json();
+        return new Response(JSON.stringify(data), {
+          status: r.status,
+          headers: { ...CORS, "Content-Type": "application/json" },
+        });
+      } catch (_) {
+        return json({ error: "Could not load sold cards." }, 502);
       }
     }
 
@@ -336,6 +356,27 @@ function galleryHTML(e) {
   .m-cta.mail{background:var(--surface2);border:1px solid var(--border2);color:var(--text)}
   .m-cta.mail:hover{border-color:var(--gold);color:var(--gold)}
 
+  /* Sold Archive */
+  #soldSection{border-top:1px solid var(--border);padding:0 0 60px}
+  #soldToggle{display:flex;align-items:center;justify-content:space-between;padding:28px 28px 0;max-width:1300px;margin:0 auto;cursor:pointer;user-select:none}
+  #soldToggle h2{font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:700;letter-spacing:-.5px;display:flex;align-items:center;gap:10px}
+  #soldToggle .sold-count{font-size:13px;color:var(--muted);font-weight:500;font-family:'Manrope',sans-serif}
+  #soldToggle .chevron{color:var(--dim);transition:transform .25s;font-size:18px}
+  #soldToggle.open .chevron{transform:rotate(180deg)}
+  #soldToggle p{font-size:14px;color:var(--dim);margin-top:4px}
+  #soldBody{display:none;max-width:1300px;margin:0 auto;padding:20px 28px 0}
+  #soldBody.open{display:block}
+  #soldGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:16px}
+  .sold-tile{background:var(--surface);border:1.5px solid var(--border);border-radius:14px;overflow:hidden;position:relative;opacity:.82}
+  .sold-img-wrap{width:100%;aspect-ratio:5/7;overflow:hidden;background:var(--surface2);position:relative}
+  .sold-img-wrap img{width:100%;height:100%;object-fit:cover;filter:grayscale(30%)}
+  .sold-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(7,8,15,.38)}
+  .sold-badge{background:#1a1a2e;border:2px solid var(--down);color:var(--down);font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:800;letter-spacing:1.5px;padding:5px 14px;border-radius:100px}
+  .sold-info{padding:10px 12px 12px}
+  .sold-player{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+  .sold-meta{font-size:11px;color:var(--dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #soldEmpty{text-align:center;padding:40px;color:var(--dim);font-size:14px}
+
   /* Contact section */
   #contact{background:var(--surface);border-top:1px solid var(--border);padding:64px 28px;text-align:center}
   #contact h2{font-family:'Space Grotesk',sans-serif;font-size:30px;font-weight:800;letter-spacing:-1px;margin-bottom:12px}
@@ -408,6 +449,7 @@ function galleryHTML(e) {
   <button class="filter-btn" data-cat="Soccer">Soccer</button>
   <button class="filter-btn" data-cat="Tennis">Tennis</button>
   <button class="filter-btn" data-cat="Pokemon">Pokémon</button>
+  <button class="filter-btn" data-cat="Disney">Disney</button>
   <button class="filter-btn" data-cat="Other">Other</button>
 </div>
 
@@ -449,6 +491,24 @@ function galleryHTML(e) {
     </div>
   </div>
 </div>
+
+<section id="soldSection">
+  <div id="soldToggle">
+    <div>
+      <h2>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 14l-4-4 4-4"/><path d="M5 10h11a4 4 0 0 1 0 8h-1"/></svg>
+        Sold Archive
+        <span class="sold-count" id="soldCount"></span>
+      </h2>
+      <p style="font-size:13px;color:var(--dim);margin-top:4px">Cards from the vault that have found new homes.</p>
+    </div>
+    <span class="chevron">▼</span>
+  </div>
+  <div id="soldBody">
+    <div id="soldGrid"></div>
+    <div id="soldEmpty" style="display:none">No sold cards yet.</div>
+  </div>
+</section>
 
 <section id="contact">
   <h2>Interested in a Card?</h2>
@@ -563,6 +623,34 @@ function galleryHTML(e) {
     var ls=document.getElementById("loadingState");
     if(ls) ls.innerHTML='<span style="color:var(--dim)">Could not load cards — please try again later.</span>';
   });
+
+  // Sold Archive
+  var soldToggle=document.getElementById("soldToggle");
+  var soldBody=document.getElementById("soldBody");
+  soldToggle.addEventListener("click",function(){
+    var open=soldBody.classList.contains("open");
+    soldBody.classList.toggle("open",!open);
+    soldToggle.classList.toggle("open",!open);
+  });
+  fetch("/api/sold-cards").then(function(r){ return r.json(); }).then(function(cards){
+    var sold=Array.isArray(cards)?cards:[];
+    var countEl=document.getElementById("soldCount");
+    if(countEl) countEl.textContent=sold.length?"("+sold.length+")":"";
+    var grid=document.getElementById("soldGrid");
+    var empty=document.getElementById("soldEmpty");
+    if(!sold.length){ if(empty) empty.style.display=""; return; }
+    if(empty) empty.style.display="none";
+    grid.innerHTML=sold.map(function(c){
+      var img=c.image_url
+        ?'<img src="'+esc(c.image_url)+'" alt="'+esc(c.player||"Card")+'" loading="lazy"/>'
+        :'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--dim)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
+      var meta=[c.year,c.card_set,c.grading_company&&c.grade?c.grading_company+" "+c.grade:(c.grade||"")].filter(Boolean).join(" · ");
+      return '<div class="sold-tile">'
+        +'<div class="sold-img-wrap">'+img+'<div class="sold-overlay"><span class="sold-badge">SOLD</span></div></div>'
+        +'<div class="sold-info"><div class="sold-player">'+esc(c.player||c.title||"Unknown")+'</div><div class="sold-meta">'+esc(meta||"Trading Card")+'</div></div>'
+        +'</div>';
+    }).join("");
+  }).catch(function(){});
 })();
 </script>
 </body>
@@ -667,6 +755,8 @@ function adminHTML(e) {
   .act-btn.vis{background:var(--surface);border:1px solid var(--border2);color:var(--muted)}
   .act-btn.vis.on{background:rgba(43,214,122,.1);border-color:rgba(43,214,122,.3);color:var(--up)}
   .act-btn.edit{background:rgba(124,108,255,.12);color:var(--indigo);border:1px solid rgba(124,108,255,.3)}
+  .act-btn.sold{background:rgba(255,93,108,.08);color:var(--muted);border:1px solid var(--border2)}
+  .act-btn.sold.on{background:rgba(255,93,108,.18);color:var(--down);border-color:rgba(255,93,108,.4)}
   #listStatus{font-size:12px;color:var(--dim);margin-bottom:12px}
   .edit-form{background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-top:8px;display:none;flex-direction:column;gap:10px}
   .edit-form.open{display:flex}
@@ -733,7 +823,7 @@ function adminHTML(e) {
       <select id="fCat">
         <option value="">— Select —</option>
         <option>Basketball</option><option>Baseball</option><option>Football</option>
-        <option>Hockey</option><option>Soccer</option><option>Tennis</option><option>Pokemon</option><option>Other</option>
+        <option>Hockey</option><option>Soccer</option><option>Tennis</option><option>Disney</option><option>Pokemon</option><option>Other</option>
       </select>
 
       <div class="field-row">
@@ -905,10 +995,12 @@ function adminHTML(e) {
         ?'<img class="cr-img" src="'+esc(c.image_url)+'" alt=""/>'
         :'<div class="cr-img-ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
       var hiddenBadge = !c.is_visible ? '<span style="font-size:10px;color:var(--down);font-weight:700;margin-left:6px;text-transform:uppercase">Hidden</span>' : '';
+      var soldBadge = c.is_sold ? '<span style="font-size:10px;color:var(--down);font-weight:700;margin-left:6px;text-transform:uppercase;background:rgba(255,93,108,.12);border:1px solid rgba(255,93,108,.3);border-radius:4px;padding:1px 5px">Sold</span>' : '';
       return '<div class="card-row" data-id="'+esc(c.id)+'">'+imgEl
-        +'<div class="cr-info"><div class="cr-name">'+esc(c.player||c.title||"Unknown")+hiddenBadge+'</div><div class="cr-meta">'+esc(meta)+'</div></div>'
+        +'<div class="cr-info"><div class="cr-name">'+esc(c.player||c.title||"Unknown")+hiddenBadge+soldBadge+'</div><div class="cr-meta">'+esc(meta)+'</div></div>'
         +'<div class="cr-acts">'
         +'<button class="act-btn edit">Edit</button>'
+        +'<button class="act-btn sold'+(c.is_sold?" on":"")+'">'+( c.is_sold?"Sold":"Mark Sold")+'</button>'
         +'<button class="act-btn vis'+(c.is_visible?" on":"")+'">'+( c.is_visible?"Visible":"Hidden")+'</button>'
         +'<button class="act-btn del">Delete</button>'
         +'</div></div>'
@@ -920,7 +1012,7 @@ function adminHTML(e) {
         +'<div class="ef-row">'
         +'<div><div class="ef-label">Set</div><input class="ef-set" type="text" value="'+esc(c.card_set||'')+'"/></div>'
         +'<div><div class="ef-label">Sport</div><select class="ef-cat"><option value="">— Select —</option>'
-        +['Basketball','Baseball','Football','Hockey','Soccer','Tennis','Pokemon','Other'].map(function(s){ return '<option value="'+s+'"'+(c.category===s?' selected':'')+'>'+s+'</option>'; }).join('')
+        +['Basketball','Baseball','Football','Hockey','Soccer','Tennis','Disney','Pokemon','Other'].map(function(s){ return '<option value="'+s+'"'+(c.category===s?' selected':'')+'>'+s+'</option>'; }).join('')
         +'</select></div>'
         +'</div>'
         +'<div class="ef-row">'
@@ -974,7 +1066,12 @@ function adminHTML(e) {
         });
       }
 
-      row.querySelector(".del").addEventListener("click",function(){
+      row.querySelector(".sold").addEventListener("click",function(){
+        var card=allCards.find(function(c){ return c.id===id; }); if(!card) return;
+        var newSold=!card.is_sold;
+        if(newSold && !confirm("Mark this card as sold? It will move to the Sold Archive on the public gallery.")) return;
+        fetch("/api/cards/"+encodeURIComponent(id),{method:"PUT",headers:{"Content-Type":"application/json","x-vault-pass":adminPass},body:JSON.stringify({is_sold:newSold})}).then(function(r){ if(r.ok) loadCards(); else alert("Update failed."); });
+      });
         if(!confirm("Delete this card?")) return;
         fetch("/api/cards/"+encodeURIComponent(id),{method:"DELETE",headers:{"x-vault-pass":adminPass}}).then(function(r){ if(r.ok) loadCards(); else alert("Delete failed."); });
       });
