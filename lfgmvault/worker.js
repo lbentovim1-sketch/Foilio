@@ -406,13 +406,12 @@ function galleryHTML(e) {
 </div>
 
 <div id="gallery-section">
-  <div id="gallery">
-    <div id="loadingState"><div class="spinner"></div> Loading vault…</div>
-    <div id="emptyState">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
-      <p style="margin-top:12px;font-size:15px">No cards found — try a different filter.</p>
-    </div>
+  <div id="loadingState" style="display:flex;align-items:center;justify-content:center;padding:80px;color:var(--dim);gap:12px"><div class="spinner"></div> Loading vault…</div>
+  <div id="emptyState" style="display:none;text-align:center;padding:80px 28px;color:var(--dim)">
+    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+    <p style="margin-top:12px;font-size:15px">No cards found — try a different filter.</p>
   </div>
+  <div id="gallery"></div>
 </div>
 
 <!-- Modal -->
@@ -500,8 +499,14 @@ function galleryHTML(e) {
     var cards=filtered();
     var g=document.getElementById("gallery");
     var empty=document.getElementById("emptyState");
-    if(!cards.length){ g.innerHTML=""; empty.style.display="block"; return; }
-    empty.style.display="none";
+    var loading=document.getElementById("loadingState");
+    if(loading) loading.style.display="none";
+    if(!cards.length){
+      g.innerHTML="";
+      if(empty) empty.style.display="block";
+      return;
+    }
+    if(empty) empty.style.display="none";
     g.innerHTML=cards.map(tile).join("");
     g.querySelectorAll(".card-tile").forEach(function(el){
       function open(){ openModal(el.getAttribute("data-id")); }
@@ -547,10 +552,10 @@ function galleryHTML(e) {
     allCards=Array.isArray(cards)?cards:[];
     document.getElementById("statCards").textContent=allCards.length;
     document.getElementById("statForSale").textContent=allCards.filter(function(c){ return c.is_for_sale; }).length||"0";
-    document.getElementById("loadingState").style.display="none";
     render();
   }).catch(function(){
-    document.getElementById("loadingState").innerHTML='<span style="color:var(--dim)">Could not load cards — please try again later.</span>';
+    var ls=document.getElementById("loadingState");
+    if(ls) ls.innerHTML='<span style="color:var(--dim)">Could not load cards — please try again later.</span>';
   });
 })();
 </script>
