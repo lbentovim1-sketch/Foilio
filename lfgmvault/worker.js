@@ -83,24 +83,38 @@ export default {
       const sbUrl = sbBase(e);
       const sbKey = sbReadKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
-      // Admins get all cards (including hidden); public gets only visible ones
       const isAdmin = checkAuth(request, e);
       const query = isAdmin
         ? "?order=created_at.desc"
         : "?is_visible=eq.true&is_sold=eq.false&order=created_at.desc";
+
+      // Cache public responses at the edge for 30 seconds
+      if (!isAdmin) {
+        const cache = caches.default;
+        const cacheKey = new Request("https://lgmvault.com/__cache/cards");
+        const cached = await cache.match(cacheKey);
+        if (cached) return new Response(cached.body, { headers: { ...CORS, "Content-Type": "application/json", "X-Cache": "HIT" } });
+        try {
+          const r = await fetch(sbUrl + "/rest/v1/vault_cards" + query,
+            { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } });
+          const data = await r.json();
+          const resp = new Response(JSON.stringify(data), {
+            status: r.status,
+            headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
+          });
+          await cache.put(cacheKey, resp.clone());
+          return resp;
+        } catch (_) { return json({ error: "Could not load cards." }, 502); }
+      }
+
       try {
-        const r = await fetch(
-          sbUrl + "/rest/v1/vault_cards" + query,
-          { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } }
-        );
+        const r = await fetch(sbUrl + "/rest/v1/vault_cards" + query,
+          { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } });
         const data = await r.json();
         return new Response(JSON.stringify(data), {
-          status: r.status,
-          headers: { ...CORS, "Content-Type": "application/json" },
+          status: r.status, headers: { ...CORS, "Content-Type": "application/json" },
         });
-      } catch (_) {
-        return json({ error: "Could not load cards." }, 502);
-      }
+      } catch (_) { return json({ error: "Could not load cards." }, 502); }
     }
 
     // ── API: sold archive (public) ───────────────────────────
@@ -108,16 +122,22 @@ export default {
       const sbUrl = sbBase(e);
       const sbKey = sbReadKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
+      const cache = caches.default;
+      const cacheKey = new Request("https://lgmvault.com/__cache/sold-cards");
+      const cached = await cache.match(cacheKey);
+      if (cached) return new Response(cached.body, { headers: { ...CORS, "Content-Type": "application/json" } });
       try {
         const r = await fetch(
           sbUrl + "/rest/v1/vault_cards?is_visible=eq.true&is_sold=eq.true&order=created_at.desc",
           { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } }
         );
         const data = await r.json();
-        return new Response(JSON.stringify(data), {
+        const resp = new Response(JSON.stringify(data), {
           status: r.status,
-          headers: { ...CORS, "Content-Type": "application/json" },
+          headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
         });
+        await cache.put(cacheKey, resp.clone());
+        return resp;
       } catch (_) {
         return json({ error: "Could not load sold cards." }, 502);
       }
@@ -260,6 +280,8 @@ function galleryHTML(e) {
 <meta property="og:type" content="website"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="dns-prefetch" href="https://iqdxvsrqnpplwgiaqbyo.supabase.co"/>
+<link rel="preconnect" href="https://iqdxvsrqnpplwgiaqbyo.supabase.co" crossorigin/>
 <style>
   :root{
     --bg:#07080f;--surface:#0d0f1c;--surface2:#12152a;--border:#1e2240;--border2:#2a2f52;
@@ -355,6 +377,10 @@ function galleryHTML(e) {
   .m-cta.ig:hover{opacity:.85}
   .m-cta.mail{background:var(--surface2);border:1px solid var(--border2);color:var(--text)}
   .m-cta.mail:hover{border-color:var(--gold);color:var(--gold)}
+
+  /* Skeleton loading */
+  .skel-box{background:linear-gradient(90deg,var(--surface2) 25%,var(--border2) 50%,var(--surface2) 75%);background-size:200% 100%;animation:skelShimmer 1.4s infinite;border-radius:6px}
+  @keyframes skelShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
   /* Sold Archive */
   #soldSection{border-top:1px solid var(--border);padding:0 0 60px}
@@ -533,6 +559,16 @@ function galleryHTML(e) {
 
   function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 
+  // Convert Supabase storage URLs to serve compressed/resized images via the render API
+  function imgUrl(url, w) {
+    if (!url) return "";
+    if (url.includes(".supabase.co/storage/v1/object/public/")) {
+      return url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/")
+               + "?width=" + (w||400) + "&quality=78&format=webp";
+    }
+    return url;
+  }
+
   function gradeCls(card){
     var g=(card.grade||"").toString().toLowerCase();
     if(!card.grade||card.grade==="Raw") return "raw";
@@ -548,7 +584,7 @@ function galleryHTML(e) {
 
   function tile(card){
     var img=card.image_url
-      ?'<img src="'+esc(card.image_url)+'" alt="'+esc(card.player||"Card")+'" loading="lazy"/>'
+      ?'<img src="'+esc(imgUrl(card.image_url,400))+'" alt="'+esc(card.player||"Card")+'" loading="lazy" decoding="async" onerror="this.src=\''+esc(card.image_url)+'\'"/>'
       :'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--dim)"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
     var meta=[card.year,card.card_set].filter(Boolean).join(" · ");
     return '<div class="card-tile" data-id="'+esc(card.id)+'" tabindex="0" role="button">'
@@ -560,6 +596,14 @@ function galleryHTML(e) {
   }
 
   function filtered(){ return activeCat==="all"?allCards:allCards.filter(function(c){ return (c.category||"").toLowerCase()===activeCat.toLowerCase(); }); }
+
+  function skeletons(n){
+    var s='<div class="card-tile" style="pointer-events:none;cursor:default">'
+      +'<div class="card-img-wrap"><div class="skel-box" style="width:100%;height:100%"></div></div>'
+      +'<div class="card-info"><div class="skel-box" style="height:15px;width:72%;margin-bottom:8px"></div>'
+      +'<div class="skel-box" style="height:11px;width:50%"></div></div></div>';
+    document.getElementById("gallery").innerHTML=Array(n).fill(s).join("");
+  }
 
   function render(){
     var cards=filtered();
@@ -614,6 +658,8 @@ function galleryHTML(e) {
     });
   });
 
+  skeletons(8);
+
   fetch("/api/cards").then(function(r){ return r.json(); }).then(function(cards){
     allCards=Array.isArray(cards)?cards:[];
     document.getElementById("statCards").textContent=allCards.length;
@@ -642,7 +688,7 @@ function galleryHTML(e) {
     if(empty) empty.style.display="none";
     grid.innerHTML=sold.map(function(c){
       var img=c.image_url
-        ?'<img src="'+esc(c.image_url)+'" alt="'+esc(c.player||"Card")+'" loading="lazy"/>'
+        ?'<img src="'+esc(imgUrl(c.image_url,300))+'" alt="'+esc(c.player||"Card")+'" loading="lazy" decoding="async" onerror="this.src=\''+esc(c.image_url)+'\'"/>'
         :'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--dim)"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
       var meta=[c.year,c.card_set,c.grading_company&&c.grade?c.grading_company+" "+c.grade:(c.grade||"")].filter(Boolean).join(" · ");
       return '<div class="sold-tile">'
