@@ -1,0 +1,23 @@
+name: Deploy LGMVault
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "lfgmvault/**"
+  workflow_dispatch: # allows manual trigger from GitHub UI
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to lgmvault.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy LGMVault Worker
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: lfgmvault

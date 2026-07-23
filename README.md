@@ -136,3 +136,16 @@ The app expects an authenticated Supabase client and a `holdings` table with col
 - `added_at`
 
 The next durable social layer should add first-class tables for profiles, public cards, follows, messages, and alerts instead of relying only on auth metadata.
+
+## LFGMVault — Group Collection Gallery
+
+A completely separate, standalone website for the LFGM group's shared card collection. It lives in the [`lfgmvault/`](lfgmvault/) folder and deploys as its own independent Cloudflare Worker — no connection to Foilio at all.
+
+### URLs (after deploying)
+
+| URL | Description |
+| --- | --- |
+| `lfgmvault.workers.dev` | Public gallery — browse all visible cards |
+| `lfgmvault.workers.dev/admin` | Password-protected admin panel |
+
+See [`lfgmvault/wrangler.toml`](lfgmvault/wrangler.toml) for deployment instructions.

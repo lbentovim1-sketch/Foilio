@@ -1,0 +1,13 @@
+{
+  "name": "lfgmvault",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LFGMVault — shared group trading card collection website",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.103.0"
+  }
+}
