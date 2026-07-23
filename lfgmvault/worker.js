@@ -219,7 +219,7 @@ export default {
 // ─────────────────────────────────────────────────────────────────────────────
 function galleryHTML(e) {
   const igHandle = "lfgmvault";
-  const contactEmail = ""; // add your shared Gmail here when ready
+  const contactEmail = "lgmvault@gmail.com";
   const igUrl = "https://instagram.com/" + igHandle;
 
   return `<!DOCTYPE html>
