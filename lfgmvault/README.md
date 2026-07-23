@@ -1,14 +1,14 @@
-# LFGMVault
+# LGMVault
 
 A simple, standalone website for the LFGM group's shared trading card collection.  
-Completely separate from Foilio — its own Cloudflare Worker, its own URL.
+Lives at **lgmvault.com** — completely separate from Foilio.
 
 ## Pages
 
 | URL | What it is |
 |---|---|
-| `/` | Public gallery — everyone can browse the vault |
-| `/admin` | Password-protected panel — upload and manage cards |
+| `lgmvault.com` | Public gallery — everyone can browse the vault |
+| `lgmvault.com/admin` | Password-protected panel — upload and manage cards |
 
 ---
 
@@ -20,7 +20,20 @@ Open your **Slabbed** Supabase project → **SQL Editor** → **New query** → 
 
 This creates the `vault_cards` table and a public `vault-images` storage bucket.
 
-### 2. Deploy the Worker to Cloudflare
+### 2. Point lgmvault.com to Cloudflare
+
+Your domain needs to use Cloudflare's nameservers so Cloudflare can serve the Worker on it.
+
+**If you registered lgmvault.com somewhere other than Cloudflare (GoDaddy, Namecheap, etc.):**
+
+1. Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Add a site** → type `lgmvault.com` → choose the **Free** plan.
+2. Cloudflare will show you two nameservers (e.g. `alice.ns.cloudflare.com` and `bob.ns.cloudflare.com`).
+3. Log into your domain registrar and replace the existing nameservers with those two Cloudflare ones.
+4. Wait up to 24 hours for DNS to propagate (usually under an hour).
+
+**If you registered it through Cloudflare Registrar:** it's already set up — skip this step.
+
+### 3. Deploy the Worker to Cloudflare
 
 ```bash
 cd lfgmvault
@@ -29,9 +42,9 @@ npx wrangler login    # opens browser to authorize Cloudflare
 npm run deploy
 ```
 
-Your site will be live at `https://lfgmvault.<your-subdomain>.workers.dev`.
+Wrangler will automatically wire up `lgmvault.com` and `www.lgmvault.com` to the Worker (this is configured in `wrangler.toml`).
 
-### 3. Add secrets in Cloudflare
+### 4. Add secrets in Cloudflare
 
 Go to [dash.cloudflare.com](https://dash.cloudflare.com) → **Workers & Pages** → click **lfgmvault** → **Settings** → **Variables and Secrets**.
 
@@ -45,6 +58,8 @@ Add these four secrets:
 | `VAULT_ADMIN_PASS` | Any password you choose — this is what you type at `/admin` |
 
 Click **Deploy** once more after saving the secrets.
+
+Your site is now live at **https://lgmvault.com**.
 
 ---
 
@@ -66,7 +81,7 @@ const contactEmail = ""; // add your shared Gmail here when ready
 
 ## Adding cards (daily use)
 
-1. Go to `https://lfgmvault.<your-subdomain>.workers.dev/admin`
+1. Go to **lgmvault.com/admin**
 2. Enter your `VAULT_ADMIN_PASS`
 3. Drag in a card photo, fill in the details, click **Add to Vault**
 

@@ -10,4 +10,14 @@
 name = "lfgmvault"
 main = "worker.js"
 compatibility_date = "2026-06-01"
+
+# Keep the free workers.dev URL active as a fallback
 workers_dev = true
+
+# Custom domain — Cloudflare will serve the Worker at lgmvault.com and www.lgmvault.com
+# The domain must be on Cloudflare (using Cloudflare nameservers) for this to work.
+# See README for the one-time setup step in the dashboard.
+routes = [
+  { pattern = "lgmvault.com/*", custom_domain = true },
+  { pattern = "www.lgmvault.com/*", custom_domain = true },
+]

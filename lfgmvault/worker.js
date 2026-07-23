@@ -211,10 +211,11 @@ function galleryHTML(e) {
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>LFGMVault — Premium Card Collection</title>
-<meta name="description" content="LFGMVault is a group of six collectors sharing a vault of premium trading cards. Browse the collection and reach out if you're interested."/>
-<meta property="og:title" content="LFGMVault — Premium Card Collection"/>
+<title>LGMVault — Premium Card Collection</title>
+<meta name="description" content="LGMVault is a group of six collectors sharing a vault of premium trading cards. Browse the collection and reach out if you're interested."/>
+<meta property="og:title" content="LGMVault — Premium Card Collection"/>
 <meta property="og:description" content="Browse our vault of premium trading cards."/>
+<meta property="og:url" content="https://lgmvault.com"/>
 <meta property="og:type" content="website"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet"/>
