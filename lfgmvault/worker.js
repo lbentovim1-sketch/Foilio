@@ -78,14 +78,19 @@ export default {
       return correct ? json({ ok: true }, 200) : json({ error: "Wrong password." }, 401);
     }
 
-    // ── API: list cards (public) ────────────────────────────
+    // ── API: list cards (public, or all cards for admin) ────
     if (path === "/api/cards" && method === "GET") {
       const sbUrl = sbBase(e);
       const sbKey = sbReadKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
+      // Admins get all cards (including hidden); public gets only visible ones
+      const isAdmin = checkAuth(request, e);
+      const query = isAdmin
+        ? "?order=created_at.desc"
+        : "?is_visible=eq.true&order=created_at.desc";
       try {
         const r = await fetch(
-          sbUrl + "/rest/v1/vault_cards?is_visible=eq.true&order=created_at.desc",
+          sbUrl + "/rest/v1/vault_cards" + query,
           { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } }
         );
         const data = await r.json();
@@ -401,6 +406,7 @@ function galleryHTML(e) {
   <button class="filter-btn" data-cat="Football">Football</button>
   <button class="filter-btn" data-cat="Hockey">Hockey</button>
   <button class="filter-btn" data-cat="Soccer">Soccer</button>
+  <button class="filter-btn" data-cat="Tennis">Tennis</button>
   <button class="filter-btn" data-cat="Pokemon">Pokémon</button>
   <button class="filter-btn" data-cat="Other">Other</button>
 </div>
@@ -660,7 +666,20 @@ function adminHTML(e) {
   .act-btn.del{background:rgba(255,93,108,.15);color:var(--down);border:1px solid rgba(255,93,108,.3)}
   .act-btn.vis{background:var(--surface);border:1px solid var(--border2);color:var(--muted)}
   .act-btn.vis.on{background:rgba(43,214,122,.1);border-color:rgba(43,214,122,.3);color:var(--up)}
+  .act-btn.edit{background:rgba(124,108,255,.12);color:var(--indigo);border:1px solid rgba(124,108,255,.3)}
   #listStatus{font-size:12px;color:var(--dim);margin-bottom:12px}
+  .edit-form{background:var(--bg);border:1px solid var(--border2);border-radius:10px;padding:14px;margin-top:8px;display:none;flex-direction:column;gap:10px}
+  .edit-form.open{display:flex}
+  .edit-form .ef-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .edit-form input,.edit-form select,.edit-form textarea{width:100%;background:var(--surface);border:1.5px solid var(--border2);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;font-family:'Manrope',sans-serif;outline:none}
+  .edit-form input:focus,.edit-form select:focus,.edit-form textarea:focus{border-color:var(--gold)}
+  .edit-form select option{background:var(--surface)}
+  .edit-form textarea{min-height:54px;resize:vertical}
+  .edit-form .ef-label{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:3px;font-family:'JetBrains Mono',monospace}
+  .edit-form .ef-actions{display:flex;gap:8px;margin-top:4px}
+  .ef-save{flex:1;padding:9px;border-radius:8px;background:var(--gold);border:none;color:#000;font-size:13px;font-weight:800;cursor:pointer;font-family:'Manrope',sans-serif}
+  .ef-cancel{padding:9px 14px;border-radius:8px;background:var(--surface);border:1px solid var(--border2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:'Manrope',sans-serif}
+  .ef-save:hover{opacity:.88} .ef-cancel:hover{color:var(--text)}
 
   @keyframes spin{to{transform:rotate(360deg)}}
   @media(max-width:860px){ #app{grid-template-columns:1fr} }
@@ -714,7 +733,7 @@ function adminHTML(e) {
       <select id="fCat">
         <option value="">— Select —</option>
         <option>Basketball</option><option>Baseball</option><option>Football</option>
-        <option>Hockey</option><option>Soccer</option><option>Pokemon</option><option>Other</option>
+        <option>Hockey</option><option>Soccer</option><option>Tennis</option><option>Pokemon</option><option>Other</option>
       </select>
 
       <div class="field-row">
@@ -885,15 +904,76 @@ function adminHTML(e) {
       var imgEl=c.image_url
         ?'<img class="cr-img" src="'+esc(c.image_url)+'" alt=""/>'
         :'<div class="cr-img-ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg></div>';
+      var hiddenBadge = !c.is_visible ? '<span style="font-size:10px;color:var(--down);font-weight:700;margin-left:6px;text-transform:uppercase">Hidden</span>' : '';
       return '<div class="card-row" data-id="'+esc(c.id)+'">'+imgEl
-        +'<div class="cr-info"><div class="cr-name">'+esc(c.player||c.title||"Unknown")+'</div><div class="cr-meta">'+esc(meta)+'</div></div>'
+        +'<div class="cr-info"><div class="cr-name">'+esc(c.player||c.title||"Unknown")+hiddenBadge+'</div><div class="cr-meta">'+esc(meta)+'</div></div>'
         +'<div class="cr-acts">'
+        +'<button class="act-btn edit">Edit</button>'
         +'<button class="act-btn vis'+(c.is_visible?" on":"")+'">'+( c.is_visible?"Visible":"Hidden")+'</button>'
         +'<button class="act-btn del">Delete</button>'
-        +'</div></div>';
+        +'</div></div>'
+        +'<div class="edit-form" data-edit-id="'+esc(c.id)+'">'
+        +'<div class="ef-row">'
+        +'<div><div class="ef-label">Player / Title</div><input class="ef-player" type="text" value="'+esc(c.player||c.title||'')+'"/></div>'
+        +'<div><div class="ef-label">Year</div><input class="ef-year" type="text" value="'+esc(c.year||'')+'"/></div>'
+        +'</div>'
+        +'<div class="ef-row">'
+        +'<div><div class="ef-label">Set</div><input class="ef-set" type="text" value="'+esc(c.card_set||'')+'"/></div>'
+        +'<div><div class="ef-label">Sport</div><select class="ef-cat"><option value="">— Select —</option>'
+        +['Basketball','Baseball','Football','Hockey','Soccer','Tennis','Pokemon','Other'].map(function(s){ return '<option value="'+s+'"'+(c.category===s?' selected':'')+'>'+s+'</option>'; }).join('')
+        +'</select></div>'
+        +'</div>'
+        +'<div class="ef-row">'
+        +'<div><div class="ef-label">Grading Co.</div><select class="ef-company"><option value="">Raw / None</option>'
+        +['PSA','BGS','SGC','CGC','TAG','Other'].map(function(s){ return '<option value="'+s+'"'+(c.grading_company===s?' selected':'')+'>'+s+'</option>'; }).join('')
+        +'</select></div>'
+        +'<div><div class="ef-label">Grade</div><input class="ef-grade" type="text" value="'+esc(c.grade||'')+'"/></div>'
+        +'</div>'
+        +'<div><div class="ef-label">Cert #</div><input class="ef-cert" type="text" value="'+esc(c.cert_number||'')+'"/></div>'
+        +'<div><div class="ef-label">Notes</div><textarea class="ef-notes">'+esc(c.notes||'')+'</textarea></div>'
+        +'<div class="ef-actions"><button class="ef-save">Save Changes</button><button class="ef-cancel">Cancel</button></div>'
+        +'<div class="ef-msg" style="font-size:12px;text-align:center;min-height:16px"></div>'
+        +'</div>';
     }).join("");
+
     el.querySelectorAll(".card-row").forEach(function(row){
       var id=row.getAttribute("data-id");
+      var editForm=el.querySelector('.edit-form[data-edit-id="'+id+'"]');
+
+      row.querySelector(".edit").addEventListener("click",function(){
+        var isOpen=editForm.classList.contains("open");
+        el.querySelectorAll(".edit-form.open").forEach(function(f){ f.classList.remove("open"); });
+        if(!isOpen) editForm.classList.add("open");
+      });
+      if(editForm){
+        editForm.querySelector(".ef-cancel").addEventListener("click",function(){ editForm.classList.remove("open"); });
+        editForm.querySelector(".ef-save").addEventListener("click",function(){
+          var msg=editForm.querySelector(".ef-msg");
+          var btn=editForm.querySelector(".ef-save");
+          btn.disabled=true; btn.textContent="Saving…"; msg.textContent=""; msg.style.color="";
+          var payload={
+            player:editForm.querySelector(".ef-player").value.trim()||null,
+            title:editForm.querySelector(".ef-player").value.trim()||null,
+            year:editForm.querySelector(".ef-year").value.trim()||null,
+            card_set:editForm.querySelector(".ef-set").value.trim()||null,
+            category:editForm.querySelector(".ef-cat").value||null,
+            grading_company:editForm.querySelector(".ef-company").value||null,
+            grade:editForm.querySelector(".ef-grade").value.trim()||null,
+            cert_number:editForm.querySelector(".ef-cert").value.trim()||null,
+            notes:editForm.querySelector(".ef-notes").value.trim()||null,
+          };
+          fetch("/api/cards/"+encodeURIComponent(id),{
+            method:"PUT",
+            headers:{"Content-Type":"application/json","x-vault-pass":adminPass},
+            body:JSON.stringify(payload)
+          }).then(function(r){
+            btn.disabled=false; btn.textContent="Save Changes";
+            if(r.ok){ msg.style.color="var(--up)"; msg.textContent="✓ Saved!"; setTimeout(function(){ editForm.classList.remove("open"); loadCards(); },800); }
+            else { msg.style.color="var(--down)"; msg.textContent="Save failed."; }
+          }).catch(function(){ btn.disabled=false; btn.textContent="Save Changes"; msg.style.color="var(--down)"; msg.textContent="Could not connect."; });
+        });
+      }
+
       row.querySelector(".del").addEventListener("click",function(){
         if(!confirm("Delete this card?")) return;
         fetch("/api/cards/"+encodeURIComponent(id),{method:"DELETE",headers:{"x-vault-pass":adminPass}}).then(function(r){ if(r.ok) loadCards(); else alert("Delete failed."); });
