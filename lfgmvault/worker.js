@@ -87,32 +87,13 @@ export default {
       const query = isAdmin
         ? "?order=created_at.desc"
         : "?is_visible=eq.true&is_sold=eq.false&order=created_at.desc";
-
-      // Cache public responses at the edge for 30 seconds
-      if (!isAdmin) {
-        const cache = caches.default;
-        const cacheKey = new Request("https://lgmvault.com/__cache/cards");
-        const cached = await cache.match(cacheKey);
-        if (cached) return new Response(cached.body, { headers: { ...CORS, "Content-Type": "application/json", "X-Cache": "HIT" } });
-        try {
-          const r = await fetch(sbUrl + "/rest/v1/vault_cards" + query,
-            { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } });
-          const data = await r.json();
-          const resp = new Response(JSON.stringify(data), {
-            status: r.status,
-            headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
-          });
-          await cache.put(cacheKey, resp.clone());
-          return resp;
-        } catch (_) { return json({ error: "Could not load cards." }, 502); }
-      }
-
       try {
         const r = await fetch(sbUrl + "/rest/v1/vault_cards" + query,
           { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } });
         const data = await r.json();
         return new Response(JSON.stringify(data), {
-          status: r.status, headers: { ...CORS, "Content-Type": "application/json" },
+          status: r.status,
+          headers: { ...CORS, "Content-Type": "application/json" },
         });
       } catch (_) { return json({ error: "Could not load cards." }, 502); }
     }
@@ -122,22 +103,16 @@ export default {
       const sbUrl = sbBase(e);
       const sbKey = sbReadKey(e);
       if (!sbUrl || !sbKey) return json({ error: "Supabase not configured." }, 500);
-      const cache = caches.default;
-      const cacheKey = new Request("https://lgmvault.com/__cache/sold-cards");
-      const cached = await cache.match(cacheKey);
-      if (cached) return new Response(cached.body, { headers: { ...CORS, "Content-Type": "application/json" } });
       try {
         const r = await fetch(
           sbUrl + "/rest/v1/vault_cards?is_visible=eq.true&is_sold=eq.true&order=created_at.desc",
           { headers: { apikey: sbKey, Authorization: "Bearer " + sbKey } }
         );
         const data = await r.json();
-        const resp = new Response(JSON.stringify(data), {
+        return new Response(JSON.stringify(data), {
           status: r.status,
-          headers: { ...CORS, "Content-Type": "application/json", "Cache-Control": "public, max-age=30" },
+          headers: { ...CORS, "Content-Type": "application/json" },
         });
-        await cache.put(cacheKey, resp.clone());
-        return resp;
       } catch (_) {
         return json({ error: "Could not load sold cards." }, 502);
       }
@@ -598,6 +573,7 @@ function galleryHTML(e) {
   function filtered(){ return activeCat==="all"?allCards:allCards.filter(function(c){ return (c.category||"").toLowerCase()===activeCat.toLowerCase(); }); }
 
   function skeletons(n){
+    var ls=document.getElementById("loadingState"); if(ls) ls.style.display="none";
     var s='<div class="card-tile" style="pointer-events:none;cursor:default">'
       +'<div class="card-img-wrap"><div class="skel-box" style="width:100%;height:100%"></div></div>'
       +'<div class="card-info"><div class="skel-box" style="height:15px;width:72%;margin-bottom:8px"></div>'
