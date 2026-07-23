@@ -16,8 +16,7 @@ workers_dev = true
 
 # Custom domain — Cloudflare will serve the Worker at lgmvault.com and www.lgmvault.com
 # The domain must be on Cloudflare (using Cloudflare nameservers) for this to work.
-# See README for the one-time setup step in the dashboard.
 routes = [
-  { pattern = "lgmvault.com/*", custom_domain = true },
-  { pattern = "www.lgmvault.com/*", custom_domain = true },
+  { pattern = "lgmvault.com", custom_domain = true },
+  { pattern = "www.lgmvault.com", custom_domain = true },
 ]
